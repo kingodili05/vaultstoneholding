@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vaultstone Bank — Banking Built on Trust. Engineered for Tomorrow. Premium financial services for personal, business, and wealth management." />
+  <meta name="theme-color" content="#0A0E1A" />
+
+  <title>Vaultstone Bank — Banking Built on Trust</title>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="styles/main.css" />
+
+  <!-- Favicon (inline SVG) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+</head>
+<body>
+
+  <!-- ────────────────────────────────────
+       Custom Cursor
+       ──────────────────────────────────── -->
+  <div class="cursor-dot"  aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <!-- ────────────────────────────────────
+       Navigation
+       ──────────────────────────────────── -->
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="container navbar__inner">
+
+        <!-- Logo -->
+        <a href="index.html" class="navbar__logo" aria-label="Vaultstone Bank home">
+          <div class="navbar__logo-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <span class="navbar__logo-text">Vault<span>stone</span></span>
+        </a>
+
+        <!-- Desktop Nav -->
+        <ul class="navbar__nav" role="list">
+          <li><a href="services.html" class="navbar__link">Services</a></li>
+          <li><a href="about.html"    class="navbar__link">About</a></li>
+          <li><a href="faq.html"      class="navbar__link">Help</a></li>
+          <li><a href="contact.html"  class="navbar__link">Contact</a></li>
+        </ul>
+
+        <!-- Desktop Actions -->
+        <div class="navbar__actions">
+          <a href="login.html" class="navbar__login">Log In</a>
+          <a href="signup.html" class="btn btn-primary btn-sm">Open Account</a>
+        </div>
+
+        <!-- Mobile Toggle -->
+        <button class="navbar__toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+      <!-- Mobile Menu -->
+      <div class="navbar__mobile" id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+        <a href="services.html" class="navbar__mobile-link">Services</a>
+        <a href="about.html"    class="navbar__mobile-link">About</a>
+        <a href="faq.html"      class="navbar__mobile-link">Help Center</a>
+        <a href="contact.html"  class="navbar__mobile-link">Contact</a>
+        <a href="login.html"    class="navbar__mobile-link">Log In</a>
+        <a href="signup.html" class="btn btn-primary btn-lg navbar__mobile-cta">Open Account</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- ────────────────────────────────────
+         Hero Section
+         ──────────────────────────────────── -->
+    <section class="hero" aria-label="Hero">
+      <canvas class="hero__canvas" id="hero-canvas" aria-hidden="true"></canvas>
+      <div class="hero__gradient" aria-hidden="true"></div>
+
+      <div class="container hero__content">
+        <div class="hero__eyebrow" aria-label="Regulated & FDIC Insured">
+          <span class="hero__eyebrow-dot" aria-hidden="true"></span>
+          FDIC Insured &nbsp;·&nbsp; SOC 2 Type II &nbsp;·&nbsp; Est. 1998
+        </div>
+
+        <h1 class="hero__title">
+          Banking Built on Trust.
+          <span class="line-accent">Engineered for Tomorrow.</span>
+        </h1>
+
+        <p class="hero__subtitle">
+          Vaultstone delivers institutional-grade financial services with the simplicity and speed of modern technology. Your wealth, secured and growing.
+        </p>
+
+        <div class="hero__actions">
+          <a href="dashboard.html" class="btn btn-primary btn-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            Open Your Account
+          </a>
+          <a href="#features" class="btn btn-outline btn-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            See How It Works
+          </a>
+        </div>
+
+        <div class="hero__trust" role="list" aria-label="Trust indicators">
+          <div class="hero__trust-item" role="listitem">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>256-bit Encryption</span>
+          </div>
+          <div class="hero__trust-item" role="listitem">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>FDIC Insured up to $250K</span>
+          </div>
+          <div class="hero__trust-item" role="listitem">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span>24/7 Concierge Support</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scroll hint -->
+      <div class="hero__scroll-hint" aria-hidden="true">
+        <div class="hero__scroll-line"></div>
+        <span>Scroll</span>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────
+         Features Strip
+         ──────────────────────────────────── -->
+    <section class="features" id="features" aria-label="Key features">
+      <div class="container">
+        <div class="features__grid">
+
+          <article class="feature-card reveal">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <h3 class="feature-card__title">Instant Transfers</h3>
+            <p class="feature-card__desc">Move money globally in seconds — not days. Real-time settlement across 147 countries with zero hidden fees.</p>
+          </article>
+
+          <article class="feature-card reveal reveal-delay-1">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3 class="feature-card__title">256-bit Encryption</h3>
+            <p class="feature-card__desc">Military-grade AES-256 encryption protects every transaction. Zero-trust architecture with continuous threat monitoring.</p>
+          </article>
+
+          <article class="feature-card reveal reveal-delay-2">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <h3 class="feature-card__title">Global Reach</h3>
+            <p class="feature-card__desc">Access your accounts from anywhere on Earth. Multi-currency accounts, competitive FX rates, and local payment rails.</p>
+          </article>
+
+          <article class="feature-card reveal reveal-delay-3">
+            <div class="feature-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <h3 class="feature-card__title">Smart Insights</h3>
+            <p class="feature-card__desc">AI-powered analytics surface spending patterns, forecast cash flow, and deliver personalized recommendations to build wealth.</p>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────
+         Stats Section
+         ──────────────────────────────────── -->
+    <section class="stats" aria-label="Company statistics">
+      <div class="container">
+        <div class="text-center" style="margin-bottom: 4rem;">
+          <div class="section-label">By The Numbers</div>
+          <h2 class="section-title">The Scale of <span>Trust</span></h2>
+          <p class="section-subtitle">25 years of disciplined growth, guided by one principle: client assets come first.</p>
+        </div>
+
+        <div class="stats__grid" role="list">
+
+          <div class="stat-item reveal" role="listitem">
+            <span
+              class="stat-item__value"
+              data-counter="48"
+              data-prefix="$"
+              data-suffix="B+"
+              data-decimals="0"
+              aria-label="48 billion dollars assets under management"
+            >$0</span>
+            <span class="stat-item__label">Assets Under Management</span>
+          </div>
+
+          <div class="stat-item reveal reveal-delay-1" role="listitem">
+            <span
+              class="stat-item__value"
+              data-counter="2.4"
+              data-suffix="M"
+              data-decimals="1"
+              aria-label="2.4 million clients"
+            >0</span>
+            <span class="stat-item__label">Clients Worldwide</span>
+          </div>
+
+          <div class="stat-item reveal reveal-delay-2" role="listitem">
+            <span
+              class="stat-item__value"
+              data-counter="99.99"
+              data-suffix="%"
+              data-decimals="2"
+              aria-label="99.99 percent uptime"
+            >0</span>
+            <span class="stat-item__label">Platform Uptime</span>
+          </div>
+
+          <div class="stat-item reveal reveal-delay-3" role="listitem">
+            <span
+              class="stat-item__value"
+              data-counter="147"
+              data-suffix="+"
+              data-decimals="0"
+              aria-label="147 countries served"
+            >0</span>
+            <span class="stat-item__label">Countries Served</span>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────
+         Products Section
+         ──────────────────────────────────── -->
+    <section class="products" id="products" aria-label="Product offerings">
+      <div class="container">
+        <div class="products__header">
+          <div class="section-label">Our Products</div>
+          <h2 class="section-title">Built for Every <span>Milestone</span></h2>
+          <p class="section-subtitle">Whether you're saving your first paycheck or managing a portfolio, Vaultstone has the right account for you.</p>
+        </div>
+
+        <div class="products__grid">
+
+          <!-- Personal -->
+          <article class="product-card reveal">
+            <div class="product-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h3 class="product-card__title">Personal</h3>
+            <p class="product-card__desc">Your everyday account, reimagined. High-yield savings, instant transfers, and a titanium debit card that earns rewards on every purchase.</p>
+            <ul class="product-card__features" aria-label="Personal account features">
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                4.75% APY High-Yield Savings
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Zero monthly fees, ever
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Instant global transfers
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                AI-powered spend analytics
+              </li>
+            </ul>
+            <a href="dashboard.html" class="btn btn-outline">Get Started</a>
+          </article>
+
+          <!-- Business (featured) -->
+          <article class="product-card product-card--featured reveal reveal-delay-1">
+            <div class="product-card__badge">Most Popular</div>
+            <div class="product-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+            </div>
+            <h3 class="product-card__title">Business</h3>
+            <p class="product-card__desc">Streamline treasury operations with multi-user accounts, automated payroll, and real-time cash flow dashboards built for growth.</p>
+            <ul class="product-card__features" aria-label="Business account features">
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Multi-user roles & permissions
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Automated payroll & invoicing
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                $500K FDIC coverage
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Dedicated relationship manager
+              </li>
+            </ul>
+            <a href="dashboard.html" class="btn btn-primary">Open Business Account</a>
+          </article>
+
+          <!-- Wealth -->
+          <article class="product-card reveal reveal-delay-2">
+            <div class="product-card__icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            </div>
+            <h3 class="product-card__title">Wealth Management</h3>
+            <p class="product-card__desc">White-glove portfolio management, estate planning, and alternative investments — for clients with $1M+ in investable assets.</p>
+            <ul class="product-card__features" aria-label="Wealth management features">
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Dedicated private banker
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Alternative assets & hedge funds
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Estate & tax planning
+              </li>
+              <li class="product-card__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                Concierge at every tier
+              </li>
+            </ul>
+            <a href="contact.html" class="btn btn-outline">Schedule a Consultation</a>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────
+         About Strip
+         ──────────────────────────────────── -->
+    <section id="about" style="background: var(--surface); border-top: 1px solid var(--accent-border); padding-block: 6rem;" aria-label="About Vaultstone">
+      <div class="container">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5rem; align-items: center;">
+          <!-- Left -->
+          <div class="reveal-left">
+            <div class="section-label">About Vaultstone</div>
+            <h2 class="section-title" style="max-width: 480px;">We Believe Banking Should <span>Serve You</span></h2>
+            <p style="margin-top: 1.5rem; color: var(--text-secondary); line-height: 1.7; font-size: 1.05rem;">
+              Founded in 1998 by former Goldman Sachs executives, Vaultstone was built on a simple conviction: individuals and businesses deserve the same institutional-grade tools that were once reserved for the ultra-wealthy.
+            </p>
+            <p style="margin-top: 1rem; color: var(--text-secondary); line-height: 1.7;">
+              Today, with $48B AUM and 2.4 million clients across 147 countries, we remain privately held, debt-free, and obsessively focused on one metric — client outcomes.
+            </p>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; flex-wrap: wrap;">
+              <a href="about.html" class="btn btn-outline">Our Story</a>
+              <a href="about.html#investors" class="btn btn-ghost">Investor Relations →</a>
+            </div>
+          </div>
+
+          <!-- Right: pillar cards -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="glass-card reveal" style="padding: 1.5rem; transition-delay: 0.1s;">
+              <div style="font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; margin-bottom: 0.25rem;">25+</div>
+              <div style="font-size: 0.875rem; color: var(--muted);">Years of excellence in global finance</div>
+            </div>
+            <div class="glass-card reveal" style="padding: 1.5rem; transition-delay: 0.2s;">
+              <div style="font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; margin-bottom: 0.25rem;">AA+</div>
+              <div style="font-size: 0.875rem; color: var(--muted);">Credit rating by S&amp;P and Moody's</div>
+            </div>
+            <div class="glass-card reveal" style="padding: 1.5rem; transition-delay: 0.3s;">
+              <div style="font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; margin-bottom: 0.25rem;">$0</div>
+              <div style="font-size: 0.875rem; color: var(--muted);">Client funds ever lost to fraud</div>
+            </div>
+            <div class="glass-card reveal" style="padding: 1.5rem; transition-delay: 0.4s;">
+              <div style="font-size: 2rem; font-weight: 800; color: var(--accent); letter-spacing: -0.03em; margin-bottom: 0.25rem;">4.9★</div>
+              <div style="font-size: 0.875rem; color: var(--muted);">Average rating from 180K+ reviews</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <style>
+        @media (max-width: 900px) {
+          #about .container > div { grid-template-columns: 1fr !important; gap: 3rem !important; }
+        }
+        @media (max-width: 560px) {
+          #about .container > div > div:last-child { grid-template-columns: 1fr 1fr !important; }
+        }
+      </style>
+    </section>
+
+    <!-- ────────────────────────────────────
+         Testimonials
+         ──────────────────────────────────── -->
+    <section class="testimonials" aria-label="Client testimonials">
+      <div class="container">
+        <div class="testimonials__header text-center">
+          <div class="section-label">Testimonials</div>
+          <h2 class="section-title">Trusted by <span>Clients</span> Globally</h2>
+          <p class="section-subtitle">From first-time savers to seasoned executives, Vaultstone delivers.</p>
+        </div>
+
+        <div class="testimonial-carousel" role="region" aria-label="Testimonial slider" tabindex="0">
+          <div class="testimonial-track" aria-live="polite">
+
+            <div class="testimonial-slide">
+              <article class="testimonial-card">
+                <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testimonial-card__quote">Switching to Vaultstone was the best financial decision I've made in a decade. The yield on my savings account alone outpaces my previous bank's "premium" rate by 3x. The interface is genuinely beautiful.</p>
+                <div class="testimonial-card__author">
+                  <div class="testimonial-card__avatar" aria-hidden="true">MM</div>
+                  <div>
+                    <div class="testimonial-card__name">Marcus Mitchell</div>
+                    <div class="testimonial-card__role">Founder, Apex Ventures — New York</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="testimonial-slide">
+              <article class="testimonial-card">
+                <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testimonial-card__quote">Our treasury team manages 14 entities across 6 countries. Vaultstone's business platform gave us visibility and control we simply couldn't get anywhere else. The FX rates alone save us six figures annually.</p>
+                <div class="testimonial-card__author">
+                  <div class="testimonial-card__avatar" aria-hidden="true">SL</div>
+                  <div>
+                    <div class="testimonial-card__name">Sofia Laurent</div>
+                    <div class="testimonial-card__role">CFO, Meridian Group — London</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="testimonial-slide">
+              <article class="testimonial-card">
+                <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testimonial-card__quote">The wealth management tier is on a completely different level. My private banker actually understands alternative investments and structured my portfolio to weather two rate cycles without a single down quarter.</p>
+                <div class="testimonial-card__author">
+                  <div class="testimonial-card__avatar" aria-hidden="true">JK</div>
+                  <div>
+                    <div class="testimonial-card__name">James Kowalski</div>
+                    <div class="testimonial-card__role">Managing Director — Singapore</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="testimonial-slide">
+              <article class="testimonial-card">
+                <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testimonial-card__quote">I was skeptical of digital banking. Then a transfer I needed hit instantly — at 11 PM on a Sunday. Then the support team called me within 4 minutes of me opening a chat. I've been a client for 3 years now.</p>
+                <div class="testimonial-card__author">
+                  <div class="testimonial-card__avatar" aria-hidden="true">AN</div>
+                  <div>
+                    <div class="testimonial-card__name">Amara Nwosu</div>
+                    <div class="testimonial-card__role">Architect, Self-employed — Lagos</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <div class="testimonial-slide">
+              <article class="testimonial-card">
+                <div class="testimonial-card__stars" aria-label="5 out of 5 stars">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </div>
+                <p class="testimonial-card__quote">As a fintech investor, I've stress-tested dozens of platforms. Vaultstone's security posture is best-in-class — their SOC 2 Type II and ISO 27001 certifications aren't just checkboxes, they live it in their product.</p>
+                <div class="testimonial-card__author">
+                  <div class="testimonial-card__avatar" aria-hidden="true">RC</div>
+                  <div>
+                    <div class="testimonial-card__name">Rania Chen</div>
+                    <div class="testimonial-card__role">General Partner, TechCapital — Dubai</div>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+          </div><!-- /track -->
+
+          <!-- Controls -->
+          <div class="testimonial-controls" role="group" aria-label="Carousel controls">
+            <button class="testimonial-btn" data-dir="-1" aria-label="Previous testimonial">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+
+            <div class="testimonial-dots" role="tablist" aria-label="Testimonial slides">
+              <button class="testimonial-dot active" role="tab" aria-label="Slide 1" aria-selected="true"></button>
+              <button class="testimonial-dot" role="tab" aria-label="Slide 2" aria-selected="false"></button>
+              <button class="testimonial-dot" role="tab" aria-label="Slide 3" aria-selected="false"></button>
+              <button class="testimonial-dot" role="tab" aria-label="Slide 4" aria-selected="false"></button>
+              <button class="testimonial-dot" role="tab" aria-label="Slide 5" aria-selected="false"></button>
+            </div>
+
+            <button class="testimonial-btn" data-dir="1" aria-label="Next testimonial">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────
+         Security Banner
+         ──────────────────────────────────── -->
+    <section style="background: var(--primary-deep); border-top: 1px solid var(--accent-border); padding-block: 4rem;" aria-label="Security certifications">
+      <div class="container">
+        <div style="text-align: center; margin-bottom: 2.5rem;">
+          <p style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);">Security & Compliance</p>
+        </div>
+        <div style="display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 3rem;">
+          <div class="reveal" style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span style="font-weight: 600; font-size: 0.9rem;">FDIC Insured</span>
+          </div>
+          <div class="reveal reveal-delay-1" style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span style="font-weight: 600; font-size: 0.9rem;">AES-256 Encryption</span>
+          </div>
+          <div class="reveal reveal-delay-2" style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span style="font-weight: 600; font-size: 0.9rem;">SOC 2 Type II</span>
+          </div>
+          <div class="reveal reveal-delay-3" style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <span style="font-weight: 600; font-size: 0.9rem;">ISO 27001</span>
+          </div>
+          <div class="reveal reveal-delay-4" style="display: flex; align-items: center; gap: 0.75rem; color: var(--muted);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span style="font-weight: 600; font-size: 0.9rem;">PCI DSS Level 1</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ────────────────────────────────────
+         CTA Banner
+         ──────────────────────────────────── -->
+    <section class="cta-banner" aria-label="Call to action">
+      <div class="container">
+        <div class="reveal">
+          <h2 class="cta-banner__title">
+            Start Building Your<br>
+            <span>Financial Legacy</span> Today.
+          </h2>
+          <p class="cta-banner__subtitle">
+            Open your account in 4 minutes. No minimum balance. No monthly fees. Just banking that works for you.
+          </p>
+          <div class="cta-banner__actions">
+            <a href="dashboard.html" class="btn btn-primary btn-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              Open Account — Free
+            </a>
+            <a href="dashboard.html" class="btn btn-outline btn-lg">View Demo Dashboard</a>
+          </div>
+          <p class="cta-banner__note">No credit check &nbsp;·&nbsp; FDIC insured &nbsp;·&nbsp; Cancel anytime</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ────────────────────────────────────
+       Footer
+       ──────────────────────────────────── -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__top">
+
+        <!-- Brand -->
+        <div class="footer__brand">
+          <div class="footer__brand-logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1"/>
+              </svg>
+            </div>
+            Vaultstone Bank
+          </div>
+          <p class="footer__brand-desc">Institutional-grade banking for everyone. Secure, transparent, and built to grow with you.</p>
+          <nav class="footer__social" aria-label="Social media links">
+            <!-- X/Twitter -->
+            <a href="#" class="footer__social-link" aria-label="Follow us on X">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg>
+            </a>
+            <!-- LinkedIn -->
+            <a href="#" class="footer__social-link" aria-label="Follow us on LinkedIn">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+            </a>
+            <!-- Instagram -->
+            <a href="#" class="footer__social-link" aria-label="Follow us on Instagram">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+            </a>
+            <!-- YouTube -->
+            <a href="#" class="footer__social-link" aria-label="Watch us on YouTube">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.97C18.88 4 12 4 12 4s-6.88 0-8.59.45A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.97C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.97A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+            </a>
+          </nav>
+        </div>
+
+        <!-- Products -->
+        <div class="footer__col">
+          <h3 class="footer__col-title">Products</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="services.html#personal"     class="footer__link">Personal Banking</a></li>
+            <li><a href="services.html#business"     class="footer__link">Business Banking</a></li>
+            <li><a href="services.html#wealth"       class="footer__link">Wealth Management</a></li>
+            <li><a href="services.html#savings"      class="footer__link">Savings Accounts</a></li>
+            <li><a href="services.html#loans"        class="footer__link">Loans & Mortgages</a></li>
+            <li><a href="services.html#investments"  class="footer__link">Investment Accounts</a></li>
+          </ul>
+        </div>
+
+        <!-- Company -->
+        <div class="footer__col">
+          <h3 class="footer__col-title">Company</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="about.html"             class="footer__link">About Us</a></li>
+            <li><a href="about.html#leadership"  class="footer__link">Leadership</a></li>
+            <li><a href="about.html#press"       class="footer__link">Press & Media</a></li>
+            <li><a href="careers.html"           class="footer__link">Careers</a></li>
+            <li><a href="about.html#investors"   class="footer__link">Investor Relations</a></li>
+            <li><a href="about.html#esg"         class="footer__link">ESG Report</a></li>
+          </ul>
+        </div>
+
+        <!-- Resources -->
+        <div class="footer__col">
+          <h3 class="footer__col-title">Resources</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="faq.html"       class="footer__link">Help Center</a></li>
+            <li><a href="#"              class="footer__link">API Documentation</a></li>
+            <li><a href="security.html"  class="footer__link">Security Center</a></li>
+            <li><a href="#"              class="footer__link">Blog & Insights</a></li>
+            <li><a href="#"              class="footer__link">Partner Program</a></li>
+            <li><a href="#"              class="footer__link">Status Page</a></li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div class="footer__col">
+          <h3 class="footer__col-title">Legal</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="privacy.html"  class="footer__link">Privacy Policy</a></li>
+            <li><a href="terms.html"    class="footer__link">Terms of Service</a></li>
+            <li><a href="#"             class="footer__link">Cookie Policy</a></li>
+            <li><a href="#"             class="footer__link">Regulatory Disclosures</a></li>
+            <li><a href="#"             class="footer__link">CCPA Rights</a></li>
+            <li><a href="#"             class="footer__link">Accessibility</a></li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="footer__bottom">
+        <p class="footer__legal">
+          &copy; 2026 Vaultstone Bank, N.A. All rights reserved. Member FDIC. Equal Housing Lender.<br>
+          Vaultstone Securities LLC is a registered broker-dealer and member SIPC/FINRA.
+        </p>
+        <div class="footer__certifications" role="list" aria-label="Certifications">
+          <div class="footer__cert" role="listitem">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            FDIC
+          </div>
+          <div class="footer__cert" role="listitem">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            SOC 2
+          </div>
+          <div class="footer__cert" role="listitem">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            PCI DSS
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ────────────────────────────────────
+       Scripts
+       ──────────────────────────────────── -->
+  <!-- Three.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+  <!-- Main JS -->
+  <script src="scripts/main.js"></script>
+
+</body>
+</html>

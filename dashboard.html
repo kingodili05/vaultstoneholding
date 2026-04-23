@@ -1,0 +1,1057 @@
+<!DOCTYPE html>
+<html lang="en" data-page="dashboard">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vaultstone Bank — Secure Account Dashboard" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0A0E1A" />
+  <title>Dashboard — Vaultstone Bank</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/dashboard.css" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+
+  <!-- CDN Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body data-page="dashboard">
+
+<!-- Toast Container -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+<!-- Notifications Drawer -->
+<div class="drawer-backdrop" id="notif-backdrop" aria-hidden="true"></div>
+<aside class="drawer" id="notif-drawer" role="complementary" aria-label="Notifications">
+  <div class="drawer-header">
+    <div>
+      <div style="font-size:1rem;font-weight:700">Notifications</div>
+      <div style="font-size:0.8125rem;color:var(--muted);margin-top:0.15rem" id="notif-unread-label">Loading…</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:0.5rem">
+      <button class="btn btn-ghost btn-sm" id="mark-all-read-btn">Mark all read</button>
+      <button class="modal-close" id="notif-close-btn" aria-label="Close notifications">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+  <div class="drawer-body" id="notif-list">
+    <div style="text-align:center;padding:2rem;color:var(--muted)">Loading notifications…</div>
+  </div>
+</aside>
+
+<!-- Receive Money Modal -->
+<div class="modal-backdrop" id="receive-modal" role="dialog" aria-modal="true" aria-label="Receive money">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Receive Money</div>
+      <button class="modal-close" id="receive-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="text-align:center;padding:1rem 0">
+      <div style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem">Share your account details to receive money</div>
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:1.5rem;margin-bottom:1rem">
+        <div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:0.5rem">Account Number</div>
+        <div style="font-size:1.25rem;font-weight:700;color:var(--gold);font-family:monospace" id="receive-account-number">—</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem;text-align:left">
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:0.875rem"><span style="color:var(--muted)">Account Name</span><span id="receive-name" style="font-weight:600">—</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:0.875rem"><span style="color:var(--muted)">Bank Name</span><span style="font-weight:600">Vaultstone Bank</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:0.875rem"><span style="color:var(--muted)">Routing Number</span><span style="font-weight:600">021000021</span></div>
+      </div>
+      <button class="btn btn-primary w-full" style="justify-content:center" id="copy-account-btn">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy Account Number
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Close Account Modal -->
+<div class="modal-backdrop" id="close-account-modal" role="dialog" aria-modal="true" aria-label="Close account request">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--red)">Close Account Request</div>
+      <button class="modal-close" id="close-account-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div>
+      <div style="background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1.25rem;font-size:0.875rem;color:var(--red)">
+        Warning: Closing your account is permanent and cannot be undone. All funds will be returned to your registered external account within 5–7 business days.
+      </div>
+      <div class="form-group">
+        <label>Reason for closing</label>
+        <select class="input">
+          <option>Select a reason</option>
+          <option>Switching to another bank</option>
+          <option>No longer need the account</option>
+          <option>Dissatisfied with services</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Type "CLOSE MY ACCOUNT" to confirm</label>
+        <input class="input" type="text" placeholder="CLOSE MY ACCOUNT" id="close-confirm-input" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="close-account-cancel-btn">Cancel</button>
+      <button class="btn btn-danger" id="close-account-submit-btn">Submit Request</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-layout">
+
+  <!-- ────────────── SIDEBAR ────────────── -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Dashboard navigation">
+
+    <div class="sidebar__header">
+      <a href="index.html" class="sidebar__logo" aria-label="Vaultstone Bank home">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <circle cx="12" cy="16" r="1"/>
+        </svg>
+      </a>
+      <span class="sidebar__brand">Vault<span>stone</span></span>
+      <button class="sidebar__close" id="sidebar-close" aria-label="Close navigation">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
+    <!-- User card -->
+    <div class="sidebar__user">
+      <div class="avatar" id="sidebar-avatar" style="width:40px;height:40px;font-size:0.875rem">??</div>
+      <div class="sidebar__user-info">
+        <div class="sidebar__user-name" id="sidebar-name">Loading…</div>
+        <div class="sidebar__user-sub" id="sidebar-account">— — — —</div>
+      </div>
+      <span class="badge" id="sidebar-status-badge" style="font-size:0.65rem;padding:0.12rem 0.45rem">—</span>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar__nav" aria-label="Main menu">
+      <div class="sidebar__section">
+        <div class="sidebar__section-label">Main</div>
+        <button class="sidebar__link active" data-panel="overview" aria-current="page">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </button>
+        <button class="sidebar__link" data-panel="accounts">
+          <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+          Accounts
+        </button>
+        <button class="sidebar__link" data-panel="transfers">
+          <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Transfers
+        </button>
+        <button class="sidebar__link" data-panel="cards">
+          <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+          Cards
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__section-label">Finance</div>
+        <button class="sidebar__link" data-panel="investments">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          Investments
+        </button>
+        <button class="sidebar__link" data-panel="statements">
+          <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Statements
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__section-label">Account</div>
+        <button class="sidebar__link" data-panel="settings">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          Settings
+        </button>
+      </div>
+    </nav>
+
+    <!-- Footer / Logout -->
+    <div class="sidebar__footer">
+      <button class="sidebar__link" id="logout-btn" style="color:var(--red);width:100%" aria-label="Sign out">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sign Out
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ────────────── MAIN AREA ────────────── -->
+  <div class="main-area">
+
+    <!-- Top Header -->
+    <header class="top-header" role="banner">
+      <button class="hamburger" id="hamburger" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h1 class="header-title" id="header-title">Overview</h1>
+
+      <div class="header-search" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" placeholder="Search transactions…" aria-label="Search transactions" />
+      </div>
+
+      <div class="header-actions">
+        <!-- Notification bell -->
+        <button class="notif-btn" id="notif-btn" aria-label="Notifications" aria-haspopup="true">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" id="notif-badge" aria-hidden="true" style="display:none">0</span>
+        </button>
+        <!-- User avatar dropdown (decorative) -->
+        <div class="header-avatar" id="header-avatar" role="button" tabindex="0" aria-label="User menu" title="Account menu">??</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content-area" role="main">
+
+      <!-- ══════════════════════════════════════
+           PANEL: OVERVIEW
+      ══════════════════════════════════════ -->
+      <section class="panel active" id="panel-overview" aria-label="Overview">
+
+        <!-- Top row: 3D Card + Balance | Income/Expense + Quick Actions -->
+        <div class="grid-2" style="margin-bottom:1.25rem;align-items:start">
+
+          <!-- Left: 3D Hero Card + balance counter -->
+          <div class="card" style="padding:1.25rem">
+            <div id="hero-canvas-container" class="hero-3d" aria-hidden="true"></div>
+            <div style="text-align:center;margin-top:1rem">
+              <div style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.25rem;font-weight:500">Total Checking Balance</div>
+              <div style="font-size:2.5rem;font-weight:800;letter-spacing:-0.04em;color:var(--text)" id="balance-counter">$0.00</div>
+              <div style="font-size:0.8125rem;color:var(--green);margin-top:0.35rem" id="balance-change-label">↑ Loading…</div>
+            </div>
+          </div>
+
+          <!-- Right column: mini-stats + quick actions -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem">
+            <div class="grid-2">
+              <div class="card" style="padding:1.25rem">
+                <div style="font-size:0.75rem;color:var(--muted);font-weight:500;margin-bottom:0.5rem">Income This Month</div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--green)" id="income-counter">$0</div>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem" id="income-label">Calculating…</div>
+              </div>
+              <div class="card" style="padding:1.25rem">
+                <div style="font-size:0.75rem;color:var(--muted);font-weight:500;margin-bottom:0.5rem">Expenses This Month</div>
+                <div style="font-size:1.5rem;font-weight:800;color:var(--red)" id="expense-counter">$0</div>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:0.25rem" id="expense-label">Calculating…</div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card" style="padding:1.25rem">
+              <div class="card-title" style="margin-bottom:1rem">Quick Actions</div>
+              <div class="quick-actions">
+                <button class="quick-action" data-goto="transfers" aria-label="Send money">
+                  <svg viewBox="0 0 24 24"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Send Money
+                </button>
+                <button class="quick-action" id="receive-btn" aria-label="Receive money">
+                  <svg viewBox="0 0 24 24"><polyline points="8 17 12 21 16 17"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/></svg>
+                  Receive
+                </button>
+                <button class="quick-action" data-goto="transfers" aria-label="Pay bills">
+                  <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  Pay Bills
+                </button>
+                <button class="quick-action" data-goto="investments" aria-label="Exchange">
+                  <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+                  Exchange
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Portfolio Chart -->
+        <div class="card" style="margin-bottom:1.25rem">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Portfolio Value</div>
+              <div class="card-subtitle">Last 6 months trend</div>
+            </div>
+            <span class="badge badge-green" id="portfolio-badge">↑ +0%</span>
+          </div>
+          <div class="chart-container" style="height:200px">
+            <canvas id="portfolio-chart" aria-label="Portfolio value chart over last 6 months"></canvas>
+          </div>
+        </div>
+
+        <!-- Recent Transactions -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Transactions</div>
+            <button class="btn btn-ghost btn-sm" data-goto="statements">View all</button>
+          </div>
+          <div class="table-wrap">
+            <table aria-label="Recent transactions">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th style="text-align:right">Amount</th>
+                </tr>
+              </thead>
+              <tbody id="recent-tx-tbody">
+                <tr><td colspan="4" style="text-align:center;color:var(--muted);padding:2rem">Loading transactions…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           PANEL: ACCOUNTS
+      ══════════════════════════════════════ -->
+      <section class="panel" id="panel-accounts" aria-label="My Accounts">
+        <div class="section-header">
+          <h2 class="section-title">My Accounts</h2>
+          <button class="btn btn-primary btn-sm">+ Open New Account</button>
+        </div>
+
+        <!-- Three account cards with 3D tilt -->
+        <div class="grid-3" style="margin-bottom:1.5rem">
+
+          <!-- Checking -->
+          <div class="acct-card" id="acct-checking" tabindex="0" role="button" aria-label="Checking account details">
+            <div class="acct-type">Checking Account</div>
+            <div class="acct-balance" id="acct-checking-balance">$0.00</div>
+            <div class="acct-number" id="acct-checking-number">•••• •••• •••• ——</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+              <span class="badge badge-green">Active</span>
+              <canvas class="sparkline" id="sparkline-checking" aria-hidden="true"></canvas>
+            </div>
+            <div style="font-size:0.8125rem;color:var(--muted)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span>Available</span><span style="color:var(--text);font-weight:500" id="acct-checking-available">$0.00</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Interest Rate</span><span style="color:var(--gold);font-weight:500">0.05% APY</span></div>
+            </div>
+          </div>
+
+          <!-- Savings -->
+          <div class="acct-card" id="acct-savings" tabindex="0" role="button" aria-label="Savings account details" style="border-color:rgba(59,130,246,0.2)">
+            <div class="acct-type" style="color:var(--blue)">High-Yield Savings</div>
+            <div class="acct-balance" id="acct-savings-balance">$0.00</div>
+            <div class="acct-number">•••• •••• •••• 4412</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+              <span class="badge badge-blue">Active</span>
+              <canvas class="sparkline" id="sparkline-savings" aria-hidden="true"></canvas>
+            </div>
+            <div style="font-size:0.8125rem;color:var(--muted)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span>Available</span><span style="color:var(--text);font-weight:500" id="acct-savings-available">$0.00</span></div>
+              <div style="display:flex;justify-content:space-between"><span>Interest Rate</span><span style="color:var(--gold);font-weight:500">4.85% APY</span></div>
+            </div>
+          </div>
+
+          <!-- Investment -->
+          <div class="acct-card" id="acct-invest" tabindex="0" role="button" aria-label="Investment account details" style="border-color:rgba(16,185,129,0.2)">
+            <div class="acct-type" style="color:var(--green)">Investment Account</div>
+            <div class="acct-balance" id="acct-invest-balance">$0.00</div>
+            <div class="acct-number">•••• •••• •••• 9901</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
+              <span class="badge badge-green">Active</span>
+              <canvas class="sparkline" id="sparkline-invest" aria-hidden="true"></canvas>
+            </div>
+            <div style="font-size:0.8125rem;color:var(--muted)">
+              <div style="display:flex;justify-content:space-between;margin-bottom:0.25rem"><span>Market Value</span><span style="color:var(--text);font-weight:500" id="acct-invest-available">$0.00</span></div>
+              <div style="display:flex;justify-content:space-between"><span>YTD Return</span><span style="color:var(--green);font-weight:500">+18.4%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction History for Checking -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Transaction History — Checking</div>
+            <button class="btn btn-ghost btn-sm" id="acct-csv-btn">Download CSV</button>
+          </div>
+          <div class="table-wrap">
+            <table aria-label="Account transaction history">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th>Date</th>
+                  <th>Category</th>
+                  <th style="text-align:right">Amount</th>
+                  <th style="text-align:right">Balance</th>
+                </tr>
+              </thead>
+              <tbody id="acct-tx-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           PANEL: TRANSFERS
+      ══════════════════════════════════════ -->
+      <section class="panel" id="panel-transfers" aria-label="Transfers">
+
+        <!-- Transfer sub-tabs -->
+        <div class="tabs" id="transfer-tabs" role="tablist" aria-label="Transfer sections">
+          <button class="tab-btn active" data-transfer-tab="send" role="tab" aria-selected="true">Send Money</button>
+          <button class="tab-btn" data-transfer-tab="my-transfers" role="tab" aria-selected="false">My Transfers</button>
+          <button class="tab-btn" data-transfer-tab="scheduled" role="tab" aria-selected="false">Scheduled</button>
+        </div>
+
+        <!-- ── SUB-TAB: SEND MONEY ── -->
+        <div class="transfer-tab-content active" id="transfer-tab-send">
+          <div class="grid-2" style="align-items:start">
+
+            <!-- Send Money Form -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Send Money</div>
+                <span class="badge badge-yellow" style="font-size:0.7rem">Requires Approval</span>
+              </div>
+
+              <!-- GSAP transfer animation scene -->
+              <div class="transfer-scene" aria-hidden="true">
+                <div class="transfer-card-node" id="from-node">From<br><span id="from-node-acct" style="font-size:0.65rem;opacity:0.8">Loading…</span></div>
+                <div class="transfer-path" id="transfer-path"></div>
+                <div id="transfer-orb"></div>
+                <div class="transfer-card-node dest" id="transfer-dest-card">To<br><span id="dest-node-name" style="font-size:0.65rem;opacity:0.8">Recipient</span></div>
+              </div>
+
+              <form id="transfer-form" novalidate>
+                <!-- Recipient search -->
+                <div class="form-group" style="position:relative">
+                  <label for="recipient-input">Recipient</label>
+                  <input id="recipient-input" class="input" type="text"
+                    placeholder="Search name or email, or type 'External'" autocomplete="off" required />
+                  <div id="recipient-dropdown" class="recipient-dropdown" role="listbox" aria-label="Contact suggestions"></div>
+                </div>
+
+                <!-- Internal: show selected user info -->
+                <div id="internal-recipient-info" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:0.875rem;margin-bottom:1.25rem;display:none">
+                  <div style="display:flex;align-items:center;gap:0.75rem">
+                    <div class="avatar" id="sel-recipient-avatar" style="width:36px;height:36px;font-size:0.8rem">??</div>
+                    <div>
+                      <div style="font-size:0.875rem;font-weight:600" id="sel-recipient-name">—</div>
+                      <div style="font-size:0.75rem;color:var(--muted)" id="sel-recipient-acct">—</div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" id="clear-recipient-btn">Clear</button>
+                  </div>
+                </div>
+
+                <!-- External bank fields -->
+                <div id="external-fields" style="display:none">
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label for="ext-account-number">Account Number</label>
+                      <input id="ext-account-number" class="input" type="text" placeholder="Account number" />
+                    </div>
+                    <div class="form-group">
+                      <label for="ext-bank-name">Bank Name</label>
+                      <input id="ext-bank-name" class="input" type="text" placeholder="Receiving bank" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="ext-routing">Routing Number</label>
+                    <input id="ext-routing" class="input" type="text" placeholder="9-digit routing number" />
+                  </div>
+                </div>
+
+                <!-- Amount + currency -->
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="transfer-amount">Amount</label>
+                    <div class="input-group">
+                      <span class="input-icon" style="font-weight:600;color:var(--gold)">$</span>
+                      <input id="transfer-amount" class="input" type="number"
+                        placeholder="0.00" min="0.01" step="0.01" required />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="transfer-currency">Currency</label>
+                    <select id="transfer-currency" class="input">
+                      <option value="USD" selected>USD — US Dollar</option>
+                      <option value="EUR">EUR — Euro</option>
+                      <option value="GBP">GBP — British Pound</option>
+                      <option value="JPY">JPY — Japanese Yen</option>
+                      <option value="AED">AED — UAE Dirham</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Note -->
+                <div class="form-group">
+                  <label for="transfer-note">Note / Reference</label>
+                  <input id="transfer-note" class="input" type="text" placeholder="What's this for? (optional)" />
+                </div>
+
+                <!-- Fee display -->
+                <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:0.875rem;margin-bottom:1.25rem;font-size:0.875rem">
+                  <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+                    <span style="color:var(--muted)">Transfer Amount</span>
+                    <span id="fee-amount">$0.00</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;margin-bottom:0.5rem">
+                    <span style="color:var(--muted)">Processing Fee</span>
+                    <span id="fee-display" style="color:var(--gold)">$0.00</span>
+                  </div>
+                  <div style="height:1px;background:var(--border2);margin:0.5rem 0"></div>
+                  <div style="display:flex;justify-content:space-between;font-weight:700">
+                    <span>Total</span>
+                    <span id="fee-total">$0.00</span>
+                  </div>
+                </div>
+
+                <!-- Transfer summary card -->
+                <div id="transfer-summary" style="display:none;background:rgba(201,168,76,0.06);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0.875rem;margin-bottom:1.25rem;font-size:0.8125rem">
+                  <div style="font-weight:600;color:var(--gold);margin-bottom:0.5rem">Transfer Summary</div>
+                  <div style="color:var(--muted2)" id="summary-text">—</div>
+                </div>
+
+                <button type="submit" id="submit-transfer-btn" class="btn btn-primary w-full" style="justify-content:center">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  Submit Transfer
+                </button>
+                <div style="text-align:center;font-size:0.75rem;color:var(--muted);margin-top:0.625rem">
+                  Transfers require admin approval before processing
+                </div>
+              </form>
+            </div>
+
+            <!-- Info: Approval workflow explanation -->
+            <div style="display:flex;flex-direction:column;gap:1.25rem">
+              <div class="card">
+                <div class="card-title" style="margin-bottom:1rem">How It Works</div>
+                <div style="display:flex;flex-direction:column;gap:1rem">
+                  <div style="display:flex;gap:0.875rem;align-items:flex-start">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(201,168,76,0.15);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:0.75rem;flex-shrink:0">1</div>
+                    <div><div style="font-weight:600;font-size:0.875rem;margin-bottom:0.2rem">Submit Transfer</div><div style="font-size:0.8125rem;color:var(--muted)">Fill in recipient details and amount, then submit.</div></div>
+                  </div>
+                  <div style="display:flex;gap:0.875rem;align-items:flex-start">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(245,158,11,0.15);display:flex;align-items:center;justify-content:center;color:var(--yellow);font-weight:700;font-size:0.75rem;flex-shrink:0">2</div>
+                    <div><div style="font-weight:600;font-size:0.875rem;margin-bottom:0.2rem">Pending Review</div><div style="font-size:0.8125rem;color:var(--muted)">Our compliance team reviews the transfer for security.</div></div>
+                  </div>
+                  <div style="display:flex;gap:0.875rem;align-items:flex-start">
+                    <div style="width:28px;height:28px;border-radius:50%;background:rgba(16,185,129,0.15);display:flex;align-items:center;justify-content:center;color:var(--green);font-weight:700;font-size:0.75rem;flex-shrink:0">3</div>
+                    <div><div style="font-weight:600;font-size:0.875rem;margin-bottom:0.2rem">Approved &amp; Processed</div><div style="font-size:0.8125rem;color:var(--muted)">Once approved, funds are transferred instantly.</div></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Available Balance -->
+              <div class="card">
+                <div class="card-title" style="margin-bottom:0.75rem">Available Balance</div>
+                <div style="font-size:2rem;font-weight:800;color:var(--text);letter-spacing:-0.03em" id="transfer-balance-display">$0.00</div>
+                <div style="font-size:0.8125rem;color:var(--muted);margin-top:0.25rem">Checking Account</div>
+                <div style="height:1px;background:var(--border2);margin:1rem 0"></div>
+                <div style="font-size:0.8125rem;color:var(--muted)">Transfers over $10,000 may require additional verification per federal regulations.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SUB-TAB: MY TRANSFERS ── -->
+        <div class="transfer-tab-content" id="transfer-tab-my-transfers" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">My Transfers</div>
+              <button class="btn btn-ghost btn-sm" id="refresh-transfers-btn">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Refresh
+              </button>
+            </div>
+            <div class="table-wrap">
+              <table aria-label="My transfer history">
+                <thead>
+                  <tr>
+                    <th>Recipient</th>
+                    <th>Bank</th>
+                    <th>Date</th>
+                    <th style="text-align:right">Amount</th>
+                    <th style="text-align:right">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="my-transfers-tbody">
+                  <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">Loading transfers…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SUB-TAB: SCHEDULED ── -->
+        <div class="transfer-tab-content" id="transfer-tab-scheduled" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Scheduled Transfers</div>
+              <button class="btn btn-primary btn-sm">+ New Schedule</button>
+            </div>
+            <div>
+              <div class="sched-item">
+                <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div class="sched-info"><div class="sched-name">Rent — Landlord</div><div class="sched-date">Monthly · May 1, 2026</div></div>
+                <div class="sched-amount text-red">-$2,400</div>
+              </div>
+              <div class="sched-item">
+                <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
+                <div class="sched-info"><div class="sched-name">Savings Top-Up</div><div class="sched-date">Weekly · Every Monday</div></div>
+                <div class="sched-amount text-green">+$500</div>
+              </div>
+              <div class="sched-item">
+                <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+                <div class="sched-info"><div class="sched-name">Car Loan Payment</div><div class="sched-date">Monthly · Apr 28, 2026</div></div>
+                <div class="sched-amount text-red">-$380</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           PANEL: CARDS
+      ══════════════════════════════════════ -->
+      <section class="panel" id="panel-cards" aria-label="Cards">
+        <div class="section-header">
+          <h2 class="section-title">My Cards</h2>
+          <button class="btn btn-primary btn-sm">+ Add New Card</button>
+        </div>
+
+        <div class="grid-2" style="align-items:start">
+
+          <!-- Left: 3D flip card + controls -->
+          <div class="card" style="text-align:center">
+            <div class="cc-card-wrapper" id="cc-wrapper" role="button" tabindex="0"
+              aria-label="Click to reveal full card details">
+              <div class="cc-card-inner" id="cc-inner">
+                <!-- Front -->
+                <div class="cc-card-face">
+                  <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div class="cc-bank-name">Vaultstone Bank</div>
+                    <svg width="36" height="22" viewBox="0 0 36 22" fill="none" aria-hidden="true">
+                      <circle cx="14" cy="11" r="11" fill="rgba(0,0,0,0.3)"/>
+                      <circle cx="22" cy="11" r="11" fill="rgba(0,0,0,0.2)"/>
+                    </svg>
+                  </div>
+                  <div class="cc-chip" aria-hidden="true"></div>
+                  <div class="cc-number" id="card-number-masked">•••• •••• •••• ——</div>
+                  <div class="cc-row">
+                    <div><div class="cc-label">Card Holder</div><div class="cc-value" id="card-holder-name">— —</div></div>
+                    <div><div class="cc-label">Expires</div><div class="cc-value">12/28</div></div>
+                    <div><div class="cc-label">Network</div><div class="cc-value">Visa Infinite</div></div>
+                  </div>
+                </div>
+                <!-- Back -->
+                <div class="cc-card-back">
+                  <div class="cc-stripe" aria-hidden="true"></div>
+                  <div class="cc-sig-area">
+                    <div class="cc-sig-label">Full Card Number</div>
+                    <div style="font-family:monospace;font-size:0.9rem;font-weight:700;color:var(--muted2);margin-bottom:0.75rem" id="card-number-full">•••• •••• •••• ——</div>
+                    <div class="cc-sig-label">Security Code</div>
+                    <div class="cc-cvv-box">
+                      <div class="cc-cvv">•••</div>
+                      <span style="color:var(--muted);font-size:0.75rem;margin-left:0.5rem">CVV</span>
+                    </div>
+                  </div>
+                  <div class="cc-back-number" id="card-back-number">—</div>
+                  <div style="font-size:0.65rem;color:var(--muted);margin-top:0.5rem">
+                    This card is property of Vaultstone Bank. Use is subject to account agreement.
+                  </div>
+                </div>
+              </div>
+              <!-- Frozen overlay -->
+              <div class="frozen-overlay" aria-hidden="true"><span class="frozen-text">FROZEN</span></div>
+            </div>
+            <div class="cc-hint">Click card to reveal details</div>
+
+            <!-- Card controls -->
+            <div style="display:flex;flex-direction:column;gap:1rem;text-align:left;margin-top:0.5rem">
+              <div class="pref-row" style="padding:0.75rem;background:var(--surface2);border-radius:var(--radius-sm)">
+                <div class="pref-info">
+                  <div class="pref-name">Freeze Card</div>
+                  <div class="pref-desc">Temporarily disable all transactions</div>
+                </div>
+                <label class="toggle" aria-label="Freeze card toggle">
+                  <input type="checkbox" id="freeze-toggle" />
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+              <div style="padding:0.75rem;background:var(--surface2);border-radius:var(--radius-sm)">
+                <div style="display:flex;justify-content:space-between;margin-bottom:0.75rem;font-size:0.875rem">
+                  <span style="font-weight:500">Daily Spending Limit</span>
+                  <span style="color:var(--gold);font-weight:600" id="limit-display">$5,000</span>
+                </div>
+                <input type="range" id="limit-range" min="500" max="20000" step="500" value="5000"
+                  class="w-full" style="accent-color:var(--gold)" aria-label="Daily spending limit" />
+                <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--muted);margin-top:0.25rem">
+                  <span>$500</span><span>$20,000</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Card details + preferences -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:1rem">Card Details</div>
+              <div style="display:flex;flex-direction:column;gap:0.75rem;font-size:0.875rem">
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Card Type</span><span style="font-weight:500">Visa Infinite</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Credit Limit</span><span style="font-weight:500">$25,000</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Available Credit</span><span style="font-weight:500;color:var(--green)">$22,480</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Current Balance</span><span style="font-weight:500;color:var(--red)">$2,520</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Due Date</span><span style="font-weight:500">May 15, 2026</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Min Payment</span><span style="font-weight:500">$35.00</span></div>
+                <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">Rewards Points</span><span style="font-weight:500;color:var(--gold)">14,280 pts</span></div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-title" style="margin-bottom:1rem">Card Preferences</div>
+              <div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Contactless Payments</div><div class="pref-desc">NFC tap-to-pay</div></div>
+                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Online Transactions</div><div class="pref-desc">Allow e-commerce purchases</div></div>
+                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">International Payments</div><div class="pref-desc">Allow overseas transactions</div></div>
+                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">ATM Withdrawals</div><div class="pref-desc">Allow cash advances</div></div>
+                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           PANEL: INVESTMENTS
+      ══════════════════════════════════════ -->
+      <section class="panel" id="panel-investments" aria-label="Investment Portfolio">
+        <div class="section-header">
+          <h2 class="section-title">Investment Portfolio</h2>
+          <div style="display:flex;gap:0.5rem">
+            <button class="btn btn-ghost btn-sm">Rebalance</button>
+            <button class="btn btn-primary btn-sm">+ Invest</button>
+          </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid-4" style="margin-bottom:1.25rem">
+          <div class="kpi-card gold">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="kpi-label">Portfolio Value</div>
+            <div class="kpi-value" id="invest-total">$0</div>
+            <div class="kpi-delta"><span class="up">↑ +18.4%</span> YTD</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg></div>
+            <div class="kpi-label">Day's Gain</div>
+            <div class="kpi-value" style="color:var(--green)">+$342</div>
+            <div class="kpi-delta"><span class="up">↑ +0.38%</span> today</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+            <div class="kpi-label">Cost Basis</div>
+            <div class="kpi-value">$75,200</div>
+            <div class="kpi-delta">Total invested</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+            <div class="kpi-label">Unrealized Gain</div>
+            <div class="kpi-value" style="color:var(--green)" id="invest-gain">+$0</div>
+            <div class="kpi-delta"><span class="up">↑ +18.8%</span></div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="align-items:start">
+          <!-- Three.js torus allocation -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Asset Allocation</div><div class="card-subtitle">Portfolio breakdown</div></div>
+            </div>
+            <div id="invest-canvas" class="invest-3d" aria-hidden="true"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:1rem">
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem"><div style="width:10px;height:10px;border-radius:50%;background:#C9A84C;flex-shrink:0"></div><span>Stocks — 45%</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem"><div style="width:10px;height:10px;border-radius:50%;background:#3B82F6;flex-shrink:0"></div><span>Bonds — 25%</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem"><div style="width:10px;height:10px;border-radius:50%;background:#10B981;flex-shrink:0"></div><span>ETFs — 20%</span></div>
+              <div style="display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem"><div style="width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0"></div><span>Crypto — 10%</span></div>
+            </div>
+          </div>
+
+          <!-- Holdings + Performance Chart -->
+          <div style="display:flex;flex-direction:column;gap:1.25rem">
+            <div class="card">
+              <div class="card-title" style="margin-bottom:1rem">Holdings</div>
+              <div class="holdings-row">
+                <div class="holding-dot" style="background:#C9A84C"></div>
+                <div class="holding-name">AAPL — Apple Inc.</div>
+                <div class="holding-alloc">20%</div>
+                <div class="holding-val">$17,868</div>
+                <div class="holding-chg" style="color:var(--green)">+2.1%</div>
+              </div>
+              <div class="holdings-row">
+                <div class="holding-dot" style="background:#3B82F6"></div>
+                <div class="holding-name">MSFT — Microsoft Corp.</div>
+                <div class="holding-alloc">25%</div>
+                <div class="holding-val">$22,335</div>
+                <div class="holding-chg" style="color:var(--green)">+1.4%</div>
+              </div>
+              <div class="holdings-row">
+                <div class="holding-dot" style="background:#10B981"></div>
+                <div class="holding-name">SPY — S&amp;P 500 ETF</div>
+                <div class="holding-alloc">20%</div>
+                <div class="holding-val">$17,868</div>
+                <div class="holding-chg" style="color:var(--green)">+1.8%</div>
+              </div>
+              <div class="holdings-row">
+                <div class="holding-dot" style="background:#EF4444"></div>
+                <div class="holding-name">BTC — Bitcoin</div>
+                <div class="holding-alloc">10%</div>
+                <div class="holding-val" id="btc-val">$8,934</div>
+                <div class="holding-chg" style="color:var(--red)">-3.2%</div>
+              </div>
+              <div class="holdings-row">
+                <div class="holding-dot" style="background:#9CA3AF"></div>
+                <div class="holding-name">VGLT — Vanguard Long-Term Treasury</div>
+                <div class="holding-alloc">25%</div>
+                <div class="holding-val">$22,335</div>
+                <div class="holding-chg" style="color:var(--green)">+0.3%</div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><div class="card-title">Performance</div><span class="badge badge-green">↑ +18.4% YTD</span></div>
+              <div class="chart-container" style="height:160px">
+                <canvas id="perf-chart" aria-label="Investment performance chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           PANEL: STATEMENTS
+      ══════════════════════════════════════ -->
+      <section class="panel" id="panel-statements" aria-label="Statements">
+        <div class="section-header">
+          <h2 class="section-title">Statements</h2>
+          <button class="btn btn-primary btn-sm" id="download-csv-btn">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download CSV
+          </button>
+        </div>
+
+        <!-- Date range filter -->
+        <div class="filter-bar">
+          <select class="input" id="stmt-month" aria-label="Filter by month" style="width:auto;min-width:140px">
+            <option value="">All Months</option>
+            <option value="0">January</option><option value="1">February</option>
+            <option value="2">March</option><option value="3">April</option>
+            <option value="4">May</option><option value="5">June</option>
+            <option value="6">July</option><option value="7">August</option>
+            <option value="8">September</option><option value="9">October</option>
+            <option value="10">November</option><option value="11">December</option>
+          </select>
+          <select class="input" id="stmt-year" aria-label="Filter by year" style="width:auto;min-width:110px">
+            <option value="">All Years</option>
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" id="stmt-filter-btn">Apply Filter</button>
+          <button class="btn btn-ghost btn-sm" id="stmt-clear-btn">Clear</button>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table aria-label="Transaction statements">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th style="text-align:right">Debit</th>
+                  <th style="text-align:right">Credit</th>
+                  <th style="text-align:right">Balance</th>
+                </tr>
+              </thead>
+              <tbody id="statements-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">Loading statements…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div class="pagination" id="stmt-pagination" aria-label="Statement pages"></div>
+        </div>
+      </section>
+
+      <!-- ══════════════════════════════════════
+           PANEL: SETTINGS
+      ══════════════════════════════════════ -->
+      <section class="panel" id="panel-settings" aria-label="Account Settings">
+        <h2 class="section-title" style="margin-bottom:1.5rem">Account Settings</h2>
+
+        <div class="grid-2" style="align-items:start">
+
+          <!-- Left column -->
+          <div>
+            <!-- Profile -->
+            <div class="card settings-section" style="margin-bottom:1.25rem">
+              <h3 style="margin-bottom:1.25rem">Profile Information</h3>
+              <form id="profile-form" novalidate>
+                <div class="form-group">
+                  <label for="profile-name">Full Name</label>
+                  <input id="profile-name" class="input" type="text" placeholder="Full name" />
+                </div>
+                <div class="form-group">
+                  <label for="profile-email">Email Address</label>
+                  <input id="profile-email" class="input" type="email" placeholder="email@example.com" />
+                </div>
+                <div class="form-group">
+                  <label for="profile-phone">Phone Number</label>
+                  <input id="profile-phone" class="input" type="tel" placeholder="+1 (555) 000-0000" />
+                </div>
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+              </form>
+            </div>
+
+            <!-- Password -->
+            <div class="card">
+              <h3 style="margin-bottom:1.25rem">Change Password</h3>
+              <form id="password-form" novalidate>
+                <div class="form-group">
+                  <label>Current Password</label>
+                  <input name="current-password" class="input" type="password" placeholder="••••••••" />
+                </div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label>New Password</label>
+                    <input name="new-password" id="new-password-input" class="input" type="password" placeholder="Min. 8 chars" />
+                  </div>
+                  <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input name="confirm-password" class="input" type="password" placeholder="Repeat" />
+                  </div>
+                </div>
+                <!-- Password strength meter -->
+                <div style="margin-bottom:1.25rem">
+                  <div class="progress-bar">
+                    <div class="progress-bar__fill" id="pw-strength-bar" style="width:0%;background:var(--red)"></div>
+                  </div>
+                  <div style="font-size:0.75rem;color:var(--muted);margin-top:0.35rem" id="pw-strength-label">Strength: —</div>
+                </div>
+                <button type="submit" class="btn btn-secondary">Update Password</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Right column -->
+          <div>
+            <!-- Security -->
+            <div class="card" style="margin-bottom:1.25rem">
+              <h3 style="margin-bottom:1.25rem">Security Settings</h3>
+              <div>
+                <div class="pref-row">
+                  <div class="pref-info">
+                    <div class="pref-name">Two-Factor Authentication</div>
+                    <div class="pref-desc">Require TOTP code on every login</div>
+                  </div>
+                  <label class="toggle"><input type="checkbox" id="2fa-toggle" /><span class="toggle-slider"></span></label>
+                </div>
+                <div id="2fa-qr-section" style="display:none;align-items:center;gap:1.5rem;padding:1rem 0;border-bottom:1px solid var(--border2)">
+                  <div class="qr-placeholder"><canvas id="qr-canvas" width="120" height="120"></canvas></div>
+                  <div>
+                    <div style="font-weight:600;margin-bottom:0.5rem">Scan with Authenticator</div>
+                    <div style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem">Use Google Authenticator, Authy, or any TOTP app.</div>
+                    <div style="font-family:monospace;font-size:0.75rem;background:var(--surface2);padding:0.5rem;border-radius:4px;color:var(--gold)">JBSWY3DPEHPK3PXP</div>
+                  </div>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Login Notifications</div><div class="pref-desc">Email alert for each new login</div></div>
+                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Trusted Devices Only</div><div class="pref-desc">Block unrecognized devices</div></div>
+                  <label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Notification Preferences -->
+            <div class="card" style="margin-bottom:1.25rem">
+              <h3 style="margin-bottom:1.25rem">Notification Preferences</h3>
+              <div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Transaction Alerts</div><div class="pref-desc">Every debit/credit on your account</div></div>
+                  <label class="toggle"><input type="checkbox" id="notif-pref-transactions" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Transfer Updates</div><div class="pref-desc">Approval and rejection notifications</div></div>
+                  <label class="toggle"><input type="checkbox" id="notif-pref-transfers" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Monthly Statements</div><div class="pref-desc">PDF statement via email</div></div>
+                  <label class="toggle"><input type="checkbox" id="notif-pref-statements" checked /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Promotional Offers</div><div class="pref-desc">Cashback and reward updates</div></div>
+                  <label class="toggle"><input type="checkbox" id="notif-pref-promo" /><span class="toggle-slider"></span></label>
+                </div>
+                <div class="pref-row">
+                  <div class="pref-info"><div class="pref-name">Investment Updates</div><div class="pref-desc">Daily portfolio summary</div></div>
+                  <label class="toggle"><input type="checkbox" id="notif-pref-invest" checked /><span class="toggle-slider"></span></label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="card" style="margin-bottom:1.25rem">
+              <h3 style="margin-bottom:1.25rem">Appearance</h3>
+              <div class="pref-row">
+                <div class="pref-info">
+                  <div class="pref-name">Light Theme</div>
+                  <div class="pref-desc">Switch between dark and light modes</div>
+                </div>
+                <label class="toggle"><input type="checkbox" id="theme-toggle" /><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="card" style="border-color:rgba(239,68,68,0.2)">
+              <h3 style="margin-bottom:0.5rem;color:var(--red)">Danger Zone</h3>
+              <p style="font-size:0.875rem;color:var(--muted);margin-bottom:1rem">These actions are irreversible. Please proceed with caution.</p>
+              <button class="btn btn-danger" id="close-account-btn">Close Account Request</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- Store must load before dashboard.js -->
+<script src="scripts/store.js"></script>
+<script src="scripts/dashboard.js"></script>
+
+</body>
+</html>

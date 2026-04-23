@@ -1,0 +1,1294 @@
+/* ============================================================
+   Vaultstone Bank — Auth Stylesheet (login.html + signup.html)
+   Design System: Dark Navy + Gold
+   ============================================================ */
+
+/* ── Google Fonts loaded via <link> in HTML ── */
+
+/* ============================================================
+   1. CSS Custom Properties
+   ============================================================ */
+:root {
+  --primary:        #0A0E1A;
+  --primary-deep:   #060810;
+  --surface:        #111827;
+  --surface-2:      #1a2236;
+  --surface-3:      #1f2a40;
+  --accent:         #C9A84C;
+  --accent-light:   #E8C97A;
+  --accent-dim:     rgba(201, 168, 76, 0.12);
+  --accent-border:  rgba(201, 168, 76, 0.25);
+  --accent-glow:    rgba(201, 168, 76, 0.40);
+  --accent-glow-sm: rgba(201, 168, 76, 0.20);
+  --text:           #F9FAFB;
+  --text-secondary: #CBD5E1;
+  --muted:          #6B7280;
+  --muted-2:        #374151;
+  --success:        #10B981;
+  --danger:         #EF4444;
+  --glass-bg:       rgba(17, 24, 39, 0.75);
+  --glass-border:   rgba(255, 255, 255, 0.06);
+  --glass-blur:     24px;
+
+  --font-base: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --radius-sm:  6px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --radius-xl:  24px;
+  --radius-full: 9999px;
+
+  --shadow-gold: 0 0 0 3px rgba(201, 168, 76, 0.30),
+                 0 0 20px rgba(201, 168, 76, 0.12);
+  --shadow-card: 0 32px 80px rgba(0,0,0,0.60),
+                 0 8px 24px rgba(0,0,0,0.40);
+  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================================
+   2. Reset + Base
+   ============================================================ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-base);
+  color: var(--text);
+  background: var(--primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a { color: var(--accent); text-decoration: none; transition: color var(--transition); }
+a:hover { color: var(--accent-light); }
+
+button { font-family: var(--font-base); cursor: pointer; border: none; background: none; }
+
+/* ============================================================
+   3. Login Page — Split Layout
+   ============================================================ */
+.auth-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Left — Three.js Canvas Panel */
+.auth-canvas-panel {
+  position: relative;
+  overflow: hidden;
+  background: var(--primary-deep);
+}
+
+#login-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+
+.canvas-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 14, 26, 0.15) 0%,
+    rgba(10, 14, 26, 0.05) 50%,
+    rgba(10, 14, 26, 0.20) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.canvas-brand {
+  position: absolute;
+  bottom: 40px;
+  left: 40px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.canvas-brand__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.canvas-brand__icon {
+  width: 36px;
+  height: 36px;
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.canvas-brand__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.canvas-brand__name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.canvas-brand__name span { color: var(--accent); }
+
+.canvas-brand__tagline {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* Right — Form Panel */
+.auth-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+  background: var(--surface);
+  position: relative;
+  overflow: hidden;
+}
+
+.auth-form-panel::before {
+  content: '';
+  position: absolute;
+  top: -200px;
+  right: -200px;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.auth-form-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -150px;
+  left: -150px;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(59,130,246,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+/* ============================================================
+   4. Auth Card (Glass Morphism)
+   ============================================================ */
+.auth-card {
+  width: 100%;
+  max-width: 440px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 48px 44px;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-card);
+  position: relative;
+  z-index: 1;
+}
+
+/* Signup card sits on top of canvas */
+.signup-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 44px 48px;
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow-card);
+  position: relative;
+  z-index: 2;
+}
+
+/* ============================================================
+   5. Login Logo + Header
+   ============================================================ */
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 32px;
+}
+
+.auth-logo__icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.auth-logo__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.auth-logo__text {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.auth-logo__text span { color: var(--accent); }
+
+.auth-header {
+  margin-bottom: 32px;
+}
+
+.auth-header h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 6px;
+}
+
+.auth-header p {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   6. Floating Label Inputs
+   ============================================================ */
+.field-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.field-group__input {
+  width: 100%;
+  padding: 20px 16px 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-family: var(--font-base);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.field-group__input::placeholder { color: transparent; }
+
+.field-group__input:focus {
+  background: rgba(201,168,76,0.04);
+  border-color: var(--accent);
+  box-shadow: var(--shadow-gold);
+}
+
+.field-group__input.error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(239,68,68,0.20);
+}
+
+.field-group__label {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9375rem;
+  color: var(--muted);
+  pointer-events: none;
+  transition: top 0.18s cubic-bezier(0.4,0,0.2,1),
+              font-size 0.18s cubic-bezier(0.4,0,0.2,1),
+              color 0.18s cubic-bezier(0.4,0,0.2,1);
+  white-space: nowrap;
+}
+
+/* Float label when input has content or is focused */
+.field-group__input:focus ~ .field-group__label,
+.field-group__input:not(:placeholder-shown) ~ .field-group__label,
+.field-group__input.has-value ~ .field-group__label {
+  top: 10px;
+  transform: none;
+  font-size: 0.70rem;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+}
+
+/* Password toggle */
+.field-group--password { position: relative; }
+
+.field-group__toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  cursor: pointer;
+  transition: color var(--transition);
+  background: none;
+  border: none;
+  padding: 0;
+  z-index: 2;
+}
+
+.field-group__toggle:hover { color: var(--accent); }
+.field-group__toggle svg { width: 18px; height: 18px; }
+
+/* Inline error message */
+.field-error {
+  display: block;
+  font-size: 0.775rem;
+  color: var(--danger);
+  margin-top: 5px;
+  padding-left: 2px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.field-error.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   7. Select (Country Dropdown)
+   ============================================================ */
+.field-group__select {
+  width: 100%;
+  padding: 20px 40px 8px 16px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: var(--radius-md);
+  color: var(--text);
+  font-family: var(--font-base);
+  font-size: 0.9375rem;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+
+.field-group__select:focus {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-gold);
+  background-color: rgba(201,168,76,0.04);
+}
+
+.field-group__select option {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Select floating label */
+.field-group__select ~ .field-group__label {
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+.field-group__select.has-value ~ .field-group__label,
+.field-group__select:focus ~ .field-group__label {
+  top: 10px;
+  transform: none;
+  font-size: 0.70rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+/* ============================================================
+   8. Side-by-side fields
+   ============================================================ */
+.fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+/* ============================================================
+   9. Forgot Password + Form utilities
+   ============================================================ */
+.forgot-link {
+  display: block;
+  text-align: right;
+  font-size: 0.8125rem;
+  color: var(--accent);
+  margin-top: -10px;
+  margin-bottom: 24px;
+  transition: color var(--transition);
+}
+.forgot-link:hover { color: var(--accent-light); }
+
+/* ============================================================
+   10. Buttons
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: var(--radius-md);
+  font-family: var(--font-base);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gold primary button */
+.btn--primary {
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-light) 100%);
+  color: var(--primary);
+  box-shadow: 0 4px 20px rgba(201,168,76,0.30);
+}
+
+.btn--primary:hover {
+  box-shadow: 0 6px 28px rgba(201,168,76,0.45);
+  transform: translateY(-1px);
+}
+
+.btn--primary:active { transform: translateY(0); }
+
+/* Shimmer sweep on hover */
+.btn--primary::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    105deg,
+    transparent 0%,
+    rgba(255,255,255,0.35) 50%,
+    transparent 100%
+  );
+  transition: left 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn--primary:hover::after { left: 160%; }
+
+/* Disabled / loading state */
+.btn--primary:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* OAuth buttons */
+.btn--oauth {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 13px 20px;
+  border-radius: var(--radius-md);
+}
+
+.btn--oauth:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.14);
+  color: var(--text);
+}
+
+.btn--oauth svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* Spinner */
+.btn__spinner {
+  display: none;
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid rgba(10,14,26,0.30);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.btn.loading .btn__spinner { display: block; }
+.btn.loading .btn__text { display: none; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============================================================
+   11. Divider
+   ============================================================ */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 24px 0;
+}
+
+.auth-divider__line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+}
+
+.auth-divider__text {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ============================================================
+   12. OAuth Grid
+   ============================================================ */
+.oauth-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+/* ============================================================
+   13. Footer links + Security badge
+   ============================================================ */
+.auth-footer-link {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+  margin-top: 24px;
+}
+
+.auth-footer-link a {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.auth-footer-link a:hover { color: var(--accent-light); }
+
+.security-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.775rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+
+.security-badge svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+
+/* ============================================================
+   14. Signup Page — Full-page canvas + centered card
+   ============================================================ */
+.signup-page {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: var(--primary);
+  overflow: hidden;
+}
+
+#signup-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.signup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 14, 26, 0.55);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* ============================================================
+   15. Step Progress Bar
+   ============================================================ */
+.step-progress {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 36px;
+  position: relative;
+}
+
+.step-progress__track {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  width: 100%;
+  max-width: 360px;
+}
+
+.step-progress__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  position: relative;
+}
+
+/* Connecting line between steps */
+.step-progress__item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 16px;
+  left: calc(50% + 16px);
+  width: calc(100% - 32px);
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  transition: background 0.4s ease;
+  z-index: 0;
+}
+
+.step-progress__item.completed:not(:last-child)::after {
+  background: var(--accent);
+}
+
+.step-progress__circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+  position: relative;
+  z-index: 1;
+  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+}
+
+.step-progress__item.active .step-progress__circle {
+  border-color: var(--accent);
+  background: rgba(201,168,76,0.15);
+  color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(201,168,76,0.12), 0 0 16px rgba(201,168,76,0.25);
+}
+
+.step-progress__item.completed .step-progress__circle {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--primary);
+}
+
+.step-progress__label {
+  font-size: 0.6875rem;
+  color: var(--muted);
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-align: center;
+  white-space: nowrap;
+  transition: color 0.35s ease;
+}
+
+.step-progress__item.active .step-progress__label { color: var(--accent); }
+.step-progress__item.completed .step-progress__label { color: var(--text-secondary); }
+
+/* ============================================================
+   16. Step Panels
+   ============================================================ */
+.step-panels {
+  overflow: hidden;
+  position: relative;
+}
+
+.step-panel {
+  display: none;
+}
+
+.step-panel.active {
+  display: block;
+}
+
+/* ============================================================
+   17. Account Type Cards
+   ============================================================ */
+.account-type-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.account-type-card {
+  padding: 18px 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1.5px solid rgba(255,255,255,0.07);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.account-type-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.05) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.account-type-card:hover {
+  border-color: rgba(201,168,76,0.30);
+  background: rgba(201,168,76,0.05);
+  transform: translateY(-2px);
+}
+
+.account-type-card:hover::before { opacity: 1; }
+
+.account-type-card.selected {
+  border-color: var(--accent);
+  background: rgba(201,168,76,0.08);
+  box-shadow: 0 0 0 1px rgba(201,168,76,0.15), 0 4px 20px rgba(201,168,76,0.15);
+}
+
+.account-type-card.selected::before { opacity: 1; }
+
+.account-type-card__icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: rgba(201,168,76,0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+  transition: background 0.22s ease;
+}
+
+.account-type-card__icon svg {
+  width: 22px;
+  height: 22px;
+}
+
+.account-type-card.selected .account-type-card__icon {
+  background: rgba(201,168,76,0.18);
+}
+
+.account-type-card__info { flex: 1; }
+
+.account-type-card__title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 2px;
+}
+
+.account-type-card__desc {
+  font-size: 0.8125rem;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.account-type-card__check {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.22s ease;
+}
+
+.account-type-card__check svg {
+  width: 10px;
+  height: 10px;
+  color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.22s ease;
+}
+
+.account-type-card.selected .account-type-card__check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.account-type-card.selected .account-type-card__check svg { opacity: 1; }
+
+/* ============================================================
+   18. Password Strength Meter
+   ============================================================ */
+.strength-meter {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+.strength-meter__bars {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.strength-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255,255,255,0.08);
+  transition: background 0.3s ease;
+}
+
+.strength-bar.weak   { background: #EF4444; }
+.strength-bar.fair   { background: #F59E0B; }
+.strength-bar.good   { background: #3B82F6; }
+.strength-bar.strong { background: #10B981; }
+
+.strength-meter__label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  transition: color 0.3s ease;
+}
+
+.strength-meter__label.weak   { color: #EF4444; }
+.strength-meter__label.fair   { color: #F59E0B; }
+.strength-meter__label.good   { color: #3B82F6; }
+.strength-meter__label.strong { color: #10B981; }
+
+/* ============================================================
+   19. Checkbox
+   ============================================================ */
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 20px;
+  user-select: none;
+}
+
+.checkbox-field input[type="checkbox"] {
+  display: none;
+}
+
+.checkbox-field__box {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  border: 2px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.18s ease;
+}
+
+.checkbox-field__box svg {
+  width: 10px;
+  height: 10px;
+  color: var(--primary);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.checkbox-field input[type="checkbox"]:checked ~ .checkbox-field__box {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.checkbox-field input[type="checkbox"]:checked ~ .checkbox-field__box svg {
+  opacity: 1;
+}
+
+.checkbox-field__label {
+  font-size: 0.8375rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.checkbox-field__label a { color: var(--accent); }
+.checkbox-field__label a:hover { color: var(--accent-light); }
+
+/* ============================================================
+   20. OTP Input Grid
+   ============================================================ */
+.otp-grid {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 28px 0;
+}
+
+.otp-input {
+  width: 52px;
+  height: 60px;
+  border-radius: var(--radius-md);
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid rgba(255,255,255,0.08);
+  color: var(--text);
+  font-family: var(--font-base);
+  font-size: 1.375rem;
+  font-weight: 700;
+  text-align: center;
+  outline: none;
+  caret-color: var(--accent);
+  transition: all var(--transition);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.otp-input:focus {
+  border-color: var(--accent);
+  background: rgba(201,168,76,0.06);
+  box-shadow: var(--shadow-gold);
+}
+
+.otp-input.filled {
+  border-color: rgba(201,168,76,0.40);
+  color: var(--accent);
+}
+
+/* ============================================================
+   21. Step Navigation Buttons
+   ============================================================ */
+.step-nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn--ghost {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  padding: 15px 24px;
+  border-radius: var(--radius-md);
+  transition: all var(--transition);
+}
+
+.btn--ghost:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.14);
+  color: var(--text);
+}
+
+.step-nav .btn--primary { flex: 1; }
+.step-nav .btn--ghost   { width: auto; min-width: 100px; }
+
+/* ============================================================
+   22. OTP helper text
+   ============================================================ */
+.otp-hint {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-bottom: 8px;
+}
+
+.otp-hint strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.resend-link {
+  display: block;
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--muted);
+  margin-top: 16px;
+}
+
+.resend-link button {
+  color: var(--accent);
+  font-weight: 500;
+  font-size: 0.8125rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: color var(--transition);
+}
+
+.resend-link button:hover { color: var(--accent-light); }
+
+/* ============================================================
+   23. Success / Confetti layer
+   ============================================================ */
+.success-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 14, 26, 0.92);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+}
+
+.success-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.success-overlay__icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: var(--primary);
+  animation: successPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+.success-overlay__icon svg {
+  width: 40px;
+  height: 40px;
+}
+
+.success-overlay h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  letter-spacing: -0.02em;
+}
+
+.success-overlay p {
+  font-size: 0.9375rem;
+  color: var(--muted);
+}
+
+@keyframes successPop {
+  from { transform: scale(0.4); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Confetti particle */
+.confetti-particle {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* ============================================================
+   24. Shake animation (invalid submit)
+   ============================================================ */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-8px); }
+  30%       { transform: translateX(8px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-3px); }
+  90%       { transform: translateX(3px); }
+}
+
+.shake { animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+
+/* ============================================================
+   25. Section header inside signup card
+   ============================================================ */
+.signup-header {
+  margin-bottom: 28px;
+}
+
+.signup-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+  margin-bottom: 5px;
+}
+
+.signup-header p {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+/* ============================================================
+   26. Top nav bar on signup
+   ============================================================ */
+.auth-topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 20px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.auth-topbar__logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.auth-topbar__logo-icon {
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary);
+}
+
+.auth-topbar__logo-icon svg { width: 18px; height: 18px; }
+
+.auth-topbar__logo-text {
+  font-size: 1.125rem;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.03em;
+}
+
+.auth-topbar__logo-text span { color: var(--accent); }
+
+.auth-topbar__link {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.auth-topbar__link a { color: var(--accent); font-weight: 500; }
+.auth-topbar__link a:hover { color: var(--accent-light); }
+
+/* ============================================================
+   27. Responsive — Tablet & Mobile
+   ============================================================ */
+@media (max-width: 900px) {
+  .auth-split {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-canvas-panel {
+    display: none;
+  }
+
+  .auth-form-panel {
+    min-height: 100vh;
+    padding: 32px 20px;
+    /* canvas behind on mobile for login */
+    position: relative;
+  }
+
+  .auth-card {
+    padding: 36px 28px;
+  }
+}
+
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 28px 20px;
+    border-radius: var(--radius-lg);
+  }
+
+  .signup-card {
+    padding: 32px 24px;
+    border-radius: var(--radius-lg);
+  }
+
+  .oauth-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fields-row {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-topbar {
+    padding: 16px 20px;
+  }
+
+  .otp-grid { gap: 8px; }
+  .otp-input { width: 44px; height: 54px; font-size: 1.25rem; }
+
+  .step-progress__label { display: none; }
+}
+
+/* Login page mobile: show canvas behind form */
+@media (max-width: 900px) {
+  .auth-split .auth-canvas-panel {
+    display: block;
+    position: fixed;
+    inset: 0;
+    opacity: 0.25;
+    z-index: 0;
+  }
+
+  .auth-form-panel {
+    position: relative;
+    z-index: 1;
+    background: rgba(17, 24, 39, 0.88);
+    backdrop-filter: blur(8px);
+  }
+}

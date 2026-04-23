@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vaultstone Bank Help Center — find answers to common questions about accounts, transfers, security, and more." />
+  <title>Help Center — Vaultstone Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+  <style>
+    .page-hero {
+      position: relative;
+      padding: 9rem 0 5rem;
+      background: var(--primary-deep);
+      overflow: hidden;
+      border-bottom: 1px solid var(--accent-border);
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .page-hero__title { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: var(--fw-extrabold); line-height: var(--leading-tight); letter-spacing: -.03em; margin-bottom: 1.75rem; }
+    .page-hero__title span { color: var(--accent); }
+
+    /* Search */
+    .search-wrap { position: relative; max-width: 580px; }
+    .search-input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-full);
+      padding: 1rem 1.25rem 1rem 3.25rem;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+    .search-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(201,168,76,.12); }
+    .search-icon {
+      position: absolute;
+      left: 1.1rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    /* Category grid */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px,1fr)); gap: 1rem; }
+    .cat-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem 1.25rem;
+      cursor: pointer;
+      transition: border-color var(--transition-normal), transform var(--transition-normal), background var(--transition-normal);
+      text-align: center;
+    }
+    .cat-card:hover, .cat-card.active { border-color: var(--accent); background: rgba(201,168,76,.04); transform: translateY(-2px); }
+    .cat-card__icon {
+      width: 48px; height: 48px;
+      background: rgba(201,168,76,.1);
+      border-radius: var(--radius-lg);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto .875rem;
+      color: var(--accent);
+    }
+    .cat-card__icon svg { width: 22px; height: 22px; }
+    .cat-card__title { font-weight: var(--fw-semibold); font-size: .95rem; }
+    .cat-card__count { font-size: .8rem; color: var(--muted); margin-top: .25rem; }
+
+    /* Accordion */
+    .faq-section { margin-bottom: 3rem; }
+    .faq-section-title { font-size: 1.2rem; font-weight: var(--fw-bold); margin-bottom: 1.25rem; padding-bottom: .75rem; border-bottom: 1px solid var(--accent-border); }
+    .accordion { display: flex; flex-direction: column; gap: .5rem; }
+    .accordion-item { background: var(--surface); border: 1px solid var(--accent-border); border-radius: var(--radius-xl); overflow: hidden; transition: border-color var(--transition-fast); }
+    .accordion-item.open { border-color: rgba(201,168,76,.4); }
+    .accordion-btn {
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      text-align: left;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: .95rem;
+      font-weight: var(--fw-medium);
+      color: var(--text-primary);
+      transition: color var(--transition-fast);
+    }
+    .accordion-btn:hover { color: var(--accent); }
+    .accordion-icon {
+      width: 20px; height: 20px; flex-shrink: 0;
+      color: var(--muted);
+      transition: transform var(--transition-normal), color var(--transition-fast);
+    }
+    .accordion-item.open .accordion-icon { transform: rotate(45deg); color: var(--accent); }
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease, padding .35s ease;
+    }
+    .accordion-item.open .accordion-body { max-height: 600px; }
+    .accordion-body-inner { padding: 0 1.5rem 1.25rem; font-size: .95rem; color: var(--text-secondary); line-height: 1.75; }
+    .accordion-body-inner a { color: var(--accent); text-decoration: underline; }
+
+    /* Highlight mark */
+    mark { background: rgba(201,168,76,.25); color: var(--accent); border-radius: 3px; padding: 0 2px; }
+
+    /* Tab filter */
+    .faq-tabs { display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: 2rem; }
+    .faq-tab {
+      padding: .5rem 1.25rem;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--accent-border);
+      background: none;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: .875rem;
+      font-weight: var(--fw-medium);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .faq-tab:hover, .faq-tab.active { border-color: var(--accent); background: rgba(201,168,76,.08); color: var(--text-primary); }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"  aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="container navbar__inner">
+        <a href="index.html" class="navbar__logo" aria-label="Vaultstone Bank home">
+          <div class="navbar__logo-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <span class="navbar__logo-text">Vault<span>stone</span></span>
+        </a>
+        <ul class="navbar__nav" role="list">
+          <li><a href="services.html" class="navbar__link">Services</a></li>
+          <li><a href="about.html"    class="navbar__link">About</a></li>
+          <li><a href="faq.html"      class="navbar__link" aria-current="page">Help</a></li>
+          <li><a href="contact.html"  class="navbar__link">Contact</a></li>
+        </ul>
+        <div class="navbar__actions">
+          <a href="login.html"  class="navbar__login">Log In</a>
+          <a href="signup.html" class="btn btn-primary btn-sm">Open Account</a>
+        </div>
+        <button class="navbar__toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="navbar__mobile" id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+        <a href="services.html" class="navbar__mobile-link">Services</a>
+        <a href="about.html"    class="navbar__mobile-link">About</a>
+        <a href="faq.html"      class="navbar__mobile-link">Help Center</a>
+        <a href="contact.html"  class="navbar__mobile-link">Contact</a>
+        <a href="login.html"    class="navbar__mobile-link">Log In</a>
+        <a href="signup.html" class="btn btn-primary btn-lg navbar__mobile-cta">Open Account</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Hero + Search -->
+    <section class="page-hero" aria-label="Help center search">
+      <div class="container" style="position:relative;z-index:1;">
+        <div class="section-label" style="margin-bottom:.75rem;">Help Center</div>
+        <h1 class="page-hero__title">How Can We<br><span>Help You?</span></h1>
+        <div class="search-wrap">
+          <span class="search-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          </span>
+          <input class="search-input" id="faq-search" type="search" placeholder="Search for answers… (e.g. 'transfer limits', 'FDIC')" aria-label="Search FAQ" />
+        </div>
+      </div>
+    </section>
+
+    <!-- Category Cards -->
+    <section style="padding-block:4rem;" aria-label="FAQ categories">
+      <div class="container">
+        <div class="cat-grid" id="cat-grid" role="list">
+          <div class="cat-card reveal" data-cat="account" role="listitem" tabindex="0">
+            <div class="cat-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+            <div class="cat-card__title">Account</div>
+            <div class="cat-card__count">18 articles</div>
+          </div>
+          <div class="cat-card reveal reveal-delay-1" data-cat="transfers" role="listitem" tabindex="0">
+            <div class="cat-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></div>
+            <div class="cat-card__title">Transfers</div>
+            <div class="cat-card__count">14 articles</div>
+          </div>
+          <div class="cat-card reveal reveal-delay-2" data-cat="security" role="listitem" tabindex="0">
+            <div class="cat-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <div class="cat-card__title">Security</div>
+            <div class="cat-card__count">12 articles</div>
+          </div>
+          <div class="cat-card reveal reveal-delay-3" data-cat="cards" role="listitem" tabindex="0">
+            <div class="cat-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></div>
+            <div class="cat-card__title">Cards</div>
+            <div class="cat-card__count">10 articles</div>
+          </div>
+          <div class="cat-card reveal" data-cat="investing" role="listitem" tabindex="0">
+            <div class="cat-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="cat-card__title">Investing</div>
+            <div class="cat-card__count">9 articles</div>
+          </div>
+          <div class="cat-card reveal reveal-delay-1" data-cat="fees" role="listitem" tabindex="0">
+            <div class="cat-card__icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="cat-card__title">Fees &amp; Rates</div>
+            <div class="cat-card__count">8 articles</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ Accordion -->
+    <section style="background:var(--surface); border-top:1px solid var(--accent-border); padding-block:5rem;" aria-label="Frequently asked questions">
+      <div class="container" style="max-width:860px;">
+        <div class="faq-tabs" id="faq-tabs" role="tablist">
+          <button class="faq-tab active" data-filter="all"  role="tab" aria-selected="true">All Questions</button>
+          <button class="faq-tab" data-filter="account"    role="tab" aria-selected="false">Account</button>
+          <button class="faq-tab" data-filter="transfers"  role="tab" aria-selected="false">Transfers</button>
+          <button class="faq-tab" data-filter="security"   role="tab" aria-selected="false">Security</button>
+          <button class="faq-tab" data-filter="cards"      role="tab" aria-selected="false">Cards</button>
+          <button class="faq-tab" data-filter="investing"  role="tab" aria-selected="false">Investing</button>
+          <button class="faq-tab" data-filter="fees"       role="tab" aria-selected="false">Fees &amp; Rates</button>
+        </div>
+
+        <div id="faq-list">
+
+          <!-- Account -->
+          <div class="faq-section" data-section="account">
+            <div class="faq-section-title">Account Questions</div>
+            <div class="accordion">
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How do I open a Vaultstone account?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Opening a Vaultstone account takes under 4 minutes. Click <a href="signup.html">Open Account</a>, enter your personal details, choose your account type (Personal, Business, or Wealth), set a secure password, and verify your identity. Once KYC is approved (usually within minutes), your account is fully active.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  Is there a minimum balance requirement?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">There is no minimum balance for Personal accounts. Business accounts require a $500 minimum. Wealth Management accounts require $1,000,000 in investable assets. There are no monthly maintenance fees at any tier.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  Can I have multiple account types?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Yes. You can hold a Personal account and a Business account simultaneously under the same login. If you qualify for Wealth Management, your relationship manager will guide you through consolidating or linking accounts for a unified view.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How do I update my personal information?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Navigate to Dashboard → Settings → Profile. You can update your name, phone number, email, and address. Some changes (e.g. legal name) require uploading updated identity documents for re-verification.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How do I close my account?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">You can request account closure from Dashboard → Settings → Close Account. We'll first confirm your identity, transfer your remaining balance to an external account of your choice, and close within 3–5 business days. There are no account closure fees.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transfers -->
+          <div class="faq-section" data-section="transfers">
+            <div class="faq-section-title">Transfers &amp; Payments</div>
+            <div class="accordion">
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  What are the transfer limits?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Personal accounts: $25,000/day domestic, $10,000/day international. Business accounts: $500,000/day domestic, $250,000/day international. Wealth clients have custom limits set by their private banker. Limits can be increased by contacting support with verification.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How long do international transfers take?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Transfers between Vaultstone accounts are instant, 24/7. International wire transfers to external banks typically arrive in 1–2 business days for SWIFT payments. Transfers to our 34 supported currency corridors settle the same business day when initiated before 2 PM local time.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  Are there fees for international transfers?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Vaultstone-to-Vaultstone transfers: always free. External bank transfers: $0 for domestic ACH, $15 flat for SWIFT wires. FX conversion uses the mid-market rate plus a 0.5% spread — one of the lowest in the industry. No hidden fees, ever.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Security -->
+          <div class="faq-section" data-section="security">
+            <div class="faq-section-title">Security &amp; Privacy</div>
+            <div class="accordion">
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  Is my money FDIC insured?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Yes. Vaultstone Bank, N.A. is a federally chartered bank and FDIC member. Personal deposits are insured up to $250,000 per depositor. Business accounts qualify for up to $500,000. Joint accounts are insured up to $500,000. Your investments through Vaultstone Securities LLC are SIPC-protected up to $500,000.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How do I enable two-factor authentication (2FA)?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Go to Dashboard → Settings → Security → Enable 2FA. We support TOTP apps (Google Authenticator, Authy) and SMS. We strongly recommend TOTP apps over SMS for better protection against SIM-swap attacks. 2FA is mandatory for business and wealth accounts.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  What should I do if I think my account was compromised?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Call our fraud hotline immediately: <strong>(603) 546-0400</strong> (available 24/7). We can freeze your account instantly. Do not wait — the sooner you call, the faster we can prevent any unauthorized transfers. We will then guide you through a full account recovery and security audit.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How does Vaultstone protect my data?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">All data is encrypted in transit (TLS 1.3) and at rest (AES-256). We hold SOC 2 Type II, ISO 27001, and PCI DSS Level 1 certifications. We never sell your personal data to third parties. Our <a href="privacy.html">Privacy Policy</a> explains exactly what we collect and why.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cards -->
+          <div class="faq-section" data-section="cards">
+            <div class="faq-section-title">Cards</div>
+            <div class="accordion">
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  What cards does Vaultstone offer?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Personal accounts receive a Titanium Visa Debit card. Business clients receive a Business Mastercard with configurable spending controls per employee. Wealth Management clients receive our Black Titanium card with no foreign transaction fees and unlimited airport lounge access.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How do I freeze or unfreeze my card?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Go to Dashboard → Cards → and toggle the card freeze switch. Freeze takes effect instantly and blocks all new card-present and card-not-present transactions. Recurring charges you've authorized may still process. Unfreeze is equally instant.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  How do I report a lost or stolen card?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Freeze the card immediately from the Dashboard (see above), then go to Cards → Report Lost/Stolen. A replacement card will be dispatched via expedited delivery within 1–3 business days. All unauthorized transactions are eligible for full chargeback under our Zero Liability policy.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Investing -->
+          <div class="faq-section" data-section="investing">
+            <div class="faq-section-title">Investments</div>
+            <div class="accordion">
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  What investment products are available?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Personal accounts: managed ETF portfolios, individual stocks, bonds, and auto-invest savings plans. Business accounts: treasury management, short-duration bonds, money market funds. Wealth Management: alternative assets, hedge funds, private equity, real estate, and bespoke structured products.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  Is my investment portfolio insured?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Investment accounts are held through Vaultstone Securities LLC, a registered broker-dealer and SIPC member. SIPC protects up to $500,000 in securities (including $250,000 in cash) if the firm fails. SIPC does not protect against market losses — only custodian failure. Note that investments involve risk and can lose value.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Fees -->
+          <div class="faq-section" data-section="fees">
+            <div class="faq-section-title">Fees &amp; Rates</div>
+            <div class="accordion">
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  What is the APY on Vaultstone savings accounts?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">Our High-Yield Savings currently earns <strong>4.75% APY</strong> for Personal accounts and <strong>5.10% APY</strong> for Business accounts. Rates are variable and updated monthly based on Fed Funds rate. There is no minimum balance to earn the full APY.</div></div>
+              </div>
+              <div class="accordion-item">
+                <button class="accordion-btn" aria-expanded="false">
+                  Are there any hidden fees?
+                  <svg class="accordion-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                </button>
+                <div class="accordion-body"><div class="accordion-body-inner">None. No monthly fees, no ATM withdrawal fees at 55,000+ Allpoint ATMs worldwide, no overdraft fees, no minimum balance fees, no inactivity fees, no account closure fees. We charge only for: SWIFT wires ($15 flat), paper statements ($2/month, opt-in only), and optional premium services like expedited card replacement ($25).</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /faq-list -->
+
+        <!-- Still need help? -->
+        <div class="glass-card" style="margin-top:3rem; padding:2.5rem; text-align:center;">
+          <h3 style="font-size:1.2rem; font-weight:var(--fw-bold); margin-bottom:.75rem;">Still Have Questions?</h3>
+          <p style="color:var(--text-secondary); line-height:1.7; margin-bottom:1.75rem; max-width:460px; margin-inline:auto;">Our support team is available 24/7 and responds to chat within 4 minutes.</p>
+          <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+            <a href="contact.html" class="btn btn-primary">Contact Support</a>
+            <a href="login.html"   class="btn btn-outline">Go to Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <div class="footer__brand-logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1"/>
+              </svg>
+            </div>
+            Vaultstone Bank
+          </div>
+          <p class="footer__brand-desc">Institutional-grade banking for everyone.</p>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Products</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="services.html#personal" class="footer__link">Personal Banking</a></li>
+            <li><a href="services.html#business" class="footer__link">Business Banking</a></li>
+            <li><a href="services.html#wealth"   class="footer__link">Wealth Management</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Company</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="about.html"   class="footer__link">About Us</a></li>
+            <li><a href="careers.html" class="footer__link">Careers</a></li>
+            <li><a href="contact.html" class="footer__link">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Legal</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="privacy.html" class="footer__link">Privacy Policy</a></li>
+            <li><a href="terms.html"   class="footer__link">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p class="footer__legal">&copy; 2026 Vaultstone Bank, N.A. All rights reserved. Member FDIC.</p>
+        <div class="footer__certifications" role="list">
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>FDIC</div>
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>SOC 2</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="scripts/main.js"></script>
+  <script>
+    // Accordion
+    document.querySelectorAll('.accordion-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.closest('.accordion-item');
+        const isOpen = item.classList.contains('open');
+        item.closest('.accordion').querySelectorAll('.accordion-item').forEach(i => i.classList.remove('open'));
+        if (!isOpen) item.classList.add('open');
+        btn.setAttribute('aria-expanded', (!isOpen).toString());
+      });
+    });
+
+    // Tab filter
+    document.querySelectorAll('.faq-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.faq-tab').forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected','false'); });
+        tab.classList.add('active');
+        tab.setAttribute('aria-selected','true');
+        const filter = tab.dataset.filter;
+        document.querySelectorAll('.faq-section').forEach(s => {
+          s.style.display = (filter === 'all' || s.dataset.section === filter) ? '' : 'none';
+        });
+      });
+    });
+
+    // Search
+    const searchInput = document.getElementById('faq-search');
+    if (searchInput) {
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim().toLowerCase();
+        document.querySelectorAll('.accordion-item').forEach(item => {
+          const text = item.textContent.toLowerCase();
+          item.style.display = (!q || text.includes(q)) ? '' : 'none';
+        });
+        document.querySelectorAll('.faq-section').forEach(s => {
+          const visible = [...s.querySelectorAll('.accordion-item')].some(i => i.style.display !== 'none');
+          s.style.display = visible ? '' : 'none';
+        });
+      });
+    }
+  </script>
+</body>
+</html>

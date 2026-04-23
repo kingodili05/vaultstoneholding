@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en" data-page="admin">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vaultstone Bank — Admin Control Panel" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0A0E1A" />
+  <title>Admin Panel — Vaultstone Bank</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="stylesheet" href="styles/dashboard.css" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23EF4444'/><path d='M9 9h14v14H9z' fill='none' stroke='%23fff' stroke-width='2'/><path d='M13 9V7a3 3 0 0 1 6 0v2' fill='none' stroke='%23fff' stroke-width='2'/></svg>" />
+</head>
+<body>
+
+<!-- Toast Container -->
+<div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
+
+<!-- ── Confirm Modal ── -->
+<div class="modal-backdrop" id="confirm-backdrop" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+  <div class="modal">
+    <div class="modal-header">
+      <h2 class="modal-title" id="confirm-title">Confirm Action</h2>
+      <button class="modal-close" id="confirm-close" aria-label="Close">&times;</button>
+    </div>
+    <p id="confirm-body" style="color:var(--muted2);line-height:1.7"></p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="confirm-cancel">Cancel</button>
+      <button class="btn btn-danger" id="confirm-action">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Edit User Drawer ── -->
+<div class="drawer-backdrop" id="edit-drawer-backdrop" aria-hidden="true"></div>
+<aside class="drawer" id="edit-drawer" role="dialog" aria-modal="true" aria-label="Edit user">
+  <div class="drawer-header">
+    <h2 style="font-size:1.0625rem;font-weight:700">Edit User</h2>
+    <button class="modal-close" id="edit-drawer-close" aria-label="Close drawer">&times;</button>
+  </div>
+  <div class="drawer-body">
+    <div class="form-group">
+      <label for="edit-name">Full Name</label>
+      <input id="edit-name" class="input" type="text" />
+    </div>
+    <div class="form-group">
+      <label for="edit-email">Email Address</label>
+      <input id="edit-email" class="input" type="email" />
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="edit-type">Account Type</label>
+        <select id="edit-type" class="input">
+          <option value="personal">Personal</option>
+          <option value="business">Business</option>
+          <option value="wealth">Wealth</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="edit-status">Status</label>
+        <select id="edit-status" class="input">
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+          <option value="pending">Pending</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="edit-balance">Balance Limit ($)</label>
+      <input id="edit-balance" class="input" type="number" step="100" />
+    </div>
+    <div class="form-group">
+      <label>Admin Notes</label>
+      <textarea class="input" rows="3" placeholder="Internal notes…" style="resize:vertical"></textarea>
+    </div>
+  </div>
+  <div class="drawer-footer">
+    <button class="btn btn-ghost flex-1" id="edit-cancel">Cancel</button>
+    <button class="btn btn-primary flex-1" id="edit-save" style="justify-content:center">Save Changes</button>
+  </div>
+</aside>
+
+<div class="app-layout">
+
+  <!-- ────────────── SIDEBAR ────────────── -->
+  <aside class="sidebar" id="sidebar" role="navigation" aria-label="Admin navigation">
+
+    <div class="sidebar__header">
+      <a href="index.html" class="sidebar__logo" aria-label="Vaultstone Bank home">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <rect x="3" y="11" width="18" height="11" rx="2"/>
+          <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          <circle cx="12" cy="16" r="1"/>
+        </svg>
+      </a>
+      <span class="sidebar__brand">Vault<span>stone</span></span>
+      <span class="badge badge-admin">Admin</span>
+      <button class="sidebar__close" id="sidebar-close" aria-label="Close navigation">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Admin user -->
+    <div class="sidebar__user">
+      <div class="avatar" style="width:38px;height:38px;background:linear-gradient(135deg,#7f1d1d,#EF4444);color:#fff">AP</div>
+      <div class="sidebar__user-info">
+        <div class="sidebar__user-name">Admin Portal</div>
+        <div class="sidebar__user-sub">Super Administrator</div>
+      </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="sidebar__nav" aria-label="Admin menu">
+      <div class="sidebar__section">
+        <div class="sidebar__section-label">Dashboard</div>
+        <button class="sidebar__link" data-panel="overview">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+          Overview
+        </button>
+        <button class="sidebar__link active" data-panel="users">
+          <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Users
+        </button>
+        <button class="sidebar__link" data-panel="transactions">
+          <svg viewBox="0 0 24 24"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+          Transactions
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__section-label">Intelligence</div>
+        <button class="sidebar__link" data-panel="analytics">
+          <svg viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+          Analytics
+        </button>
+        <button class="sidebar__link" data-panel="security">
+          <svg viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Security
+        </button>
+      </div>
+      <div class="sidebar__section">
+        <div class="sidebar__section-label">System</div>
+        <button class="sidebar__link" data-panel="users">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          System Settings
+        </button>
+      </div>
+    </nav>
+
+    <!-- Footer -->
+    <div class="sidebar__footer">
+      <div style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 0;border-bottom:1px solid var(--border2);margin-bottom:0.5rem">
+        <div class="avatar" style="width:32px;height:32px;font-size:0.7rem;background:linear-gradient(135deg,#7f1d1d,#EF4444);color:#fff">AP</div>
+        <div style="flex:1;min-width:0"><div style="font-size:0.8125rem;font-weight:600">Admin Portal</div><div style="font-size:0.7rem;color:var(--muted)">admin@vaultstone.bank</div></div>
+      </div>
+      <button class="sidebar__link" id="logout-btn" style="color:var(--red)" aria-label="Logout">
+        <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Logout
+      </button>
+    </div>
+
+  </aside>
+
+  <!-- ────────────── MAIN AREA ────────────── -->
+  <div class="main-area">
+
+    <!-- Top Header -->
+    <header class="top-header" role="banner">
+      <button class="hamburger" id="hamburger" aria-label="Open navigation">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h1 class="header-title" id="header-title">User Management</h1>
+
+      <div class="header-search" role="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="search" placeholder="Search anything…" aria-label="Search" />
+      </div>
+
+      <div class="header-actions">
+        <button class="notif-btn" aria-label="Notifications">
+          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="notif-badge" aria-hidden="true">7</span>
+        </button>
+        <div class="header-avatar" title="Admin Portal" style="background:linear-gradient(135deg,#7f1d1d,#EF4444)">AP</div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="content-area" role="main">
+
+      <!-- ══════════ PANEL: OVERVIEW ══════════ -->
+      <section class="panel" id="panel-overview" aria-label="Overview">
+
+        <!-- KPI Cards -->
+        <div class="grid-4" style="margin-bottom:1.5rem">
+          <div class="kpi-card gold">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="kpi-label">Total Users</div>
+            <div class="kpi-value" id="kpi-users">0</div>
+            <div class="kpi-delta"><span class="up">↑ +2,140</span> this month</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+            <div class="kpi-label">Active Sessions</div>
+            <div class="kpi-value" id="kpi-sessions">0</div>
+            <div class="kpi-delta"><span class="up">↑ +84</span> vs 1h ago</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="kpi-label">Total Volume</div>
+            <div class="kpi-value" id="kpi-volume">—</div>
+            <div class="kpi-delta"><span class="up">↑ +12.4%</span> MoM</div>
+          </div>
+          <div class="kpi-card red">
+            <div class="kpi-icon"><svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div>
+            <div class="kpi-label">Flagged Accounts</div>
+            <div class="kpi-value" style="color:var(--red)" id="kpi-flagged">0</div>
+            <div class="kpi-delta"><span class="down">↑ +3</span> new flags</div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:1.5rem">
+          <!-- Globe -->
+          <div class="card">
+            <div class="card-header">
+              <div><div class="card-title">Global Transaction Map</div><div class="card-subtitle">Live connection overview</div></div>
+              <span class="badge badge-green" style="font-size:0.7rem">● Live</span>
+            </div>
+            <div id="globe-container" class="globe-container" aria-hidden="true"></div>
+          </div>
+
+          <!-- Activity Feed -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Real-Time Activity</div>
+              <span class="badge badge-green" style="font-size:0.7rem">● Live</span>
+            </div>
+            <div id="activity-feed" class="activity-feed" role="log" aria-live="polite" aria-label="Real-time activity feed"></div>
+          </div>
+        </div>
+
+        <!-- System Health -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">System Health</div><span class="badge badge-green">All Systems Operational</span></div>
+          <div class="grid-2">
+            <div>
+              <div class="health-item">
+                <div class="health-header"><span class="health-label">CPU Usage</span><span class="health-value">34%</span></div>
+                <div class="progress-bar"><div class="progress-bar__fill" id="health-cpu" style="width:0%;background:var(--green)"></div></div>
+              </div>
+              <div class="health-item">
+                <div class="health-header"><span class="health-label">Memory Usage</span><span class="health-value">67%</span></div>
+                <div class="progress-bar"><div class="progress-bar__fill" id="health-mem" style="width:0%;background:var(--yellow)"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="health-item">
+                <div class="health-header"><span class="health-label">API Latency</span><span class="health-value">45ms</span></div>
+                <div class="progress-bar"><div class="progress-bar__fill" id="health-api" style="width:0%;background:var(--blue)"></div></div>
+              </div>
+              <div class="health-item">
+                <div class="health-header"><span class="health-label">Disk I/O</span><span class="health-value">52%</span></div>
+                <div class="progress-bar"><div class="progress-bar__fill" id="health-disk" style="width:0%;background:var(--gold)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════ PANEL: USERS ══════════ -->
+      <section class="panel active" id="panel-users" aria-label="User Management">
+        <div class="section-header">
+          <h2 class="section-title">Users</h2>
+          <button class="btn btn-primary btn-sm">+ Add User</button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <div class="input-group" style="flex:1;min-width:200px">
+            <svg class="input-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="user-search" class="input" type="search" placeholder="Search by name or email…" aria-label="Search users" />
+          </div>
+          <select id="filter-status" class="input" aria-label="Filter by status">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="suspended">Suspended</option>
+            <option value="pending">Pending</option>
+          </select>
+          <select id="filter-type" class="input" aria-label="Filter by account type">
+            <option value="">All Types</option>
+            <option value="personal">Personal</option>
+            <option value="business">Business</option>
+            <option value="wealth">Wealth</option>
+          </select>
+        </div>
+
+        <!-- Bulk action bar -->
+        <div class="bulk-bar" id="bulk-bar" role="toolbar" aria-label="Bulk actions">
+          <span class="bulk-count" id="bulk-count">0 users</span>
+          <span style="color:var(--muted)">selected</span>
+          <button class="btn btn-ghost btn-sm" id="bulk-suspend">Suspend Selected</button>
+          <button class="btn btn-danger btn-sm" id="bulk-delete">Delete Selected</button>
+          <button class="btn btn-ghost btn-sm ml-auto" id="bulk-clear">Clear</button>
+        </div>
+
+        <div class="card" style="padding:0">
+          <div class="table-wrap">
+            <table id="users-table" aria-label="Users table">
+              <thead>
+                <tr>
+                  <th style="width:40px;cursor:default"><input type="checkbox" id="select-all" aria-label="Select all users" /></th>
+                  <th data-sort="name">Name ↕</th>
+                  <th data-sort="email">Email ↕</th>
+                  <th data-sort="type">Type ↕</th>
+                  <th data-sort="balance">Balance ↕</th>
+                  <th data-sort="status">Status ↕</th>
+                  <th data-sort="joined">Joined ↕</th>
+                  <th style="cursor:default">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+          </div>
+          <!-- Pagination -->
+          <div style="padding:1rem 1.5rem;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem">
+            <span style="font-size:0.8125rem;color:var(--muted)">Showing 1–12 of 847 users</span>
+            <div class="pagination" aria-label="Pagination">
+              <button class="page-btn" disabled aria-label="Previous page">‹</button>
+              <button class="page-btn active" aria-current="page" aria-label="Page 1">1</button>
+              <button class="page-btn" aria-label="Page 2">2</button>
+              <button class="page-btn" aria-label="Page 3">3</button>
+              <button class="page-btn dots" aria-hidden="true">…</button>
+              <button class="page-btn" aria-label="Page 847">847</button>
+              <button class="page-btn" aria-label="Next page">›</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════ PANEL: TRANSACTIONS ══════════ -->
+      <section class="panel" id="panel-transactions" aria-label="Transactions">
+        <div class="section-header">
+          <h2 class="section-title">Transactions</h2>
+          <button class="btn btn-secondary btn-sm" id="export-csv">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export CSV
+          </button>
+        </div>
+
+        <!-- Filters -->
+        <div class="filter-bar">
+          <div class="input-group" style="flex:1;min-width:180px">
+            <svg class="input-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="tx-search" class="input" type="search" placeholder="Search user or ID…" />
+          </div>
+          <select id="tx-type-filter" class="input" aria-label="Filter by type">
+            <option value="">All Types</option>
+            <option value="Credit">Credit</option>
+            <option value="Debit">Debit</option>
+            <option value="Transfer">Transfer</option>
+          </select>
+          <select id="tx-status-filter" class="input" aria-label="Filter by status">
+            <option value="">All Statuses</option>
+            <option value="completed">Completed</option>
+            <option value="pending">Pending</option>
+            <option value="flagged">Flagged</option>
+          </select>
+          <input class="input" type="date" style="min-width:130px" aria-label="From date" />
+          <input class="input" type="date" style="min-width:130px" aria-label="To date" />
+        </div>
+
+        <div class="card" style="padding:0;margin-bottom:1.5rem">
+          <div class="table-wrap">
+            <table aria-label="Transactions table">
+              <thead>
+                <tr>
+                  <th>Txn ID</th>
+                  <th>User</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Merchant</th>
+                  <th>Date</th>
+                  <th>Status</th>
+                  <th>Risk</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody id="tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Volume Chart -->
+        <div class="card">
+          <div class="card-header"><div class="card-title">Daily Transaction Volume</div><div class="card-subtitle">Last 30 days</div></div>
+          <div class="chart-container" style="height:220px">
+            <canvas id="tx-volume-chart" aria-label="Daily transaction volume chart"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════ PANEL: ANALYTICS ══════════ -->
+      <section class="panel" id="panel-analytics" aria-label="Analytics">
+        <h2 class="section-title" style="margin-bottom:1.5rem">Analytics</h2>
+
+        <!-- Key Metrics -->
+        <div class="grid-3" style="margin-bottom:1.5rem">
+          <div class="kpi-card gold">
+            <div class="kpi-label">Avg. Account Balance</div>
+            <div class="kpi-value">$56,200</div>
+            <div class="kpi-delta"><span class="up">↑ +8.2%</span> QoQ</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">Churn Rate</div>
+            <div class="kpi-value">1.4%</div>
+            <div class="kpi-delta"><span class="down">↓ -0.3%</span> QoQ</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">NPS Score</div>
+            <div class="kpi-value">72</div>
+            <div class="kpi-delta"><span class="up">↑ +5</span> this quarter</div>
+          </div>
+        </div>
+
+        <!-- Charts row 1 -->
+        <div class="grid-2" style="margin-bottom:1.5rem">
+          <div class="card">
+            <div class="card-header"><div class="card-title">User Growth</div><div class="card-subtitle">Last 12 months</div></div>
+            <div class="chart-container" style="height:220px">
+              <canvas id="growth-chart" aria-label="User growth chart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-title">Account Type Distribution</div></div>
+            <div class="chart-container" style="height:220px">
+              <canvas id="acct-type-chart" aria-label="Account type distribution chart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Geographic distribution -->
+        <div class="card" style="margin-bottom:1.5rem">
+          <div class="card-header"><div class="card-title">Geographic Distribution</div><div class="card-subtitle">Top 10 countries by user count</div></div>
+          <div class="chart-container" style="height:260px">
+            <canvas id="geo-chart" aria-label="Geographic distribution chart"></canvas>
+          </div>
+        </div>
+
+        <!-- 3D Revenue Chart -->
+        <div class="card">
+          <div class="card-header">
+            <div><div class="card-title">Revenue by Quarter — 3D</div><div class="card-subtitle">Q1–Q4 2025</div></div>
+            <div style="display:flex;gap:0.5rem">
+              <span style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:#C9A84C;display:inline-block"></span>Q1: $580K</span>
+              <span style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:#3B82F6;display:inline-block"></span>Q2: $720K</span>
+              <span style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:#10B981;display:inline-block"></span>Q3: $840K</span>
+              <span style="display:flex;align-items:center;gap:0.4rem;font-size:0.75rem;color:var(--muted)"><span style="width:10px;height:10px;border-radius:2px;background:#F59E0B;display:inline-block"></span>Q4: $1.02M</span>
+            </div>
+          </div>
+          <div id="revenue-3d-container" class="analytics-3d" aria-hidden="true"></div>
+        </div>
+      </section>
+
+      <!-- ══════════ PANEL: SECURITY ══════════ -->
+      <section class="panel" id="panel-security" aria-label="Security Center">
+        <div class="section-header">
+          <h2 class="section-title">Security Center</h2>
+          <button class="btn btn-primary btn-sm" id="run-scan-btn">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Run Security Scan
+          </button>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:1.5rem;align-items:start">
+          <!-- Failed Logins -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Failed Login Attempts</div><div class="card-subtitle">Last 24 hours</div></div>
+            <div class="table-wrap">
+              <table aria-label="Failed login attempts">
+                <thead><tr><th>IP Address</th><th>User</th><th>Time</th><th>Attempts</th></tr></thead>
+                <tbody>
+                  <tr><td style="font-family:monospace;font-size:0.8rem">185.220.101.45</td><td>elena.novak</td><td style="color:var(--muted)">02:14 AM</td><td><span class="badge badge-red">18</span></td></tr>
+                  <tr><td style="font-family:monospace;font-size:0.8rem">45.33.32.156</td><td>unknown</td><td style="color:var(--muted)">04:33 AM</td><td><span class="badge badge-red">12</span></td></tr>
+                  <tr><td style="font-family:monospace;font-size:0.8rem">203.0.113.42</td><td>alex.morgan</td><td style="color:var(--muted)">07:55 AM</td><td><span class="badge badge-yellow">4</span></td></tr>
+                  <tr><td style="font-family:monospace;font-size:0.8rem">104.16.51.111</td><td>unknown</td><td style="color:var(--muted)">11:20 AM</td><td><span class="badge badge-yellow">3</span></td></tr>
+                  <tr><td style="font-family:monospace;font-size:0.8rem">172.16.254.1</td><td>rajan.iyer</td><td style="color:var(--muted)">01:42 PM</td><td><span class="badge badge-yellow">2</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 2FA Adoption -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">2FA Adoption Rate</div><div class="card-subtitle">Among active users</div></div>
+            <div style="height:200px;position:relative">
+              <canvas id="twofa-chart" aria-label="2FA adoption donut chart"></canvas>
+            </div>
+            <div style="text-align:center;margin-top:0.75rem">
+              <div style="font-size:1.75rem;font-weight:800;color:var(--green)">62%</div>
+              <div style="font-size:0.8125rem;color:var(--muted)">26,565 users have 2FA enabled</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="align-items:start">
+          <!-- IP Blocklist -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">IP Blocklist</div><span class="badge badge-red" id="ip-count-badge">4 blocked</span></div>
+            <div style="display:flex;gap:0.5rem;margin-bottom:1rem">
+              <input id="add-ip-input" class="input" type="text" placeholder="e.g. 192.168.1.1" aria-label="IP address to block" style="flex:1" />
+              <button class="btn btn-danger btn-sm" id="add-ip-btn" style="white-space:nowrap">Block IP</button>
+            </div>
+            <div id="ip-list" class="ip-list" aria-label="Blocked IP addresses"></div>
+          </div>
+
+          <!-- Security Events + Scan -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Recent Security Events</div></div>
+            <div>
+              <div class="sec-event">
+                <div class="sec-event-icon" style="background:rgba(239,68,68,0.15)">🔴</div>
+                <div class="sec-event-info"><div class="sec-event-title">Brute-force attack blocked</div><div class="sec-event-meta">IP 185.220.101.45 · 18 attempts · 02:14 AM</div></div>
+              </div>
+              <div class="sec-event">
+                <div class="sec-event-icon" style="background:rgba(245,158,11,0.15)">🟡</div>
+                <div class="sec-event-info"><div class="sec-event-title">Unusual transfer pattern detected</div><div class="sec-event-meta">User ID 10284 · TXN-00015 · 04:22 AM</div></div>
+              </div>
+              <div class="sec-event">
+                <div class="sec-event-icon" style="background:rgba(16,185,129,0.15)">🟢</div>
+                <div class="sec-event-info"><div class="sec-event-title">SSL certificate auto-renewed</div><div class="sec-event-meta">*.vaultstone.bank · 06:00 AM</div></div>
+              </div>
+              <div class="sec-event">
+                <div class="sec-event-icon" style="background:rgba(59,130,246,0.15)">🔵</div>
+                <div class="sec-event-info"><div class="sec-event-title">Admin login from new device</div><div class="sec-event-meta">admin@vaultstone.bank · MacBook · 08:30 AM</div></div>
+              </div>
+              <div class="sec-event">
+                <div class="sec-event-icon" style="background:rgba(239,68,68,0.15)">🔴</div>
+                <div class="sec-event-info"><div class="sec-event-title">High-risk transaction flagged</div><div class="sec-event-meta">TXN-00009 · Risk score 91 · Casino · 10:45 AM</div></div>
+              </div>
+            </div>
+
+            <!-- Scan progress area -->
+            <div id="scan-progress" class="scan-progress" aria-live="polite" aria-label="Security scan progress">
+              <div style="font-size:0.8125rem;font-weight:600;margin-bottom:0.5rem;color:var(--green)">Running Security Scan…</div>
+              <div id="scan-log" class="scan-log" role="log"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div><!-- /main-area -->
+</div><!-- /app-layout -->
+
+<!-- CDN Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+<!-- VaultStore must load before admin.js -->
+<script src="scripts/store.js"></script>
+<!-- Admin JS -->
+<script src="scripts/admin.js"></script>
+
+</body>
+</html>

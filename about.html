@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="About Vaultstone Bank — Founded in 1998, we're committed to making institutional-grade banking accessible to everyone." />
+  <title>About Us — Vaultstone Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+  <style>
+    .page-hero {
+      position: relative;
+      padding: 9rem 0 5rem;
+      background: var(--primary-deep);
+      overflow: hidden;
+      border-bottom: 1px solid var(--accent-border);
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.1) 0%, transparent 65%),
+        radial-gradient(ellipse 40% 40% at 80% 80%, rgba(74,111,165,0.06) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .page-hero__label { margin-bottom: .75rem; }
+    .page-hero__title {
+      font-size: clamp(2.2rem, 5vw, 3.75rem);
+      font-weight: var(--fw-extrabold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.03em;
+      margin-bottom: 1.25rem;
+    }
+    .page-hero__title span { color: var(--accent); }
+    .page-hero__subtitle {
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      color: var(--text-secondary);
+      max-width: 580px;
+      line-height: 1.7;
+    }
+    /* ── Timeline ── */
+    .timeline { position: relative; padding: 2rem 0; }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0; bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, transparent, var(--accent-border) 10%, var(--accent-border) 90%, transparent);
+      transform: translateX(-50%);
+    }
+    .timeline-item {
+      display: grid;
+      grid-template-columns: 1fr 60px 1fr;
+      gap: 0 1.5rem;
+      margin-bottom: 3rem;
+      align-items: start;
+    }
+    .timeline-item:nth-child(even) .timeline-content { grid-column: 3; grid-row: 1; text-align: left; }
+    .timeline-item:nth-child(even) .timeline-empty   { grid-column: 1; grid-row: 1; }
+    .timeline-item:nth-child(odd)  .timeline-content { grid-column: 1; grid-row: 1; text-align: right; }
+    .timeline-item:nth-child(odd)  .timeline-empty   { grid-column: 3; grid-row: 1; }
+    .timeline-dot {
+      grid-column: 2; grid-row: 1;
+      width: 48px; height: 48px;
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .8rem; font-weight: var(--fw-bold);
+      color: var(--accent);
+      margin: 0 auto;
+      position: relative; z-index: 1;
+      flex-shrink: 0;
+    }
+    .timeline-content { padding: .25rem 0; }
+    .timeline-year {
+      font-size: .75rem; font-weight: var(--fw-semibold);
+      color: var(--accent); text-transform: uppercase;
+      letter-spacing: .1em; margin-bottom: .4rem;
+    }
+    .timeline-title { font-weight: var(--fw-semibold); margin-bottom: .4rem; }
+    .timeline-desc  { font-size: .9rem; color: var(--text-secondary); line-height: 1.6; }
+    /* Team cards */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+    }
+    .team-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-xl);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      transition: border-color var(--transition-normal), transform var(--transition-normal);
+    }
+    .team-card:hover {
+      border-color: var(--accent);
+      transform: translateY(-4px);
+    }
+    .team-avatar {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, rgba(201,168,76,.15), rgba(201,168,76,.05));
+      border: 2px solid rgba(201,168,76,.3);
+      border-radius: 50%;
+      margin: 0 auto 1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; font-weight: var(--fw-bold);
+      color: var(--accent);
+    }
+    .team-name   { font-weight: var(--fw-semibold); margin-bottom: .25rem; }
+    .team-title  { font-size: .85rem; color: var(--accent); margin-bottom: .75rem; }
+    .team-bio    { font-size: .875rem; color: var(--text-secondary); line-height: 1.6; }
+    /* Values */
+    .values-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .value-card  {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+    }
+    .value-icon {
+      width: 48px; height: 48px;
+      background: rgba(201,168,76,.1);
+      border-radius: var(--radius-lg);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+      color: var(--accent);
+    }
+    .value-icon svg { width: 22px; height: 22px; }
+    .value-title { font-weight: var(--fw-semibold); margin-bottom: .5rem; }
+    .value-desc  { font-size: .9rem; color: var(--text-secondary); line-height: 1.6; }
+    /* Press */
+    .press-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+    .press-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem;
+      transition: border-color var(--transition-normal);
+    }
+    .press-card:hover { border-color: var(--accent); }
+    .press-pub { font-size: .75rem; font-weight: var(--fw-semibold); color: var(--accent); text-transform: uppercase; letter-spacing: .1em; margin-bottom: .75rem; }
+    .press-quote { font-size: .95rem; color: var(--text-primary); line-height: 1.6; font-style: italic; margin-bottom: 1rem; }
+    .press-date  { font-size: .8rem; color: var(--muted); }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .timeline::before { left: 24px; }
+      .timeline-item { grid-template-columns: 48px 1fr; }
+      .timeline-dot  { grid-column: 1; grid-row: 1; }
+      .timeline-item:nth-child(odd)  .timeline-content,
+      .timeline-item:nth-child(even) .timeline-content { grid-column: 2; grid-row: 1; text-align: left; }
+      .timeline-item:nth-child(odd)  .timeline-empty,
+      .timeline-item:nth-child(even) .timeline-empty   { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"  aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="container navbar__inner">
+        <a href="index.html" class="navbar__logo" aria-label="Vaultstone Bank home">
+          <div class="navbar__logo-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <span class="navbar__logo-text">Vault<span>stone</span></span>
+        </a>
+        <ul class="navbar__nav" role="list">
+          <li><a href="services.html" class="navbar__link">Services</a></li>
+          <li><a href="about.html"    class="navbar__link" aria-current="page">About</a></li>
+          <li><a href="faq.html"      class="navbar__link">Help</a></li>
+          <li><a href="contact.html"  class="navbar__link">Contact</a></li>
+        </ul>
+        <div class="navbar__actions">
+          <a href="login.html"  class="navbar__login">Log In</a>
+          <a href="signup.html" class="btn btn-primary btn-sm">Open Account</a>
+        </div>
+        <button class="navbar__toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="navbar__mobile" id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+        <a href="services.html" class="navbar__mobile-link">Services</a>
+        <a href="about.html"    class="navbar__mobile-link">About</a>
+        <a href="faq.html"      class="navbar__mobile-link">Help Center</a>
+        <a href="contact.html"  class="navbar__mobile-link">Contact</a>
+        <a href="login.html"    class="navbar__mobile-link">Log In</a>
+        <a href="signup.html" class="btn btn-primary btn-lg navbar__mobile-cta">Open Account</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <!-- Page Hero -->
+    <section class="page-hero" aria-label="About hero">
+      <canvas id="page-canvas" data-scene="network" aria-hidden="true" style="position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:0.55;"></canvas>
+      <div class="container" style="position:relative;z-index:1;">
+        <div class="section-label page-hero__label">About Vaultstone</div>
+        <h1 class="page-hero__title">Banking Built on<br><span>Conviction</span></h1>
+        <p class="page-hero__subtitle">Founded in 1998 by former Goldman Sachs executives with a singular belief: every individual and business deserves access to the same institutional tools once reserved for the ultra-wealthy.</p>
+      </div>
+    </section>
+
+    <!-- Mission & Stats -->
+    <section style="padding-block: 5rem;" aria-label="Mission and statistics">
+      <div class="container">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:4rem; align-items:center;" class="about-split">
+          <div class="reveal-left">
+            <div class="section-label">Our Mission</div>
+            <h2 class="section-title">We Believe <span>Finance</span> Should Serve People</h2>
+            <p style="margin-top:1.5rem; color:var(--text-secondary); line-height:1.75; font-size:1.05rem;">
+              For too long, institutional-quality financial services were gated behind minimum balances and private client thresholds. Vaultstone was built to dismantle that gate — permanently.
+            </p>
+            <p style="margin-top:1rem; color:var(--text-secondary); line-height:1.75;">
+              Today, with $48B AUM, 2.4 million clients, and operations in 147 countries, we remain privately held and obsessively focused on one metric: client outcomes. Not quarterly earnings. Not shareholder returns. Client outcomes.
+            </p>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+            <div class="glass-card reveal" style="padding:1.75rem; text-align:center;">
+              <div style="font-size:2.25rem; font-weight:800; color:var(--accent); letter-spacing:-.03em;">25+</div>
+              <div style="font-size:.875rem; color:var(--muted); margin-top:.35rem;">Years of excellence</div>
+            </div>
+            <div class="glass-card reveal" style="padding:1.75rem; text-align:center; transition-delay:.1s;">
+              <div style="font-size:2.25rem; font-weight:800; color:var(--accent); letter-spacing:-.03em;">AA+</div>
+              <div style="font-size:.875rem; color:var(--muted); margin-top:.35rem;">S&amp;P / Moody's rating</div>
+            </div>
+            <div class="glass-card reveal" style="padding:1.75rem; text-align:center; transition-delay:.2s;">
+              <div style="font-size:2.25rem; font-weight:800; color:var(--accent); letter-spacing:-.03em;">$0</div>
+              <div style="font-size:.875rem; color:var(--muted); margin-top:.35rem;">Client funds lost to fraud</div>
+            </div>
+            <div class="glass-card reveal" style="padding:1.75rem; text-align:center; transition-delay:.3s;">
+              <div style="font-size:2.25rem; font-weight:800; color:var(--accent); letter-spacing:-.03em;">4.9★</div>
+              <div style="font-size:.875rem; color:var(--muted); margin-top:.35rem;">180K+ client reviews</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <style>@media(max-width:900px){.about-split{grid-template-columns:1fr!important;gap:2.5rem!important;}}</style>
+    </section>
+
+    <!-- Values -->
+    <section style="background:var(--surface); border-top:1px solid var(--accent-border); padding-block:5rem;" aria-label="Company values">
+      <div class="container">
+        <div class="text-center" style="margin-bottom:3rem;">
+          <div class="section-label">What Drives Us</div>
+          <h2 class="section-title">Four <span>Pillars</span> of Vaultstone</h2>
+        </div>
+        <div class="values-grid">
+          <div class="value-card reveal">
+            <div class="value-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="value-title">Client-First, Always</div>
+            <div class="value-desc">Every product decision, every policy, every line of code is evaluated through a single lens: does this make our clients financially stronger? If the answer isn't an unambiguous yes, we don't ship it.</div>
+          </div>
+          <div class="value-card reveal reveal-delay-1">
+            <div class="value-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            </div>
+            <div class="value-title">Radical Transparency</div>
+            <div class="value-desc">No hidden fees. No confusing fine print. No conflicts of interest. We earn revenue when our clients earn returns — full stop. Our fee structures are published, plain-English, and audited annually.</div>
+          </div>
+          <div class="value-card reveal reveal-delay-2">
+            <div class="value-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <div class="value-title">Engineering Excellence</div>
+            <div class="value-desc">We invest 22% of revenue in R&amp;D — 3x the industry average. Our infrastructure runs at 99.99% uptime, and our security posture is continuously validated by external red-team exercises.</div>
+          </div>
+          <div class="value-card reveal reveal-delay-3">
+            <div class="value-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            </div>
+            <div class="value-title">Global Inclusion</div>
+            <div class="value-desc">Whether you're in Lagos, Lahore, or London, you deserve the same product quality and support. We localize for 87 languages, offer 34 currency accounts, and hire locally in every major region we serve.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- History Timeline -->
+    <section style="padding-block:5rem;" aria-label="Company history">
+      <div class="container">
+        <div class="text-center" style="margin-bottom:3.5rem;">
+          <div class="section-label">Our History</div>
+          <h2 class="section-title">25 Years of <span>Milestones</span></h2>
+        </div>
+        <div class="timeline">
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-year">1998</div>
+              <div class="timeline-title">Founded in New York</div>
+              <div class="timeline-desc">James Hartwell and Elena Voss leave Goldman Sachs to found Vaultstone with $12M in seed capital and a charter from the OCC.</div>
+            </div>
+            <div class="timeline-dot">98</div>
+            <div class="timeline-empty"></div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-empty"></div>
+            <div class="timeline-dot">03</div>
+            <div class="timeline-content">
+              <div class="timeline-year">2003</div>
+              <div class="timeline-title">First $1B in AUM</div>
+              <div class="timeline-desc">Reached $1B in assets under management ahead of schedule, driven by word-of-mouth growth among high-net-worth individuals.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-year">2008</div>
+              <div class="timeline-title">Through the Financial Crisis</div>
+              <div class="timeline-desc">While competitors collapsed, Vaultstone's conservative risk framework preserved 100% of client assets. Zero client losses. Zero government bailouts.</div>
+            </div>
+            <div class="timeline-dot">08</div>
+            <div class="timeline-empty"></div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-empty"></div>
+            <div class="timeline-dot">14</div>
+            <div class="timeline-content">
+              <div class="timeline-year">2014</div>
+              <div class="timeline-title">Launched Digital Platform</div>
+              <div class="timeline-desc">Pioneered the shift to mobile-first banking with full-featured iOS and Android apps, 18 months before major incumbents.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-year">2018</div>
+              <div class="timeline-title">Global Expansion</div>
+              <div class="timeline-desc">Opened London, Singapore, and Dubai offices. Received FCA authorization in the UK and MAS licensing in Singapore.</div>
+            </div>
+            <div class="timeline-dot">18</div>
+            <div class="timeline-empty"></div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-empty"></div>
+            <div class="timeline-dot">22</div>
+            <div class="timeline-content">
+              <div class="timeline-year">2022</div>
+              <div class="timeline-title">$40B AUM Milestone</div>
+              <div class="timeline-desc">Crossed $40B in assets under management. Launched AI-powered financial insights and real-time global payment rails.</div>
+            </div>
+          </div>
+          <div class="timeline-item">
+            <div class="timeline-content">
+              <div class="timeline-year">Today</div>
+              <div class="timeline-title">$48B &amp; 2.4M Clients</div>
+              <div class="timeline-desc">Serving 2.4 million individuals and businesses across 147 countries. Still privately held. Still debt-free. Still obsessively client-first.</div>
+            </div>
+            <div class="timeline-dot" style="background:rgba(201,168,76,.15);">26</div>
+            <div class="timeline-empty"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Leadership -->
+    <section id="leadership" style="background:var(--surface); border-top:1px solid var(--accent-border); padding-block:5rem;" aria-label="Leadership team">
+      <div class="container">
+        <div class="text-center" style="margin-bottom:3rem;">
+          <div class="section-label">Leadership</div>
+          <h2 class="section-title">The <span>Team</span> Behind Vaultstone</h2>
+          <p class="section-subtitle" style="max-width:560px; margin-inline:auto;">Seasoned executives from Goldman Sachs, JPMorgan, Google, and the world's leading regulatory bodies.</p>
+        </div>
+        <div class="team-grid">
+          <div class="team-card reveal">
+            <div class="team-avatar">JH</div>
+            <div class="team-name">James Hartwell</div>
+            <div class="team-title">Co-Founder &amp; CEO</div>
+            <div class="team-bio">Former Managing Director at Goldman Sachs. Harvard MBA. Named to Forbes Fintech 50 for six consecutive years.</div>
+          </div>
+          <div class="team-card reveal reveal-delay-1">
+            <div class="team-avatar">EV</div>
+            <div class="team-name">Elena Voss</div>
+            <div class="team-title">Co-Founder &amp; President</div>
+            <div class="team-bio">Former Head of Risk at JPMorgan Chase. MIT Sloan MBA. Architect of Vaultstone's zero-loss risk framework.</div>
+          </div>
+          <div class="team-card reveal reveal-delay-2">
+            <div class="team-avatar">MK</div>
+            <div class="team-name">Michael Kang</div>
+            <div class="team-title">Chief Technology Officer</div>
+            <div class="team-bio">Ex-VP Engineering at Stripe. Stanford CS PhD. Led the architecture of Vaultstone's real-time payment rails and security infrastructure.</div>
+          </div>
+          <div class="team-card reveal reveal-delay-3">
+            <div class="team-avatar">SC</div>
+            <div class="team-name">Sophia Chen</div>
+            <div class="team-title">Chief Financial Officer</div>
+            <div class="team-bio">Former Global CFO at BlackRock Asset Management. Maintained Vaultstone's AA+ credit rating through three rate cycles.</div>
+          </div>
+          <div class="team-card reveal">
+            <div class="team-avatar">OB</div>
+            <div class="team-name">Oluwaseun Balogun</div>
+            <div class="team-title">Chief Risk Officer</div>
+            <div class="team-bio">Former Head of Compliance, EMEA at Citibank. LLM in Financial Regulation from London School of Economics.</div>
+          </div>
+          <div class="team-card reveal reveal-delay-1">
+            <div class="team-avatar">PL</div>
+            <div class="team-name">Priya Lakshmi</div>
+            <div class="team-title">Chief Product Officer</div>
+            <div class="team-bio">Built consumer products at Google Pay and Apple Wallet. Named one of Fortune's Most Powerful Women in Business 2024.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Press -->
+    <section id="press" style="padding-block:5rem;" aria-label="Press and media">
+      <div class="container">
+        <div class="text-center" style="margin-bottom:3rem;">
+          <div class="section-label">Press &amp; Media</div>
+          <h2 class="section-title">What the World Is <span>Saying</span></h2>
+        </div>
+        <div class="press-grid">
+          <div class="press-card reveal">
+            <div class="press-pub">The Wall Street Journal</div>
+            <div class="press-quote">"Vaultstone has quietly become the most trusted name in digital banking for high-net-worth clients — and it's doing so without the venture-fueled recklessness of its competitors."</div>
+            <div class="press-date">March 2025</div>
+          </div>
+          <div class="press-card reveal reveal-delay-1">
+            <div class="press-pub">Financial Times</div>
+            <div class="press-quote">"In an industry rocked by bank failures and crypto chaos, Vaultstone's 27-year streak of zero client losses stands as a singular achievement."</div>
+            <div class="press-date">January 2025</div>
+          </div>
+          <div class="press-card reveal reveal-delay-2">
+            <div class="press-pub">Forbes</div>
+            <div class="press-quote">"The platform's AI analytics put Vaultstone in a category of one — it's the only institution where personal banking genuinely feels like having a private wealth manager."</div>
+            <div class="press-date">October 2024</div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:2.5rem;">
+          <a href="contact.html" class="btn btn-outline">Press Inquiries</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ESG / Investors -->
+    <section id="esg" style="background:var(--surface); border-top:1px solid var(--accent-border); padding-block:5rem;" aria-label="ESG and investor relations">
+      <div class="container">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:3rem;" class="about-split">
+          <div class="glass-card reveal" style="padding:2.5rem;">
+            <div class="section-label">ESG &amp; Sustainability</div>
+            <h3 style="font-size:1.5rem; font-weight:var(--fw-bold); margin:1rem 0 1rem; line-height:1.3;">Banking That <span style="color:var(--accent);">Gives Back</span></h3>
+            <p style="color:var(--text-secondary); line-height:1.7; margin-bottom:1.5rem;">Carbon-neutral since 2021. $200M committed to emerging-market financial inclusion. 1% of annual profits donated to financial literacy programs globally.</p>
+            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:.75rem;">
+              <li style="display:flex; gap:.75rem; align-items:flex-start; color:var(--text-secondary); font-size:.9rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:.15rem; flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                Net-zero emissions certified by EY
+              </li>
+              <li style="display:flex; gap:.75rem; align-items:flex-start; color:var(--text-secondary); font-size:.9rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:.15rem; flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                Board gender parity achieved in 2022
+              </li>
+              <li style="display:flex; gap:.75rem; align-items:flex-start; color:var(--text-secondary); font-size:.9rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:.15rem; flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                TCFD-aligned climate risk disclosures since 2020
+              </li>
+            </ul>
+          </div>
+          <div id="investors" class="glass-card reveal" style="padding:2.5rem;">
+            <div class="section-label">Investor Relations</div>
+            <h3 style="font-size:1.5rem; font-weight:var(--fw-bold); margin:1rem 0 1rem; line-height:1.3;">Privately Held, <span style="color:var(--accent);">Debt-Free</span></h3>
+            <p style="color:var(--text-secondary); line-height:1.7; margin-bottom:1.5rem;">Vaultstone has never taken on debt or sold equity since its founding round. Our capital ratios exceed Basel III requirements by 2.8x. We grow from operating cash flow, not leverage.</p>
+            <ul style="list-style:none; padding:0; display:flex; flex-direction:column; gap:.75rem;">
+              <li style="display:flex; gap:.75rem; align-items:flex-start; color:var(--text-secondary); font-size:.9rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:.15rem; flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                Tier 1 Capital Ratio: 18.4% (min. 6%)
+              </li>
+              <li style="display:flex; gap:.75rem; align-items:flex-start; color:var(--text-secondary); font-size:.9rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:.15rem; flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                Audited annually by PricewaterhouseCoopers
+              </li>
+              <li style="display:flex; gap:.75rem; align-items:flex-start; color:var(--text-secondary); font-size:.9rem;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-top:.15rem; flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+                Annual Report available to all clients
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-banner" aria-label="Call to action">
+      <div class="container">
+        <div class="reveal">
+          <h2 class="cta-banner__title">Ready to Join the<br><span>Vaultstone Family?</span></h2>
+          <p class="cta-banner__subtitle">Open your account in 4 minutes. No minimum balance. No monthly fees.</p>
+          <div class="cta-banner__actions">
+            <a href="signup.html" class="btn btn-primary btn-lg">Open Account — Free</a>
+            <a href="contact.html" class="btn btn-outline btn-lg">Talk to Our Team</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <div class="footer__brand-logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1"/>
+              </svg>
+            </div>
+            Vaultstone Bank
+          </div>
+          <p class="footer__brand-desc">Institutional-grade banking for everyone. Secure, transparent, and built to grow with you.</p>
+          <nav class="footer__social" aria-label="Social media links">
+            <a href="#" class="footer__social-link" aria-label="Follow us on X"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4l16 16M20 4L4 20"/></svg></a>
+            <a href="#" class="footer__social-link" aria-label="Follow us on LinkedIn"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg></a>
+          </nav>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Products</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="services.html#personal"    class="footer__link">Personal Banking</a></li>
+            <li><a href="services.html#business"    class="footer__link">Business Banking</a></li>
+            <li><a href="services.html#wealth"      class="footer__link">Wealth Management</a></li>
+            <li><a href="services.html#savings"     class="footer__link">Savings Accounts</a></li>
+            <li><a href="services.html#loans"       class="footer__link">Loans &amp; Mortgages</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Company</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="about.html"            class="footer__link">About Us</a></li>
+            <li><a href="about.html#leadership" class="footer__link">Leadership</a></li>
+            <li><a href="about.html#press"      class="footer__link">Press &amp; Media</a></li>
+            <li><a href="careers.html"          class="footer__link">Careers</a></li>
+            <li><a href="about.html#investors"  class="footer__link">Investor Relations</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Resources</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="faq.html"      class="footer__link">Help Center</a></li>
+            <li><a href="security.html" class="footer__link">Security Center</a></li>
+            <li><a href="contact.html"  class="footer__link">Contact Us</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Legal</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="privacy.html" class="footer__link">Privacy Policy</a></li>
+            <li><a href="terms.html"   class="footer__link">Terms of Service</a></li>
+            <li><a href="#"            class="footer__link">Cookie Policy</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p class="footer__legal">&copy; 2026 Vaultstone Bank, N.A. All rights reserved. Member FDIC. Equal Housing Lender.</p>
+        <div class="footer__certifications" role="list">
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>FDIC</div>
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>SOC 2</div>
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>PCI DSS</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+  <script src="scripts/main.js"></script>
+</body>
+</html>

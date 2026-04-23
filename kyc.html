@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vaultstone Bank — Identity Verification (KYC)" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#0A0E1A" />
+  <title>Identity Verification — Vaultstone Bank</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/auth.css" />
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+
+  <style>
+    /* ── KYC-specific overrides ── */
+    .kyc-card { max-width: 540px; }
+
+    /* Document type selection grid */
+    .doc-type-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .doc-type-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 1.125rem 1rem;
+      border: 1.5px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      background: rgba(26, 34, 54, 0.5);
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition), transform 0.18s;
+      user-select: none;
+      text-align: center;
+    }
+    .doc-type-card:hover { border-color: var(--accent-border); background: var(--accent-dim); }
+    .doc-type-card.selected {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 0 3px rgba(201,168,76,0.18);
+    }
+    .doc-type-card svg { width: 32px; height: 32px; color: var(--accent); }
+    .doc-type-card__name { font-size: 0.875rem; font-weight: 600; color: var(--text); }
+    .doc-type-card__sub  { font-size: 0.75rem; color: var(--muted); line-height: 1.4; }
+    .doc-type-card .check-icon {
+      display: none;
+      position: absolute;
+      top: 0.5rem; right: 0.5rem;
+      width: 18px; height: 18px;
+      background: var(--accent);
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+    }
+    .doc-type-card { position: relative; }
+    .doc-type-card.selected .check-icon { display: flex; }
+    .doc-type-card .check-icon svg { width: 10px; height: 10px; color: #000; }
+
+    /* Upload zones */
+    .upload-zone {
+      position: relative;
+      border: 2px dashed var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color var(--transition), background var(--transition);
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent-border);
+      background: var(--accent-dim);
+    }
+    .upload-zone.uploaded {
+      border-color: var(--success);
+      background: rgba(16, 185, 129, 0.06);
+    }
+    .upload-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .upload-zone__icon {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 0.75rem;
+    }
+    .upload-zone__icon svg { width: 22px; height: 22px; color: var(--accent); }
+    .upload-zone__title { font-size: 0.875rem; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; }
+    .upload-zone__sub   { font-size: 0.75rem; color: var(--muted); }
+    .upload-zone__preview {
+      max-width: 100%; max-height: 120px;
+      border-radius: var(--radius-sm);
+      object-fit: cover;
+      display: none;
+      margin: 0.5rem auto 0;
+    }
+    .upload-zone.uploaded .upload-zone__preview { display: block; }
+    .upload-zone.uploaded .upload-zone__icon { background: rgba(16,185,129,0.15); }
+    .upload-zone.uploaded .upload-zone__icon svg { color: var(--success); }
+
+    /* Selfie frame */
+    .selfie-frame {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      border: 3px dashed var(--accent-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.25rem;
+      overflow: hidden;
+      background: var(--accent-dim);
+      position: relative;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    .selfie-frame:hover { border-color: var(--accent); }
+    .selfie-frame.uploaded { border-style: solid; border-color: var(--success); }
+    .selfie-frame input[type="file"] {
+      position: absolute; inset: 0; opacity: 0; cursor: pointer;
+      width: 100%; height: 100%;
+    }
+    .selfie-frame__placeholder svg { width: 48px; height: 48px; color: var(--accent); }
+    .selfie-frame__img {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: none;
+      border-radius: 50%;
+    }
+    .selfie-frame.uploaded .selfie-frame__img   { display: block; }
+    .selfie-frame.uploaded .selfie-frame__placeholder { display: none; }
+
+    /* Review checklist */
+    .review-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.875rem 0;
+      border-bottom: 1px solid var(--glass-border);
+      font-size: 0.875rem;
+    }
+    .review-row:last-child { border-bottom: none; }
+    .review-row__icon {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.12);
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .review-row__icon svg { width: 18px; height: 18px; color: var(--success); }
+    .review-row__label { color: var(--muted); flex: 1; }
+    .review-row__value { font-weight: 600; color: var(--text); text-align: right; }
+
+    /* KYC under-review success state */
+    .kyc-success__icon {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: rgba(201,168,76,0.15);
+      border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+    }
+    .kyc-success__icon svg { width: 36px; height: 36px; color: var(--accent); }
+
+    /* Input document number */
+    .doc-number-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    /* Info banner */
+    .info-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      background: rgba(59,130,246,0.08);
+      border: 1px solid rgba(59,130,246,0.2);
+      border-radius: var(--radius-sm);
+      padding: 0.875rem 1rem;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1.25rem;
+    }
+    .info-banner svg { width: 16px; height: 16px; color: #60A5FA; flex-shrink: 0; margin-top: 1px; }
+
+    @media (max-width: 480px) {
+      .doc-type-grid { grid-template-columns: 1fr 1fr; }
+      .doc-number-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Three.js Background -->
+<canvas id="kyc-canvas" aria-hidden="true"
+  style="position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block;"></canvas>
+<div class="signup-overlay" aria-hidden="true"></div>
+
+<!-- Top Bar -->
+<nav class="auth-topbar" role="navigation" aria-label="Site navigation">
+  <a href="index.html" class="auth-topbar__logo" aria-label="Vaultstone Bank home">
+    <div class="auth-topbar__logo-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <circle cx="12" cy="16" r="1"/>
+      </svg>
+    </div>
+    <span class="auth-topbar__logo-text">Vault<span>stone</span></span>
+  </a>
+  <span class="auth-topbar__link">
+    Secure Verification &nbsp;
+    <span style="color:var(--accent);font-weight:600;font-size:0.75rem">
+      🔒 256-bit Encrypted
+    </span>
+  </span>
+</nav>
+
+<!-- KYC Form -->
+<main class="signup-page" role="main" style="padding-top:5.5rem">
+  <div class="signup-card kyc-card" id="kyc-form">
+
+    <!-- Step Progress -->
+    <div class="step-progress" role="tablist" aria-label="Verification steps">
+      <div class="step-progress__track">
+
+        <div class="step-progress__item active" role="tab" aria-selected="true" aria-label="Step 1: Document">
+          <div class="step-progress__circle">1</div>
+          <span class="step-progress__label">Document</span>
+        </div>
+
+        <div class="step-progress__item" role="tab" aria-selected="false" aria-label="Step 2: Upload">
+          <div class="step-progress__circle">2</div>
+          <span class="step-progress__label">Upload</span>
+        </div>
+
+        <div class="step-progress__item" role="tab" aria-selected="false" aria-label="Step 3: Selfie">
+          <div class="step-progress__circle">3</div>
+          <span class="step-progress__label">Selfie</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ════════════════ STEP 1 — Document Type ════════════════ -->
+    <div class="step-panel active" id="kyc-step-1" role="tabpanel">
+
+      <div class="signup-header">
+        <h2>Choose Your Document</h2>
+        <p>Select a valid government-issued identity document. Make sure it is not expired.</p>
+      </div>
+
+      <div class="doc-type-grid">
+
+        <!-- Passport -->
+        <div class="doc-type-card" data-doc="passport" tabindex="0" role="radio" aria-checked="false">
+          <div class="check-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="2" width="16" height="20" rx="2"/>
+            <circle cx="12" cy="10" r="3"/>
+            <path d="M8 18h8"/>
+          </svg>
+          <div class="doc-type-card__name">Passport</div>
+          <div class="doc-type-card__sub">International travel document</div>
+        </div>
+
+        <!-- Driver's License -->
+        <div class="doc-type-card" data-doc="driver_license" tabindex="0" role="radio" aria-checked="false">
+          <div class="check-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="1" y="4" width="22" height="16" rx="2"/>
+            <circle cx="8" cy="12" r="2"/>
+            <path d="M12 10h6M12 14h4"/>
+          </svg>
+          <div class="doc-type-card__name">Driver's License</div>
+          <div class="doc-type-card__sub">State or national licence</div>
+        </div>
+
+        <!-- National ID -->
+        <div class="doc-type-card" data-doc="national_id" tabindex="0" role="radio" aria-checked="false">
+          <div class="check-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <path d="M7 15s0-4 3-4 3 4 3 4"/>
+            <circle cx="10" cy="9" r="1.5"/>
+            <path d="M16 10h2M16 13h2"/>
+          </svg>
+          <div class="doc-type-card__name">National ID Card</div>
+          <div class="doc-type-card__sub">Government ID card</div>
+        </div>
+
+        <!-- Residence Permit -->
+        <div class="doc-type-card" data-doc="residence_permit" tabindex="0" role="radio" aria-checked="false">
+          <div class="check-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <div class="doc-type-card__name">Residence Permit</div>
+          <div class="doc-type-card__sub">Permanent residency card</div>
+        </div>
+
+      </div>
+
+      <!-- Document number + expiry -->
+      <div class="doc-number-row" id="doc-fields" style="display:none">
+        <div class="field-group">
+          <input type="text" id="doc-number" class="field-group__input" placeholder="Document number" autocomplete="off" />
+          <label for="doc-number" class="field-group__label">Document number</label>
+        </div>
+        <div class="field-group">
+          <input type="date" id="doc-expiry" class="field-group__input has-value" />
+          <label for="doc-expiry" class="field-group__label">Expiry date</label>
+        </div>
+      </div>
+
+      <div id="doc-type-error" style="color:#EF4444;font-size:0.8125rem;margin-bottom:0.75rem;display:none">
+        Please select a document type.
+      </div>
+
+      <div class="step-nav">
+        <button type="button" class="btn btn--primary" id="kyc-next-1">
+          <span class="btn__text">Continue</span>
+          <span class="btn__spinner"></span>
+        </button>
+      </div>
+    </div><!-- /#kyc-step-1 -->
+
+    <!-- ════════════════ STEP 2 — Upload Documents ════════════════ -->
+    <div class="step-panel" id="kyc-step-2" role="tabpanel">
+
+      <div class="signup-header">
+        <h2>Upload Your Document</h2>
+        <p>Take clear, well-lit photos. All four corners must be visible with no glare.</p>
+      </div>
+
+      <div class="info-banner">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Supported formats: JPG, PNG, PDF · Max size: 10 MB per file
+      </div>
+
+      <!-- Front side -->
+      <div class="upload-zone" id="upload-front-zone" aria-label="Upload document front">
+        <input type="file" id="upload-front" accept="image/*,.pdf" aria-label="Upload front of document" />
+        <div class="upload-zone__icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-zone__title" id="front-label">Front of Document</div>
+        <div class="upload-zone__sub">Click to browse or drag and drop here</div>
+        <img class="upload-zone__preview" id="front-preview" src="" alt="Front preview" />
+      </div>
+
+      <!-- Back side (hidden for passport) -->
+      <div class="upload-zone" id="upload-back-zone" aria-label="Upload document back">
+        <input type="file" id="upload-back" accept="image/*,.pdf" aria-label="Upload back of document" />
+        <div class="upload-zone__icon">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <div class="upload-zone__title">Back of Document</div>
+        <div class="upload-zone__sub">Click to browse or drag and drop here</div>
+        <img class="upload-zone__preview" id="back-preview" src="" alt="Back preview" />
+      </div>
+
+      <div id="upload-error" style="color:#EF4444;font-size:0.8125rem;margin-bottom:0.75rem;display:none">
+        Please upload the front of your document.
+      </div>
+
+      <div class="step-nav">
+        <button type="button" class="btn btn--ghost" id="kyc-back-2">Back</button>
+        <button type="button" class="btn btn--primary" id="kyc-next-2">
+          <span class="btn__text">Continue</span>
+          <span class="btn__spinner"></span>
+        </button>
+      </div>
+    </div><!-- /#kyc-step-2 -->
+
+    <!-- ════════════════ STEP 3 — Selfie & Submit ════════════════ -->
+    <div class="step-panel" id="kyc-step-3" role="tabpanel">
+
+      <div class="signup-header">
+        <h2>Take a Selfie</h2>
+        <p>Hold your camera at eye level in good lighting. Look directly at the camera.</p>
+      </div>
+
+      <!-- Selfie upload circle -->
+      <div class="selfie-frame" id="selfie-frame" role="button" tabindex="0" aria-label="Upload selfie">
+        <input type="file" id="upload-selfie" accept="image/*" capture="user" aria-label="Selfie photo" />
+        <div class="selfie-frame__placeholder">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <img class="selfie-frame__img" id="selfie-preview" src="" alt="Selfie preview" />
+      </div>
+
+      <p style="text-align:center;font-size:0.8125rem;color:var(--muted);margin-bottom:1.5rem">
+        Tap the circle above to take or upload a selfie
+      </p>
+
+      <!-- Review summary -->
+      <div class="card" style="padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-size:0.8125rem;font-weight:600;margin-bottom:0.75rem;color:var(--muted)">REVIEW YOUR SUBMISSION</div>
+
+        <div class="review-row">
+          <div class="review-row__icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 0h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 7.55a16 16 0 0 0 8.54 8.54l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 24 16.92z"/></svg>
+          </div>
+          <div class="review-row__label">Document type</div>
+          <div class="review-row__value" id="review-doc-type">—</div>
+        </div>
+
+        <div class="review-row">
+          <div class="review-row__icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div class="review-row__label">Document number</div>
+          <div class="review-row__value" id="review-doc-number">—</div>
+        </div>
+
+        <div class="review-row">
+          <div class="review-row__icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <div class="review-row__label">Documents uploaded</div>
+          <div class="review-row__value" id="review-uploads">—</div>
+        </div>
+
+        <div class="review-row">
+          <div class="review-row__icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <div class="review-row__label">Selfie</div>
+          <div class="review-row__value" id="review-selfie">Not uploaded</div>
+        </div>
+      </div>
+
+      <label class="checkbox-field" style="margin-bottom:1.25rem">
+        <input type="checkbox" id="kyc-agree" required />
+        <span class="checkbox-field__box">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3.5">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </span>
+        <span class="checkbox-field__label">
+          I confirm that the information and documents submitted are genuine, accurate, and belong to me.
+        </span>
+      </label>
+
+      <div id="selfie-error" style="color:#EF4444;font-size:0.8125rem;margin-bottom:0.75rem;display:none">
+        Please upload a selfie photo before submitting.
+      </div>
+
+      <div class="step-nav">
+        <button type="button" class="btn btn--ghost" id="kyc-back-3">Back</button>
+        <button type="button" class="btn btn--primary" id="kyc-submit">
+          <span class="btn__text">Submit for Review</span>
+          <span class="btn__spinner" role="status" aria-label="Submitting…"></span>
+        </button>
+      </div>
+
+    </div><!-- /#kyc-step-3 -->
+
+  </div><!-- /.kyc-card -->
+</main>
+
+<!-- ═══════════════════════════════════════════════
+     SUCCESS OVERLAY — UNDER REVIEW
+═══════════════════════════════════════════════ -->
+<div class="success-overlay" id="kyc-success-overlay" aria-live="assertive" role="alert">
+  <div class="kyc-success__icon">
+    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    </svg>
+  </div>
+  <h2>Documents Submitted!</h2>
+  <p>Your identity verification is under review. This typically takes 1–2 business days. We'll notify you by email once approved.</p>
+  <p style="margin-top:0.5rem;color:var(--muted);font-size:0.8125rem">Redirecting to your dashboard…</p>
+</div>
+
+<!-- CDN Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<!-- VaultStore -->
+<script src="scripts/store.js"></script>
+
+<script>
+'use strict';
+
+/* ── Auth guard ── */
+(function () {
+  const user = VaultStore.getCurrentUser();
+  if (!user) { window.location.href = 'login.html'; return; }
+  if (user.kycStatus === 'approved' && user.status === 'active') {
+    window.location.href = 'dashboard.html'; return;
+  }
+})();
+
+/* ── Three.js Particle Background ── */
+function initKYCBackground() {
+  const canvas = document.getElementById('kyc-canvas');
+  if (!canvas || typeof THREE === 'undefined') return;
+
+  const W = window.innerWidth, H = window.innerHeight;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const scene  = new THREE.Scene();
+  scene.background = new THREE.Color(0x060810);
+
+  const camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 100);
+  camera.position.z = 10;
+
+  /* Floating gold particles */
+  const count = 200;
+  const positions = new Float32Array(count * 3);
+  for (let i = 0; i < count; i++) {
+    positions[i * 3]     = (Math.random() - 0.5) * 30;
+    positions[i * 3 + 1] = (Math.random() - 0.5) * 20;
+    positions[i * 3 + 2] = (Math.random() - 0.5) * 15;
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const mat = new THREE.PointsMaterial({ color: 0xC9A84C, size: 0.07, transparent: true, opacity: 0.45, sizeAttenuation: true });
+  const points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  /* Grid plane */
+  const gridGeo = new THREE.PlaneGeometry(40, 40, 20, 20);
+  const gridMat = new THREE.MeshBasicMaterial({ color: 0xC9A84C, wireframe: true, transparent: true, opacity: 0.04 });
+  const grid = new THREE.Mesh(gridGeo, gridMat);
+  grid.rotation.x = -Math.PI / 2.4;
+  grid.position.y = -5;
+  scene.add(grid);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const pos = geo.attributes.position;
+    for (let i = 0; i < count; i++) {
+      pos.array[i * 3 + 1] += 0.008;
+      if (pos.array[i * 3 + 1] > 10) pos.array[i * 3 + 1] = -10;
+    }
+    pos.needsUpdate = true;
+    points.rotation.y += 0.0005;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+}
+
+/* ── KYC Form Logic ── */
+document.addEventListener('DOMContentLoaded', () => {
+  initKYCBackground();
+
+  const user = VaultStore.getCurrentUser();
+  let currentStep = 1;
+  let selectedDocType = null;
+  let frontUploaded = false;
+  let selfieUploaded = false;
+
+  const docLabels = {
+    passport:         'Passport',
+    driver_license:   "Driver's License",
+    national_id:      'National ID Card',
+    residence_permit: 'Residence Permit',
+  };
+
+  /* GSAP card entrance */
+  if (window.gsap) {
+    gsap.from('#kyc-form', { y: 40, opacity: 0, duration: 0.85, ease: 'power3.out', delay: 0.2 });
+  }
+
+  /* ── Step progress update ── */
+  function updateProgress() {
+    document.querySelectorAll('.step-progress__item').forEach((item, idx) => {
+      const n = idx + 1;
+      item.classList.toggle('active', n === currentStep);
+      item.classList.toggle('completed', n < currentStep);
+      const circle = item.querySelector('.step-progress__circle');
+      if (circle) {
+        if (n < currentStep) {
+          circle.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>`;
+        } else {
+          circle.textContent = n;
+        }
+      }
+    });
+  }
+
+  /* ── Slide between steps ── */
+  function goToStep(next, dir) {
+    if (next < 1 || next > 3) return;
+    const from = document.getElementById('kyc-step-' + currentStep);
+    if (window.gsap && from) {
+      gsap.to(from, { x: dir * -60, opacity: 0, duration: 0.26, ease: 'power2.in', onComplete: () => {
+        from.classList.remove('active');
+        currentStep = next;
+        updateProgress();
+        const to = document.getElementById('kyc-step-' + currentStep);
+        if (to) {
+          to.classList.add('active');
+          gsap.fromTo(to, { x: dir * 60, opacity: 0 }, { x: 0, opacity: 1, duration: 0.34, ease: 'power2.out' });
+        }
+        if (currentStep === 3) populateReview();
+      }});
+    } else {
+      from && from.classList.remove('active');
+      currentStep = next;
+      updateProgress();
+      const to = document.getElementById('kyc-step-' + currentStep);
+      to && to.classList.add('active');
+      if (currentStep === 3) populateReview();
+    }
+  }
+
+  /* ── Document type cards ── */
+  document.querySelectorAll('.doc-type-card').forEach(card => {
+    function select() {
+      document.querySelectorAll('.doc-type-card').forEach(c => {
+        c.classList.remove('selected');
+        c.setAttribute('aria-checked', 'false');
+      });
+      card.classList.add('selected');
+      card.setAttribute('aria-checked', 'true');
+      selectedDocType = card.dataset.doc;
+
+      /* Show/hide document fields */
+      const fields = document.getElementById('doc-fields');
+      if (fields) fields.style.display = 'grid';
+
+      /* Passport has no back side */
+      const backZone = document.getElementById('upload-back-zone');
+      if (backZone) backZone.style.display = selectedDocType === 'passport' ? 'none' : 'block';
+
+      /* Update front label */
+      const frontLabel = document.getElementById('front-label');
+      if (frontLabel) {
+        frontLabel.textContent = selectedDocType === 'passport' ? 'Photo page (inside)' : 'Front of Document';
+      }
+      document.getElementById('doc-type-error').style.display = 'none';
+    }
+    card.addEventListener('click', select);
+    card.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); }});
+  });
+
+  /* ── Step 1 Next ── */
+  document.getElementById('kyc-next-1')?.addEventListener('click', () => {
+    if (!selectedDocType) {
+      document.getElementById('doc-type-error').style.display = 'block';
+      const grid = document.querySelector('.doc-type-grid');
+      if (grid) { grid.classList.remove('shake'); void grid.offsetWidth; grid.classList.add('shake'); grid.addEventListener('animationend', () => grid.classList.remove('shake'), { once: true }); }
+      return;
+    }
+    goToStep(2, 1);
+  });
+
+  /* ── File upload handlers ── */
+  function setupUpload(inputId, previewId, zoneId, onSuccess) {
+    const input   = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    const zone    = document.getElementById(zoneId);
+    if (!input || !preview || !zone) return;
+
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if (!file) return;
+      zone.classList.add('uploaded');
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = e => { preview.src = e.target.result; };
+        reader.readAsDataURL(file);
+      } else {
+        preview.src = '';
+      }
+      if (onSuccess) onSuccess(file.name);
+    });
+
+    /* Drag and drop */
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      const file = e.dataTransfer.files[0];
+      if (!file) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event('change'));
+    });
+  }
+
+  setupUpload('upload-front',  'front-preview',  'upload-front-zone',  () => { frontUploaded = true; document.getElementById('upload-error').style.display = 'none'; });
+  setupUpload('upload-back',   'back-preview',   'upload-back-zone',   () => {});
+  setupUpload('upload-selfie', 'selfie-preview', null, () => {
+    selfieUploaded = true;
+    document.getElementById('selfie-error').style.display = 'none';
+    document.getElementById('selfie-frame').classList.add('uploaded');
+    document.getElementById('review-selfie').textContent = 'Uploaded ✓';
+  });
+
+  /* Selfie special setup (no zone element; use frame) */
+  document.getElementById('upload-selfie')?.addEventListener('change', function () {
+    const file = this.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.getElementById('selfie-preview');
+      if (img) img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+    selfieUploaded = true;
+    document.getElementById('selfie-error').style.display = 'none';
+    document.getElementById('selfie-frame').classList.add('uploaded');
+    document.getElementById('review-selfie').textContent = 'Uploaded ✓';
+  });
+
+  /* ── Step 2 Nav ── */
+  document.getElementById('kyc-back-2')?.addEventListener('click', () => goToStep(1, -1));
+  document.getElementById('kyc-next-2')?.addEventListener('click', () => {
+    if (!frontUploaded) {
+      document.getElementById('upload-error').style.display = 'block';
+      const zone = document.getElementById('upload-front-zone');
+      if (zone) { zone.classList.remove('shake'); void zone.offsetWidth; zone.classList.add('shake'); zone.addEventListener('animationend', () => zone.classList.remove('shake'), { once: true }); }
+      return;
+    }
+    goToStep(3, 1);
+  });
+
+  /* ── Step 3 Nav ── */
+  document.getElementById('kyc-back-3')?.addEventListener('click', () => goToStep(2, -1));
+
+  /* ── Populate review summary ── */
+  function populateReview() {
+    const typeEl   = document.getElementById('review-doc-type');
+    const numEl    = document.getElementById('review-doc-number');
+    const uploadsEl = document.getElementById('review-uploads');
+
+    if (typeEl)    typeEl.textContent   = docLabels[selectedDocType] || selectedDocType || '—';
+    if (numEl)     numEl.textContent    = document.getElementById('doc-number')?.value.trim() || 'Not provided';
+    if (uploadsEl) {
+      const count = frontUploaded ? (document.getElementById('upload-back').files[0] ? 2 : 1) : 0;
+      uploadsEl.textContent = count + ' file' + (count !== 1 ? 's' : '') + ' uploaded';
+    }
+  }
+
+  /* ── Final Submit ── */
+  document.getElementById('kyc-submit')?.addEventListener('click', () => {
+    if (!selfieUploaded) {
+      document.getElementById('selfie-error').style.display = 'block';
+      return;
+    }
+    const agree = document.getElementById('kyc-agree');
+    if (agree && !agree.checked) {
+      agree.closest('.checkbox-field')?.classList.add('shake');
+      setTimeout(() => agree.closest('.checkbox-field')?.classList.remove('shake'), 500);
+      return;
+    }
+
+    const btn = document.getElementById('kyc-submit');
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    setTimeout(() => {
+      /* Save KYC to VaultStore */
+      if (user) {
+        VaultStore.submitKYC(user.id, {
+          documentType:   selectedDocType,
+          documentNumber: document.getElementById('doc-number')?.value.trim() || 'N/A',
+          expiryDate:     document.getElementById('doc-expiry')?.value || '',
+          hasSelfie:      true,
+          submittedAt:    new Date().toISOString(),
+        });
+      }
+
+      /* Show success overlay */
+      const overlay = document.getElementById('kyc-success-overlay');
+      if (overlay) {
+        if (window.gsap) {
+          gsap.fromTo(overlay, { opacity: 0 }, { opacity: 1, duration: 0.5, ease: 'power2.out', onStart: () => overlay.classList.add('visible') });
+        } else {
+          overlay.classList.add('visible');
+        }
+      }
+
+      setTimeout(() => { window.location.href = 'dashboard.html'; }, 3200);
+    }, 1800);
+  });
+
+  updateProgress();
+});
+</script>
+
+</body>
+</html>

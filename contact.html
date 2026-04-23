@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Contact Vaultstone Bank — reach our team by phone, email, chat, or visit one of our global offices." />
+  <title>Contact Us — Vaultstone Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+  <style>
+    .page-hero {
+      position: relative;
+      padding: 9rem 0 5rem;
+      background: var(--primary-deep);
+      overflow: hidden;
+      border-bottom: 1px solid var(--accent-border);
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(201,168,76,0.1) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .page-hero__title {
+      font-size: clamp(2.2rem, 5vw, 3.75rem);
+      font-weight: var(--fw-extrabold);
+      line-height: var(--leading-tight);
+      letter-spacing: -.03em;
+      margin-bottom: 1.25rem;
+    }
+    .page-hero__title span { color: var(--accent); }
+    .page-hero__subtitle { font-size: 1.1rem; color: var(--text-secondary); max-width: 540px; line-height: 1.7; }
+
+    /* Contact grid */
+    .contact-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .contact-grid { grid-template-columns: 1fr; } }
+
+    /* Form */
+    .contact-form { display: flex; flex-direction: column; gap: 1.25rem; }
+    .form-row     { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+    @media (max-width: 600px) { .form-row { grid-template-columns: 1fr; } }
+    .field-group { display: flex; flex-direction: column; gap: .5rem; }
+    .field-label { font-size: .875rem; font-weight: var(--fw-medium); color: var(--text-secondary); }
+    .field-input, .field-select, .field-textarea {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-lg);
+      padding: .875rem 1rem;
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: .95rem;
+      transition: border-color var(--transition-fast);
+      width: 100%;
+      appearance: none;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+    .field-textarea { resize: vertical; min-height: 130px; }
+    .field-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23C9A84C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 1rem center; padding-right: 2.5rem; }
+
+    /* Channel cards */
+    .channel-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-xl);
+      padding: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      transition: border-color var(--transition-normal);
+    }
+    .channel-card:hover { border-color: var(--accent); }
+    .channel-icon {
+      width: 44px; height: 44px; flex-shrink: 0;
+      background: rgba(201,168,76,.1);
+      border-radius: var(--radius-lg);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--accent);
+    }
+    .channel-icon svg { width: 20px; height: 20px; }
+    .channel-title  { font-weight: var(--fw-semibold); margin-bottom: .25rem; }
+    .channel-detail { font-size: .875rem; color: var(--text-secondary); line-height: 1.5; }
+    .channel-badge  { display: inline-block; background: rgba(34,197,94,.1); color: #22c55e; border-radius: var(--radius-full); padding: .2rem .65rem; font-size: .75rem; font-weight: var(--fw-semibold); margin-top: .5rem; }
+
+    /* Office cards */
+    .office-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1.25rem; }
+    .office-card {
+      background: var(--surface);
+      border: 1px solid var(--accent-border);
+      border-radius: var(--radius-xl);
+      padding: 1.75rem;
+      transition: border-color var(--transition-normal), transform var(--transition-normal);
+    }
+    .office-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+    .office-city {
+      font-size: 1.1rem; font-weight: var(--fw-bold); margin-bottom: .35rem;
+    }
+    .office-region { font-size: .75rem; color: var(--accent); text-transform: uppercase; letter-spacing: .1em; font-weight: var(--fw-semibold); margin-bottom: .75rem; }
+    .office-address { font-size: .875rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Success state */
+    .form-success { display: none; text-align: center; padding: 3rem 2rem; }
+    .form-success.visible { display: block; }
+    .form-success__icon {
+      width: 72px; height: 72px;
+      background: rgba(34,197,94,.1);
+      border: 2px solid rgba(34,197,94,.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 1.5rem;
+      color: #22c55e;
+    }
+    .form-success__icon svg { width: 32px; height: 32px; }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"  aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="container navbar__inner">
+        <a href="index.html" class="navbar__logo" aria-label="Vaultstone Bank home">
+          <div class="navbar__logo-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <span class="navbar__logo-text">Vault<span>stone</span></span>
+        </a>
+        <ul class="navbar__nav" role="list">
+          <li><a href="services.html" class="navbar__link">Services</a></li>
+          <li><a href="about.html"    class="navbar__link">About</a></li>
+          <li><a href="faq.html"      class="navbar__link">Help</a></li>
+          <li><a href="contact.html"  class="navbar__link" aria-current="page">Contact</a></li>
+        </ul>
+        <div class="navbar__actions">
+          <a href="login.html"  class="navbar__login">Log In</a>
+          <a href="signup.html" class="btn btn-primary btn-sm">Open Account</a>
+        </div>
+        <button class="navbar__toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="navbar__mobile" id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+        <a href="services.html" class="navbar__mobile-link">Services</a>
+        <a href="about.html"    class="navbar__mobile-link">About</a>
+        <a href="faq.html"      class="navbar__mobile-link">Help Center</a>
+        <a href="contact.html"  class="navbar__mobile-link">Contact</a>
+        <a href="login.html"    class="navbar__mobile-link">Log In</a>
+        <a href="signup.html" class="btn btn-primary btn-lg navbar__mobile-cta">Open Account</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+
+    <section class="page-hero" aria-label="Contact hero">
+      <div class="container" style="position:relative;z-index:1;">
+        <div class="section-label" style="margin-bottom:.75rem;">Get in Touch</div>
+        <h1 class="page-hero__title">We're Here to<br><span>Help You</span></h1>
+        <p class="page-hero__subtitle">Our team is available 24/7. Expect a response within 4 minutes on chat, or within one business day by email.</p>
+      </div>
+    </section>
+
+    <!-- Contact Channels -->
+    <section style="padding-block:4rem;" aria-label="Contact channels">
+      <div class="container">
+        <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:1.25rem; margin-bottom:4rem;">
+          <div class="channel-card reveal">
+            <div class="channel-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div>
+              <div class="channel-title">Live Chat</div>
+              <div class="channel-detail">Start a chat from the Help icon in any page. Powered by human agents, not bots.</div>
+              <div class="channel-badge">Avg. 4 min response</div>
+            </div>
+          </div>
+          <div class="channel-card reveal reveal-delay-1">
+            <div class="channel-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.13 1 .36 1.98.71 2.91a2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.98 5.98l1.19-1.19a2 2 0 0 1 2.11-.45c.93.35 1.91.58 2.91.71A2 2 0 0 1 22 16.92z"/></svg>
+            </div>
+            <div>
+              <div class="channel-title">Phone Support</div>
+              <div class="channel-detail">(603) 546-0400<br>Available 24 hours, 7 days a week, 365 days a year.</div>
+              <div class="channel-badge">24 / 7</div>
+            </div>
+          </div>
+          <div class="channel-card reveal reveal-delay-2">
+            <div class="channel-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            </div>
+            <div>
+              <div class="channel-title">Email</div>
+              <div class="channel-detail">support@vaultstone.bank<br>For non-urgent queries and documentation requests.</div>
+              <div class="channel-badge">Within 1 business day</div>
+            </div>
+          </div>
+          <div class="channel-card reveal reveal-delay-3">
+            <div class="channel-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div>
+              <div class="channel-title">Dedicated Banker</div>
+              <div class="channel-detail">Business and Wealth clients get a named relationship manager reachable by direct line and email.</div>
+              <div class="channel-badge">Business &amp; Wealth</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Form + Side Info -->
+        <div class="contact-grid">
+          <!-- Form -->
+          <div>
+            <h2 style="font-size:1.5rem; font-weight:var(--fw-bold); margin-bottom:1.75rem;">Send Us a Message</h2>
+            <form class="contact-form" id="contact-form" novalidate>
+              <div class="form-row">
+                <div class="field-group">
+                  <label class="field-label" for="cf-first">First Name *</label>
+                  <input class="field-input" type="text" id="cf-first" name="first_name" placeholder="James" required />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="cf-last">Last Name *</label>
+                  <input class="field-input" type="text" id="cf-last" name="last_name" placeholder="Hartwell" required />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="field-group">
+                  <label class="field-label" for="cf-email">Email Address *</label>
+                  <input class="field-input" type="email" id="cf-email" name="email" placeholder="you@example.com" required />
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="cf-phone">Phone (Optional)</label>
+                  <input class="field-input" type="tel" id="cf-phone" name="phone" placeholder="+1 (555) 000-0000" />
+                </div>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="cf-subject">Subject *</label>
+                <select class="field-select" id="cf-subject" name="subject" required>
+                  <option value="" disabled selected>Select a topic…</option>
+                  <option value="account">Account Opening</option>
+                  <option value="support">Account Support</option>
+                  <option value="transfers">Transfers &amp; Payments</option>
+                  <option value="cards">Cards &amp; Limits</option>
+                  <option value="investment">Investment &amp; Wealth</option>
+                  <option value="business">Business Banking</option>
+                  <option value="security">Security &amp; Fraud</option>
+                  <option value="press">Press &amp; Media</option>
+                  <option value="careers">Careers</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field-group">
+                <label class="field-label" for="cf-message">Message *</label>
+                <textarea class="field-textarea" id="cf-message" name="message" placeholder="Tell us how we can help…" required></textarea>
+              </div>
+              <div style="display:flex; align-items:center; gap:.75rem;">
+                <input type="checkbox" id="cf-consent" name="consent" required style="width:16px;height:16px;accent-color:var(--accent);flex-shrink:0;" />
+                <label for="cf-consent" style="font-size:.85rem; color:var(--text-secondary);">I agree to Vaultstone's <a href="privacy.html" style="color:var(--accent);">Privacy Policy</a> and consent to being contacted about my enquiry.</label>
+              </div>
+              <button type="submit" class="btn btn-primary" style="align-self:flex-start;">
+                Send Message
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:.5rem;"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+              </button>
+            </form>
+
+            <!-- Success State -->
+            <div class="form-success" id="form-success" aria-live="polite">
+              <div class="form-success__icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <h3 style="font-size:1.35rem; font-weight:var(--fw-bold); margin-bottom:.75rem;">Message Sent!</h3>
+              <p style="color:var(--text-secondary); line-height:1.6;">Thank you for reaching out. A member of our team will respond within one business day. For urgent matters, please call (603) 546-0400.</p>
+            </div>
+          </div>
+
+          <!-- Side channels -->
+          <div style="display:flex; flex-direction:column; gap:1.5rem;">
+            <div class="glass-card" style="padding:1.75rem;">
+              <div style="font-size:1rem; font-weight:var(--fw-semibold); margin-bottom:1rem;">Existing Clients</div>
+              <p style="font-size:.9rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.6;">Logged-in clients get priority routing and can raise tickets directly from the dashboard with full account context pre-filled.</p>
+              <a href="login.html" class="btn btn-outline" style="width:100%; justify-content:center;">Go to Dashboard</a>
+            </div>
+            <div class="glass-card" style="padding:1.75rem;">
+              <div style="font-size:1rem; font-weight:var(--fw-semibold); margin-bottom:1rem;">Report Fraud or Suspicious Activity</div>
+              <p style="font-size:.9rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.6;">If you suspect unauthorized access to your account, call our 24/7 fraud hotline immediately:</p>
+              <div style="font-size:1.1rem; font-weight:var(--fw-bold); color:var(--accent);">(603) 546-0400</div>
+            </div>
+            <div class="glass-card" style="padding:1.75rem;">
+              <div style="font-size:1rem; font-weight:var(--fw-semibold); margin-bottom:.75rem;">Browse Common Questions</div>
+              <p style="font-size:.9rem; color:var(--text-secondary); margin-bottom:1.25rem; line-height:1.6;">Find instant answers in our Help Center — no waiting required.</p>
+              <a href="faq.html" class="btn btn-ghost" style="padding:0; color:var(--accent);">Visit Help Center →</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Offices -->
+    <section style="background:var(--surface); border-top:1px solid var(--accent-border); padding-block:5rem;" aria-label="Global offices">
+      <div class="container">
+        <div class="text-center" style="margin-bottom:3rem;">
+          <div class="section-label">Our Offices</div>
+          <h2 class="section-title">Global <span>Presence</span></h2>
+          <p class="section-subtitle" style="max-width:520px; margin-inline:auto;">Four regional headquarters serving clients across 147 countries with local expertise and global reach.</p>
+        </div>
+        <div class="office-grid">
+          <div class="office-card reveal">
+            <div class="office-region">Americas — HQ</div>
+            <div class="office-city">Nashua, New Hampshire</div>
+            <div class="office-address">230 Daniel Webster Hwy<br>Nashua, NH 03060<br>United States<br><br>(603) 546-0400</div>
+          </div>
+          <div class="office-card reveal reveal-delay-1">
+            <div class="office-region">Europe, Middle East &amp; Africa</div>
+            <div class="office-city">London</div>
+            <div class="office-address">1 Canada Square, Canary Wharf<br>London E14 5AB<br>United Kingdom<br><br>+44 20 7555 0200</div>
+          </div>
+          <div class="office-card reveal reveal-delay-2">
+            <div class="office-region">Asia Pacific</div>
+            <div class="office-city">Singapore</div>
+            <div class="office-address">1 Raffles Quay, #45-00<br>Singapore 048583<br><br>+65 6555 0300</div>
+          </div>
+          <div class="office-card reveal reveal-delay-3">
+            <div class="office-region">Middle East</div>
+            <div class="office-city">Dubai</div>
+            <div class="office-address">DIFC Gate Village 10<br>Dubai, UAE 00000<br><br>+971 4 555 0400</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Response SLA -->
+    <section style="padding-block:4rem;" aria-label="Response times">
+      <div class="container">
+        <div class="glass-card reveal" style="padding:2.5rem; text-align:center; max-width:680px; margin:0 auto;">
+          <h3 style="font-size:1.3rem; font-weight:var(--fw-bold); margin-bottom:1rem;">Our Service Commitment</h3>
+          <p style="color:var(--text-secondary); line-height:1.7; margin-bottom:1.75rem;">We measure response times to the minute. These are median times from our last 90 days of support data.</p>
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; text-align:center;">
+            <div>
+              <div style="font-size:2rem; font-weight:800; color:var(--accent);">4 min</div>
+              <div style="font-size:.85rem; color:var(--muted); margin-top:.25rem;">Live Chat</div>
+            </div>
+            <div>
+              <div style="font-size:2rem; font-weight:800; color:var(--accent);">2 min</div>
+              <div style="font-size:.85rem; color:var(--muted); margin-top:.25rem;">Phone</div>
+            </div>
+            <div>
+              <div style="font-size:2rem; font-weight:800; color:var(--accent);">6 hrs</div>
+              <div style="font-size:.85rem; color:var(--muted); margin-top:.25rem;">Email</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <div class="footer__brand-logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                <circle cx="12" cy="16" r="1"/>
+              </svg>
+            </div>
+            Vaultstone Bank
+          </div>
+          <p class="footer__brand-desc">Institutional-grade banking for everyone. Secure, transparent, and built to grow with you.</p>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Products</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="services.html#personal" class="footer__link">Personal Banking</a></li>
+            <li><a href="services.html#business" class="footer__link">Business Banking</a></li>
+            <li><a href="services.html#wealth"   class="footer__link">Wealth Management</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Company</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="about.html"    class="footer__link">About Us</a></li>
+            <li><a href="careers.html"  class="footer__link">Careers</a></li>
+            <li><a href="contact.html"  class="footer__link">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Resources</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="faq.html"      class="footer__link">Help Center</a></li>
+            <li><a href="security.html" class="footer__link">Security Center</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Legal</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="privacy.html" class="footer__link">Privacy Policy</a></li>
+            <li><a href="terms.html"   class="footer__link">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p class="footer__legal">&copy; 2026 Vaultstone Bank, N.A. All rights reserved. Member FDIC.</p>
+        <div class="footer__certifications" role="list">
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>FDIC</div>
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>SOC 2</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="scripts/main.js"></script>
+  <script>
+    const form = document.getElementById('contact-form');
+    const success = document.getElementById('form-success');
+    if (form) {
+      form.addEventListener('submit', e => {
+        e.preventDefault();
+        const required = form.querySelectorAll('[required]');
+        let valid = true;
+        required.forEach(el => {
+          if (!el.value.trim()) { el.style.borderColor = 'var(--danger)'; valid = false; }
+          else el.style.borderColor = '';
+        });
+        if (!valid) return;
+        const btn = form.querySelector('button[type=submit]');
+        btn.textContent = 'Sending…';
+        btn.disabled = true;
+        setTimeout(() => {
+          form.style.display = 'none';
+          success.classList.add('visible');
+        }, 1200);
+      });
+    }
+  </script>
+</body>
+</html>

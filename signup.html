@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Open a Vaultstone Bank account — Personal, Business, or Wealth Management." />
+  <meta name="theme-color" content="#0A0E1A" />
+  <title>Open Account — Vaultstone Bank</title>
+
+  <!-- Preconnect -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Auth Styles -->
+  <link rel="stylesheet" href="styles/auth.css" />
+
+  <!-- Favicon -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════
+     THREE.JS BACKGROUND
+═══════════════════════════════════════════════════════════ -->
+<canvas id="signup-canvas" aria-hidden="true"></canvas>
+<div class="signup-overlay" aria-hidden="true"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     TOP BAR
+═══════════════════════════════════════════════════════════ -->
+<nav class="auth-topbar" role="navigation" aria-label="Site navigation">
+  <a href="index.html" class="auth-topbar__logo" aria-label="Vaultstone Bank home">
+    <div class="auth-topbar__logo-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <circle cx="12" cy="16" r="1"/>
+      </svg>
+    </div>
+    <span class="auth-topbar__logo-text">Vault<span>stone</span></span>
+  </a>
+  <span class="auth-topbar__link">Already have an account? <a href="login.html">Sign In</a></span>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════════
+     MAIN SIGNUP PAGE
+═══════════════════════════════════════════════════════════ -->
+<main class="signup-page" role="main">
+  <div class="signup-card" id="signup-form">
+
+    <!-- ── Step Progress Bar ── -->
+    <div class="step-progress" role="tablist" aria-label="Registration steps">
+
+      <div class="step-progress__track">
+
+        <div class="step-progress__item active" role="tab" aria-selected="true" aria-label="Step 1: Personal Info">
+          <div class="step-progress__circle">1</div>
+          <span class="step-progress__label">Personal</span>
+        </div>
+
+        <div class="step-progress__item" role="tab" aria-selected="false" aria-label="Step 2: Account Type">
+          <div class="step-progress__circle">2</div>
+          <span class="step-progress__label">Account</span>
+        </div>
+
+        <div class="step-progress__item" role="tab" aria-selected="false" aria-label="Step 3: Security">
+          <div class="step-progress__circle">3</div>
+          <span class="step-progress__label">Security</span>
+        </div>
+
+        <div class="step-progress__item" role="tab" aria-selected="false" aria-label="Step 4: Verify">
+          <div class="step-progress__circle">4</div>
+          <span class="step-progress__label">Verify</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── Step Panels ── -->
+    <div class="step-panels">
+
+      <!-- ════════════════════════════════
+           STEP 1 — Personal Information
+      ════════════════════════════════ -->
+      <div class="step-panel active" id="step-1" role="tabpanel" aria-labelledby="step-label-1">
+
+        <div class="signup-header">
+          <h2>Personal Information</h2>
+          <p>Let's start with the basics. Please use your legal name.</p>
+        </div>
+
+        <!-- Name row -->
+        <div class="fields-row">
+          <div class="field-group">
+            <input
+              type="text" id="first-name" name="first-name"
+              class="field-group__input" placeholder="First name"
+              autocomplete="given-name" required
+            />
+            <label for="first-name" class="field-group__label">First name</label>
+          </div>
+          <div class="field-group">
+            <input
+              type="text" id="last-name" name="last-name"
+              class="field-group__input" placeholder="Last name"
+              autocomplete="family-name" required
+            />
+            <label for="last-name" class="field-group__label">Last name</label>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="field-group">
+          <input
+            type="email" id="signup-email" name="email"
+            class="field-group__input" placeholder="Email address"
+            autocomplete="email" required
+          />
+          <label for="signup-email" class="field-group__label">Email address</label>
+        </div>
+
+        <!-- Date of Birth -->
+        <div class="field-group">
+          <input
+            type="date" id="dob" name="dob"
+            class="field-group__input has-value"
+            autocomplete="bday" required
+            max="2007-01-01"
+          />
+          <label for="dob" class="field-group__label">Date of birth</label>
+        </div>
+
+        <!-- Country -->
+        <div class="field-group">
+          <select id="country" name="country" class="field-group__select" required>
+            <option value="" disabled selected></option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+            <option value="CA">Canada</option>
+            <option value="AU">Australia</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="SG">Singapore</option>
+            <option value="AE">United Arab Emirates</option>
+            <option value="JP">Japan</option>
+            <option value="CH">Switzerland</option>
+            <option value="NL">Netherlands</option>
+            <option value="SE">Sweden</option>
+            <option value="NO">Norway</option>
+            <option value="HK">Hong Kong</option>
+            <option value="NZ">New Zealand</option>
+            <option value="IE">Ireland</option>
+            <option value="IN">India</option>
+            <option value="BR">Brazil</option>
+            <option value="MX">Mexico</option>
+            <option value="ZA">South Africa</option>
+            <option value="NG">Nigeria</option>
+            <option value="KE">Kenya</option>
+          </select>
+          <label for="country" class="field-group__label">Country of residence</label>
+        </div>
+
+        <!-- Nav -->
+        <div class="step-nav">
+          <button type="button" class="btn btn--primary" data-next>
+            <span class="btn__text">Continue</span>
+            <span class="btn__spinner"></span>
+          </button>
+        </div>
+
+      </div><!-- /#step-1 -->
+
+      <!-- ════════════════════════════════
+           STEP 2 — Account Type
+      ════════════════════════════════ -->
+      <div class="step-panel" id="step-2" role="tabpanel" aria-labelledby="step-label-2">
+
+        <div class="signup-header">
+          <h2>Choose Account Type</h2>
+          <p>Select the account that best suits your financial goals.</p>
+        </div>
+
+        <div class="account-type-grid">
+
+          <!-- Personal -->
+          <div class="account-type-card" data-type="personal" role="radio" aria-checked="false" tabindex="0">
+            <div class="account-type-card__icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </div>
+            <div class="account-type-card__info">
+              <div class="account-type-card__title">Personal</div>
+              <div class="account-type-card__desc">Everyday banking, savings &amp; payments</div>
+            </div>
+            <div class="account-type-card__check">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="3.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Business -->
+          <div class="account-type-card" data-type="business" role="radio" aria-checked="false" tabindex="0">
+            <div class="account-type-card__icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+                <line x1="12" y1="12" x2="12" y2="16"/>
+                <line x1="8"  y1="14" x2="16" y2="14"/>
+              </svg>
+            </div>
+            <div class="account-type-card__info">
+              <div class="account-type-card__title">Business</div>
+              <div class="account-type-card__desc">Corporate accounts, payroll &amp; invoicing</div>
+            </div>
+            <div class="account-type-card__check">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="3.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Wealth Management -->
+          <div class="account-type-card" data-type="wealth" role="radio" aria-checked="false" tabindex="0">
+            <div class="account-type-card__icon">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+              </svg>
+            </div>
+            <div class="account-type-card__info">
+              <div class="account-type-card__title">Wealth Management</div>
+              <div class="account-type-card__desc">Private banking, investments &amp; advisory</div>
+            </div>
+            <div class="account-type-card__check">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                   stroke="currentColor" stroke-width="3.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+          </div>
+
+        </div><!-- /.account-type-grid -->
+
+        <!-- Nav -->
+        <div class="step-nav">
+          <button type="button" class="btn btn--ghost" data-back>Back</button>
+          <button type="button" class="btn btn--primary" data-next>
+            <span class="btn__text">Continue</span>
+            <span class="btn__spinner"></span>
+          </button>
+        </div>
+
+      </div><!-- /#step-2 -->
+
+      <!-- ════════════════════════════════
+           STEP 3 — Security Setup
+      ════════════════════════════════ -->
+      <div class="step-panel" id="step-3" role="tabpanel" aria-labelledby="step-label-3">
+
+        <div class="signup-header">
+          <h2>Secure Your Account</h2>
+          <p>Create a strong password and add two-factor authentication.</p>
+        </div>
+
+        <!-- Password -->
+        <div class="field-group field-group--password">
+          <input
+            type="password" id="signup-password" name="password"
+            class="field-group__input" placeholder="Password"
+            autocomplete="new-password" required
+          />
+          <label for="signup-password" class="field-group__label">Password</label>
+          <button type="button" class="field-group__toggle" aria-label="Toggle password visibility">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943
+                       9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Strength Meter -->
+        <div class="strength-meter">
+          <div class="strength-meter__bars">
+            <div class="strength-bar" aria-hidden="true"></div>
+            <div class="strength-bar" aria-hidden="true"></div>
+            <div class="strength-bar" aria-hidden="true"></div>
+            <div class="strength-bar" aria-hidden="true"></div>
+          </div>
+          <span class="strength-meter__label" aria-live="polite"></span>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="field-group field-group--password">
+          <input
+            type="password" id="confirm-password" name="confirm-password"
+            class="field-group__input" placeholder="Confirm password"
+            autocomplete="new-password" required
+          />
+          <label for="confirm-password" class="field-group__label">Confirm password</label>
+          <button type="button" class="field-group__toggle" aria-label="Toggle confirm password visibility">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943
+                       9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Phone (2FA) -->
+        <div class="field-group">
+          <input
+            type="tel" id="phone" name="phone"
+            class="field-group__input" placeholder="Phone number"
+            autocomplete="tel" required
+          />
+          <label for="phone" class="field-group__label">Phone number (for 2FA)</label>
+        </div>
+
+        <!-- Terms checkbox -->
+        <label class="checkbox-field">
+          <input type="checkbox" id="agree-terms" name="agree-terms" required />
+          <span class="checkbox-field__box">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                 stroke="currentColor" stroke-width="3.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </span>
+          <span class="checkbox-field__label">
+            I agree to the <a href="terms.html">Terms of Service</a> and
+            <a href="privacy.html">Privacy Policy</a>. I confirm I am 18 years or older.
+          </span>
+        </label>
+
+        <!-- Nav -->
+        <div class="step-nav">
+          <button type="button" class="btn btn--ghost" data-back>Back</button>
+          <button type="button" class="btn btn--primary" data-next>
+            <span class="btn__text">Continue</span>
+            <span class="btn__spinner"></span>
+          </button>
+        </div>
+
+      </div><!-- /#step-3 -->
+
+      <!-- ════════════════════════════════
+           STEP 4 — OTP Verification
+      ════════════════════════════════ -->
+      <div class="step-panel" id="step-4" role="tabpanel" aria-labelledby="step-label-4">
+
+        <div class="signup-header">
+          <h2>Verify Your Identity</h2>
+        </div>
+
+        <p class="otp-hint">
+          We've sent a 6-digit verification code to your phone number.
+          Enter it below to complete your registration.
+        </p>
+
+        <!-- OTP Inputs -->
+        <div class="otp-grid" role="group" aria-label="One-time verification code">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 2" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 3" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 4" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 5" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 6" />
+        </div>
+
+        <!-- Resend -->
+        <div class="resend-link">
+          Didn't receive it?
+          <button type="button" id="resend-otp">Resend code</button>
+        </div>
+
+        <!-- Nav -->
+        <div class="step-nav">
+          <button type="button" class="btn btn--ghost" data-back>Back</button>
+          <button type="button" class="btn btn--primary" id="signup-submit">
+            <span class="btn__text">Verify &amp; Open Account</span>
+            <span class="btn__spinner" role="status" aria-label="Creating account..."></span>
+          </button>
+        </div>
+
+      </div><!-- /#step-4 -->
+
+    </div><!-- /.step-panels -->
+
+    <!-- Footer back to login -->
+    <p class="auth-footer-link" style="margin-top:20px;">
+      Already have an account? <a href="login.html">Sign In</a>
+    </p>
+
+  </div><!-- /.signup-card -->
+</main>
+
+<!-- ═══════════════════════════════════════════════════════════
+     SUCCESS OVERLAY
+═══════════════════════════════════════════════════════════ -->
+<div class="success-overlay" id="success-overlay" aria-live="assertive" role="alert">
+  <div class="success-overlay__icon">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+         stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  </div>
+  <h2>Account Created!</h2>
+  <p>Welcome to Vaultstone Bank. Redirecting to your dashboard…</p>
+</div>
+
+<!-- CDN Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<!-- State engine -->
+<script src="scripts/store.js"></script>
+
+<!-- Auth Script -->
+<script src="scripts/auth.js"></script>
+<script src="scripts/signup-integration.js"></script>
+
+</body>
+</html>

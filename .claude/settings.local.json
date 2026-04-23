@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(js|css\\)$\")",
+      "Bash([ -f \"c:/Users/HP/Downloads/Bankwebsite/$f\" ])",
+      "Bash(git --version)",
+      "Bash(git config *)"
+    ]
+  }
+}

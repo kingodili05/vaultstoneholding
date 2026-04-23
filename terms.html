@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Vaultstone Bank Terms of Service — The agreement governing your use of Vaultstone's banking products and services." />
+  <meta name="theme-color" content="#0A0E1A" />
+  <title>Terms of Service — Vaultstone Bank</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/main.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+
+  <style>
+    [id] { scroll-margin-top: calc(var(--nav-height) + 2rem); }
+
+    .legal-hero {
+      background: var(--primary-deep);
+      padding-top: calc(var(--nav-height) + 4rem);
+      padding-bottom: 4rem;
+      border-bottom: 1px solid var(--accent-border);
+      position: relative;
+      overflow: hidden;
+    }
+    .legal-hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 0%, rgba(201,168,76,0.09) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .legal-hero__inner { position: relative; z-index: 1; }
+    .legal-hero__eyebrow {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(201,168,76,0.08); border: 1px solid rgba(201,168,76,0.2);
+      border-radius: var(--radius-full);
+      padding: 0.25rem 1rem 0.25rem 0.625rem;
+      font-size: var(--text-xs); font-weight: var(--fw-semibold);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--accent-light); margin-bottom: 1.25rem;
+    }
+    .legal-hero__dot { width:6px;height:6px;background:var(--accent);border-radius:50%; }
+    .legal-hero__title { font-size: clamp(2rem, 5vw, 3.25rem); font-weight: var(--fw-extrabold); letter-spacing: -0.03em; color: var(--text); margin-bottom: 1rem; }
+    .legal-hero__meta { font-size: var(--text-sm); color: var(--muted); }
+    .legal-hero__meta strong { color: var(--text-secondary); }
+
+    .legal-layout {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      gap: 4rem;
+      padding-block: 4rem;
+      align-items: start;
+    }
+    @media (max-width: 900px) { .legal-layout { grid-template-columns: 1fr; } }
+
+    .legal-toc { position: sticky; top: calc(var(--nav-height) + 2rem); }
+    .legal-toc__title { font-size: var(--text-xs); font-weight: var(--fw-semibold); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+    .legal-toc__list { list-style: none; padding: 0; margin: 0; }
+    .legal-toc__item { margin-bottom: 0.25rem; }
+    .legal-toc__link {
+      display: block; font-size: var(--text-sm); color: var(--muted);
+      text-decoration: none; padding: 0.4rem 0.75rem;
+      border-left: 2px solid transparent;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      transition: all var(--transition-fast); line-height: 1.4;
+    }
+    .legal-toc__link:hover { color: var(--text-secondary); border-left-color: var(--accent-border); background: rgba(255,255,255,0.02); }
+    .legal-toc__link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }
+    @media (max-width: 900px) { .legal-toc { position: static; display: none; } }
+
+    .legal-content { min-width: 0; }
+    .legal-section { margin-bottom: 3.5rem; }
+    .legal-section:last-child { margin-bottom: 0; }
+    .legal-section__num { font-size: var(--text-xs); font-weight: var(--fw-semibold); letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.5rem; }
+    .legal-section__title { font-size: var(--text-2xl); font-weight: var(--fw-bold); color: var(--text); letter-spacing: -0.02em; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--accent-border); }
+    .legal-section p { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.8; margin-bottom: 1rem; }
+    .legal-section p:last-child { margin-bottom: 0; }
+    .legal-section h4 { font-size: var(--text-base); font-weight: var(--fw-semibold); color: var(--text); margin: 1.5rem 0 0.625rem; }
+    .legal-section ul, .legal-section ol { padding-left: 1.5rem; margin-bottom: 1rem; }
+    .legal-section li { font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.75; margin-bottom: 0.375rem; }
+    .legal-section li strong { color: var(--text); }
+    .legal-section a { color: var(--accent); text-decoration: underline; }
+    .legal-section a:hover { color: var(--accent-light); }
+
+    .legal-callout {
+      background: var(--surface-2); border: 1px solid var(--accent-border);
+      border-left: 3px solid var(--accent); border-radius: var(--radius);
+      padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+    }
+    .legal-callout p { margin: 0; font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7; }
+    .legal-callout p strong { color: var(--accent); }
+
+    .legal-warning {
+      background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);
+      border-left: 3px solid var(--danger); border-radius: var(--radius);
+      padding: 1.25rem 1.5rem; margin: 1.5rem 0;
+    }
+    .legal-warning p { margin: 0; font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7; }
+
+    .legal-contact-box {
+      background: var(--surface-2); border: 1px solid var(--accent-border);
+      border-radius: var(--radius-lg); padding: 1.5rem 2rem; margin-top: 1.5rem;
+    }
+    .legal-contact-box p { margin: 0 0 0.25rem; font-size: var(--text-sm); color: var(--text-secondary); }
+    .legal-contact-box p:last-child { margin: 0; }
+    .legal-contact-box strong { color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <div class="cursor-dot"  aria-hidden="true"></div>
+  <div class="cursor-ring" aria-hidden="true"></div>
+
+  <header>
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+      <div class="container navbar__inner">
+        <a href="index.html" class="navbar__logo" aria-label="Vaultstone Bank home">
+          <div class="navbar__logo-icon" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              <circle cx="12" cy="16" r="1"/>
+            </svg>
+          </div>
+          <span class="navbar__logo-text">Vault<span>stone</span></span>
+        </a>
+        <ul class="navbar__nav" role="list">
+          <li><a href="services.html" class="navbar__link">Services</a></li>
+          <li><a href="about.html"    class="navbar__link">About</a></li>
+          <li><a href="faq.html"      class="navbar__link">Help</a></li>
+          <li><a href="contact.html"  class="navbar__link">Contact</a></li>
+        </ul>
+        <div class="navbar__actions">
+          <a href="login.html"  class="navbar__login">Log In</a>
+          <a href="signup.html" class="btn btn-primary btn-sm">Open Account</a>
+        </div>
+        <button class="navbar__toggle" aria-label="Toggle menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+      <div class="navbar__mobile" id="mobile-menu" role="dialog" aria-label="Mobile navigation">
+        <a href="services.html" class="navbar__mobile-link">Services</a>
+        <a href="about.html"    class="navbar__mobile-link">About</a>
+        <a href="faq.html"      class="navbar__mobile-link">Help Center</a>
+        <a href="contact.html"  class="navbar__mobile-link">Contact</a>
+        <a href="login.html"    class="navbar__mobile-link">Log In</a>
+        <a href="signup.html" class="btn btn-primary btn-lg navbar__mobile-cta">Open Account</a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="legal-hero">
+      <div class="container legal-hero__inner">
+        <div class="legal-hero__eyebrow">
+          <span class="legal-hero__dot" aria-hidden="true"></span>
+          Legal
+        </div>
+        <h1 class="legal-hero__title">Terms of Service</h1>
+        <p class="legal-hero__meta">
+          <strong>Effective Date:</strong> January 1, 2026 &nbsp;·&nbsp;
+          <strong>Last Updated:</strong> April 1, 2026 &nbsp;·&nbsp;
+          <a href="privacy.html" style="color:var(--accent);">View Privacy Policy</a>
+        </p>
+      </div>
+    </div>
+
+    <div style="background:var(--primary);">
+      <div class="container">
+        <div class="legal-layout">
+
+          <!-- TOC -->
+          <aside class="legal-toc" aria-label="Table of contents">
+            <div class="legal-toc__title">Contents</div>
+            <ul class="legal-toc__list" role="list">
+              <li class="legal-toc__item"><a href="#acceptance"    class="legal-toc__link active">Acceptance</a></li>
+              <li class="legal-toc__item"><a href="#eligibility"   class="legal-toc__link">Eligibility</a></li>
+              <li class="legal-toc__item"><a href="#accounts"      class="legal-toc__link">Your Account</a></li>
+              <li class="legal-toc__item"><a href="#services-tos"  class="legal-toc__link">Our Services</a></li>
+              <li class="legal-toc__item"><a href="#fees"          class="legal-toc__link">Fees & Charges</a></li>
+              <li class="legal-toc__item"><a href="#prohibited"    class="legal-toc__link">Prohibited Use</a></li>
+              <li class="legal-toc__item"><a href="#intellectual"  class="legal-toc__link">Intellectual Property</a></li>
+              <li class="legal-toc__item"><a href="#disclaimers"   class="legal-toc__link">Disclaimers</a></li>
+              <li class="legal-toc__item"><a href="#liability"     class="legal-toc__link">Limitation of Liability</a></li>
+              <li class="legal-toc__item"><a href="#arbitration"   class="legal-toc__link">Dispute Resolution</a></li>
+              <li class="legal-toc__item"><a href="#termination"   class="legal-toc__link">Termination</a></li>
+              <li class="legal-toc__item"><a href="#governing"     class="legal-toc__link">Governing Law</a></li>
+              <li class="legal-toc__item"><a href="#general"       class="legal-toc__link">General</a></li>
+              <li class="legal-toc__item"><a href="#contact-tos"   class="legal-toc__link">Contact</a></li>
+            </ul>
+          </aside>
+
+          <!-- Content -->
+          <article class="legal-content">
+
+            <section class="legal-section" id="acceptance">
+              <div class="legal-section__num">Section 1</div>
+              <h2 class="legal-section__title">Acceptance of Terms</h2>
+              <div class="legal-callout">
+                <p>By accessing or using Vaultstone Bank's services, you agree to be bound by these Terms of Service and our <a href="privacy.html">Privacy Policy</a>. If you do not agree, you may not use our services. <strong>Please read these terms carefully before creating an account.</strong></p>
+              </div>
+              <p>These Terms of Service ("Terms") constitute a legally binding agreement between you and Vaultstone Bank, N.A. ("Vaultstone," "we," "us," or "our"), a national bank chartered under the laws of the United States and regulated by the Office of the Comptroller of the Currency (OCC).</p>
+              <p>By registering for an account, clicking "I Agree," or otherwise accessing our services, you confirm that you have read, understood, and agree to be bound by these Terms, including all documents incorporated by reference. These Terms apply to all users of Vaultstone's website, mobile applications, and banking services.</p>
+            </section>
+
+            <section class="legal-section" id="eligibility">
+              <div class="legal-section__num">Section 2</div>
+              <h2 class="legal-section__title">Eligibility</h2>
+              <p>To use Vaultstone's services, you must meet the following requirements:</p>
+              <ul>
+                <li>Be at least 18 years of age (or the age of majority in your jurisdiction)</li>
+                <li>Be a citizen or legal resident of a country where Vaultstone operates</li>
+                <li>Have a valid government-issued identification document</li>
+                <li>Have a valid Social Security Number or Individual Taxpayer Identification Number (for US accounts)</li>
+                <li>Not be subject to any economic sanctions administered by OFAC, the EU, the UN, or any other applicable authority</li>
+                <li>Not have been previously banned from Vaultstone's services</li>
+              </ul>
+              <p>For business accounts, additional eligibility requirements apply including valid business registration, beneficial ownership disclosure, and KYB (Know Your Business) verification. We reserve the right to decline any application at our discretion.</p>
+            </section>
+
+            <section class="legal-section" id="accounts">
+              <div class="legal-section__num">Section 3</div>
+              <h2 class="legal-section__title">Your Account</h2>
+              <h4>Account Registration</h4>
+              <p>You must provide accurate, complete, and current information during registration. You are responsible for maintaining the accuracy of this information and for updating it promptly if it changes. Providing false or misleading information is grounds for immediate account termination and may constitute fraud.</p>
+              <h4>Security Responsibilities</h4>
+              <p>You are solely responsible for maintaining the confidentiality of your login credentials, including your password, PIN, and any one-time codes. You must immediately notify Vaultstone at security@vaultstone.com of any suspected unauthorized access to your account. We are not liable for losses resulting from your failure to safeguard your credentials.</p>
+              <h4>One Account Per Person</h4>
+              <p>Individual accounts are personal and non-transferable. You may not create more than one personal account without our written consent. Business entities may hold separate accounts where permitted by applicable law.</p>
+              <h4>Account Verification</h4>
+              <p>We are legally required to verify your identity before activating your account. This process (Know Your Customer, or KYC) involves verifying your government-issued ID, address, and other information. Until verification is complete, your account may have limited functionality.</p>
+            </section>
+
+            <section class="legal-section" id="services-tos">
+              <div class="legal-section__num">Section 4</div>
+              <h2 class="legal-section__title">Our Services</h2>
+              <p>Vaultstone offers the following banking and financial services, subject to individual account agreements and product-specific terms:</p>
+              <ul>
+                <li><strong>Deposit Accounts:</strong> Checking and savings accounts, including high-yield savings. Accounts are FDIC-insured up to applicable limits.</li>
+                <li><strong>Payment Services:</strong> Domestic and international wire transfers, ACH transfers, bill pay, and real-time payments via RTP and FedNow.</li>
+                <li><strong>Card Services:</strong> Debit cards issued on the Visa network, subject to Visa's operating regulations.</li>
+                <li><strong>Business Banking:</strong> Multi-user business accounts, payroll integration, and treasury management tools.</li>
+                <li><strong>Wealth Management:</strong> Investment advisory services offered through Vaultstone Securities LLC, a registered investment adviser. Investment products are not FDIC-insured, not bank-guaranteed, and may lose value.</li>
+                <li><strong>Lending Products:</strong> Personal loans, lines of credit, and mortgage products subject to credit approval and separate loan agreements.</li>
+              </ul>
+              <p>We may modify, suspend, or discontinue any service at any time. We will provide reasonable advance notice for material changes that affect your existing accounts.</p>
+            </section>
+
+            <section class="legal-section" id="fees">
+              <div class="legal-section__num">Section 5</div>
+              <h2 class="legal-section__title">Fees &amp; Charges</h2>
+              <p>Our current fee schedule is available at <a href="services.html">vaultstone.com/services</a> and in your account agreement. Key fee policies include:</p>
+              <ul>
+                <li>Standard personal accounts have no monthly maintenance fees, no minimum balance requirements, and no fees for domestic standard transfers.</li>
+                <li>Expedited wire transfers, international transfers, and certain premium services carry fees as disclosed in the relevant service agreement.</li>
+                <li>Insufficient funds or returned payment fees apply as disclosed in your account agreement.</li>
+                <li>We do not charge hidden fees. All applicable fees are disclosed before you initiate a transaction.</li>
+              </ul>
+              <p>We reserve the right to change fees with 30 days' written notice for existing accounts. Continued use of the service after the fee change takes effect constitutes acceptance.</p>
+            </section>
+
+            <section class="legal-section" id="prohibited">
+              <div class="legal-section__num">Section 6</div>
+              <h2 class="legal-section__title">Prohibited Use</h2>
+              <div class="legal-warning">
+                <p>Violation of these prohibitions may result in immediate account termination, fund holds, reporting to law enforcement, and/or civil or criminal liability.</p>
+              </div>
+              <p>You may not use Vaultstone's services for:</p>
+              <ul>
+                <li>Any illegal activity, including money laundering, terrorist financing, tax evasion, or fraud</li>
+                <li>Transactions involving sanctioned countries, entities, or individuals as listed by OFAC</li>
+                <li>Purchase or sale of illegal goods or services, including controlled substances or unlicensed weapons</li>
+                <li>Unauthorized use of another person's financial information or impersonating another person</li>
+                <li>Activities that violate any applicable law, regulation, or third-party rights</li>
+                <li>Automated access to our systems without written authorization (scraping, API abuse)</li>
+                <li>Distributing malware, viruses, or any malicious code through our systems</li>
+                <li>Any activity that interferes with or disrupts our systems, servers, or networks</li>
+              </ul>
+            </section>
+
+            <section class="legal-section" id="intellectual">
+              <div class="legal-section__num">Section 7</div>
+              <h2 class="legal-section__title">Intellectual Property</h2>
+              <p>All content, trademarks, logos, software, and materials available through Vaultstone's services are the proprietary property of Vaultstone Bank, N.A., or our licensors, and are protected by copyright, trademark, and other intellectual property laws.</p>
+              <p>We grant you a limited, non-exclusive, non-transferable, revocable license to access and use our services for personal, non-commercial banking purposes. This license does not include the right to:</p>
+              <ul>
+                <li>Copy, reproduce, modify, or create derivative works from our content</li>
+                <li>Sell, transfer, or sublicense access to our services</li>
+                <li>Reverse-engineer, decompile, or disassemble any software component</li>
+                <li>Use our name, logo, or trademarks without prior written consent</li>
+              </ul>
+              <p>You retain ownership of any data you submit to Vaultstone. By submitting data, you grant us a limited license to use that data solely to provide and improve our services, as described in our Privacy Policy.</p>
+            </section>
+
+            <section class="legal-section" id="disclaimers">
+              <div class="legal-section__num">Section 8</div>
+              <h2 class="legal-section__title">Disclaimers</h2>
+              <p>OUR SERVICES ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, TO THE FULLEST EXTENT PERMITTED BY LAW. WE DISCLAIM ALL WARRANTIES INCLUDING, WITHOUT LIMITATION, IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT.</p>
+              <p>We do not warrant that our services will be uninterrupted, error-free, or free of viruses. We do not warrant the accuracy or completeness of any financial information, market data, or third-party content provided through our services.</p>
+              <p>Investment products offered through Vaultstone Securities LLC involve risk, including the possible loss of principal. Past performance does not guarantee future results. Nothing on our platform constitutes investment advice unless specifically stated in a written investment advisory agreement.</p>
+            </section>
+
+            <section class="legal-section" id="liability">
+              <div class="legal-section__num">Section 9</div>
+              <h2 class="legal-section__title">Limitation of Liability</h2>
+              <p>TO THE FULLEST EXTENT PERMITTED BY APPLICABLE LAW, VAULTSTONE SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, INCLUDING LOST PROFITS, LOST DATA, OR BUSINESS INTERRUPTION, ARISING FROM YOUR USE OF OR INABILITY TO USE OUR SERVICES.</p>
+              <p>IN NO EVENT SHALL VAULTSTONE'S TOTAL LIABILITY TO YOU FOR ALL CLAIMS ARISING FROM THESE TERMS OR YOUR USE OF OUR SERVICES EXCEED THE GREATER OF (A) THE AMOUNT OF FEES YOU PAID TO VAULTSTONE IN THE 12 MONTHS PRECEDING THE CLAIM, OR (B) ONE HUNDRED DOLLARS ($100).</p>
+              <p>Some jurisdictions do not allow the exclusion or limitation of certain damages, so the above limitations may not apply to you. In such cases, our liability is limited to the maximum extent permitted by applicable law.</p>
+              <p>These limitations do not apply to (a) liability for gross negligence or willful misconduct, (b) liability for death or personal injury, or (c) any liability that cannot be limited by law.</p>
+            </section>
+
+            <section class="legal-section" id="arbitration">
+              <div class="legal-section__num">Section 10</div>
+              <h2 class="legal-section__title">Dispute Resolution</h2>
+              <h4>Informal Resolution First</h4>
+              <p>Before initiating formal legal proceedings, you agree to contact Vaultstone at legal@vaultstone.com to attempt to resolve the dispute informally. We will make good-faith efforts to resolve complaints within 30 days.</p>
+              <h4>Binding Arbitration</h4>
+              <p>If informal resolution fails, most disputes will be resolved through binding individual arbitration administered by the American Arbitration Association (AAA) under its Consumer Arbitration Rules. You and Vaultstone each waive the right to a jury trial and to participate in class actions or class arbitrations.</p>
+              <h4>Exceptions</h4>
+              <p>Either party may bring claims in small claims court for disputes within that court's jurisdiction. Injunctive or declaratory relief may be sought in any competent court to prevent unauthorized use of intellectual property or to preserve the status quo pending arbitration.</p>
+              <h4>Opt-Out</h4>
+              <p>You may opt out of the arbitration provision by notifying us in writing at legal@vaultstone.com within 30 days of first accepting these Terms. Opting out does not affect any other provision of these Terms.</p>
+            </section>
+
+            <section class="legal-section" id="termination">
+              <div class="legal-section__num">Section 11</div>
+              <h2 class="legal-section__title">Termination</h2>
+              <p>You may close your account at any time by contacting us or through your account settings, subject to satisfying any outstanding obligations (pending transactions, loans, fees).</p>
+              <p>We may suspend or terminate your account immediately without notice if:</p>
+              <ul>
+                <li>You violate any provision of these Terms</li>
+                <li>We are required to do so by law or regulation</li>
+                <li>We reasonably believe your account is being used for fraudulent or illegal activity</li>
+                <li>You provide false information during registration or account maintenance</li>
+              </ul>
+              <p>We may also close any account with 30 days' written notice for any reason not listed above. Upon termination, we will return any remaining balance to you (minus any amounts owed to us) via check or ACH transfer within 10 business days.</p>
+            </section>
+
+            <section class="legal-section" id="governing">
+              <div class="legal-section__num">Section 12</div>
+              <h2 class="legal-section__title">Governing Law</h2>
+              <p>These Terms and any dispute arising out of or related to them shall be governed by the laws of the State of New Hampshire, without regard to its conflict of laws principles, and the applicable federal laws of the United States. To the extent arbitration does not apply, you consent to the personal jurisdiction of the state and federal courts located in Hillsborough County, New Hampshire.</p>
+            </section>
+
+            <section class="legal-section" id="general">
+              <div class="legal-section__num">Section 13</div>
+              <h2 class="legal-section__title">General Provisions</h2>
+              <h4>Entire Agreement</h4>
+              <p>These Terms, together with our Privacy Policy, account agreements, and any product-specific terms, constitute the entire agreement between you and Vaultstone regarding your use of our services and supersede all prior agreements.</p>
+              <h4>Severability</h4>
+              <p>If any provision of these Terms is found invalid or unenforceable, that provision shall be modified to the minimum extent necessary to make it enforceable, and the remaining provisions shall remain in full force and effect.</p>
+              <h4>No Waiver</h4>
+              <p>Our failure to enforce any right or provision of these Terms shall not be deemed a waiver of such right or provision.</p>
+              <h4>Assignment</h4>
+              <p>You may not assign or transfer your rights or obligations under these Terms without our prior written consent. We may assign our rights and obligations to an affiliate, successor, or acquirer without restriction.</p>
+              <h4>Force Majeure</h4>
+              <p>We are not liable for delays or failures in performance resulting from causes beyond our reasonable control, including natural disasters, pandemics, government actions, cyberattacks, or infrastructure failures.</p>
+              <h4>Updates to These Terms</h4>
+              <p>We may modify these Terms at any time. Material changes will be communicated via in-app notification and email with at least 30 days' notice before taking effect. Your continued use of our services after the effective date constitutes acceptance of the updated Terms.</p>
+            </section>
+
+            <section class="legal-section" id="contact-tos">
+              <div class="legal-section__num">Section 14</div>
+              <h2 class="legal-section__title">Contact</h2>
+              <p>Questions about these Terms may be directed to our Legal Team:</p>
+              <div class="legal-contact-box">
+                <p><strong>Vaultstone Bank, N.A. — Legal Department</strong></p>
+                <p>Email: <a href="mailto:legal@vaultstone.com" style="color:var(--accent);">legal@vaultstone.com</a></p>
+                <p>Mail: Vaultstone Bank, N.A., Attn: Legal Department, 230 Daniel Webster Hwy, Nashua, NH 03060</p>
+                <p style="margin-top:0.75rem;font-size:var(--text-xs);color:var(--muted);">For privacy-related inquiries, please contact our Privacy Team at <a href="mailto:privacy@vaultstone.com" style="color:var(--accent);">privacy@vaultstone.com</a> instead.</p>
+              </div>
+            </section>
+
+          </article>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__top">
+        <div class="footer__brand">
+          <div class="footer__brand-logo">
+            <div class="logo-icon" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><circle cx="12" cy="16" r="1"/></svg>
+            </div>
+            Vaultstone Bank
+          </div>
+          <p class="footer__brand-desc">Institutional-grade banking for everyone. Secure, transparent, and built to grow with you.</p>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Products</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="services.html#personal" class="footer__link">Personal Banking</a></li>
+            <li><a href="services.html#business" class="footer__link">Business Banking</a></li>
+            <li><a href="services.html#wealth"   class="footer__link">Wealth Management</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Company</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="about.html"    class="footer__link">About Us</a></li>
+            <li><a href="careers.html"  class="footer__link">Careers</a></li>
+            <li><a href="contact.html"  class="footer__link">Contact</a></li>
+          </ul>
+        </div>
+        <div class="footer__col">
+          <h3 class="footer__col-title">Legal</h3>
+          <ul class="footer__links" role="list">
+            <li><a href="privacy.html"  class="footer__link">Privacy Policy</a></li>
+            <li><a href="terms.html"    class="footer__link">Terms of Service</a></li>
+            <li><a href="security.html" class="footer__link">Security Center</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer__bottom">
+        <p class="footer__legal">&copy; 2026 Vaultstone Bank, N.A. All rights reserved. Member FDIC. Equal Housing Lender.</p>
+        <div class="footer__certifications" role="list">
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg> FDIC</div>
+          <div class="footer__cert" role="listitem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg> SOC 2</div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="scripts/main.js"></script>
+  <script>
+    const sections = document.querySelectorAll('.legal-section[id]');
+    const tocLinks = document.querySelectorAll('.legal-toc__link');
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          tocLinks.forEach(l => l.classList.remove('active'));
+          const active = document.querySelector('.legal-toc__link[href="#' + entry.target.id + '"]');
+          if (active) active.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+    sections.forEach(s => observer.observe(s));
+  </script>
+</body>
+</html>
