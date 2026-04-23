@@ -294,20 +294,17 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   appearance: none;
 }
 
-/* Date inputs must NOT suppress native appearance — doing so clips the 4-digit year on Chrome */
+/* Restore native date rendering so Chrome can display all 4 year digits correctly */
 input[type="date"].field-group__input {
-  -webkit-appearance: textfield;
-  appearance: textfield;
-  min-width: 0;
+  -webkit-appearance: auto;
+  appearance: auto;
   color-scheme: dark;
+  padding: 22px 14px 6px 16px;
 }
 input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
-  filter: invert(0.7) sepia(1) saturate(3) hue-rotate(5deg);
   cursor: pointer;
-  opacity: 0.7;
-}
-input[type="date"].field-group__input::-webkit-date-and-time-value {
-  text-align: left;
+  opacity: 0.6;
+  margin-left: 4px;
 }
 
 .field-group__input::placeholder { color: transparent; }
