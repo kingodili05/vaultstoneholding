@@ -918,7 +918,12 @@ function wireTransferForm(user) {
 /* ───────────────────────────────────────────
    INIT ALL
 ─────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  /* Wait for Supabase session cache to populate (no-op with localStorage VaultStore) */
+  if (typeof VaultStore !== 'undefined' && VaultStore.ready instanceof Promise) {
+    await VaultStore.ready;
+  }
+
   /* Auth guard + load real user data */
   const currentUser = (typeof VaultStore !== 'undefined') ? loadUserData() : null;
 

@@ -2,15 +2,15 @@
 
 /**
  * signup-integration.js
- * Wires the multi-step signup form to VaultStore.createUser().
- * Loads after auth.js so the 3-D scene and step navigation are
- * already initialised; replaces the submit-button listener that
- * auth.js attached so we can call VaultStore before redirecting.
+ * Wires the multi-step signup form to Supabase Auth via VaultStore.createUser().
+ * Loads after auth.js so the 3-D scene and step navigation are already initialised.
  */
-(function () {
+(async function () {
   if (typeof VaultStore === 'undefined') return;
 
-  /* ── Already logged in? Skip signup ── */
+  await VaultStore.ready;
+
+  // Already logged in → redirect
   const existing = VaultStore.getCurrentUser();
   if (existing) {
     window.location.href =
@@ -24,15 +24,15 @@
     const oldBtn = document.getElementById('signup-submit');
     if (!oldBtn) return;
 
-    /* Clone to strip auth.js's existing listener */
+    // Clone to strip auth.js's existing listener
     const btn = oldBtn.cloneNode(true);
     oldBtn.parentNode.replaceChild(btn, oldBtn);
 
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', async () => {
       const otpInputs = [...document.querySelectorAll('.otp-input')];
       const otp = otpInputs.map(i => i.value).join('');
 
-      /* Validate OTP */
+      // Validate OTP length
       if (otp.length < 6) {
         const panel = btn.closest('.step-panel');
         if (panel) {
@@ -45,7 +45,7 @@
         return;
       }
 
-      /* Collect form data from steps 1-3 */
+      // Collect form data from all steps
       const firstName   = (document.getElementById('first-name')?.value    || '').trim();
       const lastName    = (document.getElementById('last-name')?.value     || '').trim();
       const email       = (document.getElementById('signup-email')?.value  || '').trim().toLowerCase();
@@ -56,50 +56,61 @@
       const typeCard    =  document.querySelector('.account-type-card.selected');
       const accountType =  typeCard?.dataset.type || 'personal';
 
-      /* Duplicate email guard */
-      if (VaultStore.getUserByEmail(email)) {
-        const errEl = document.createElement('p');
-        errEl.style.cssText =
-          'color:#EF4444;font-size:0.8125rem;text-align:center;margin-bottom:0.5rem;';
-        errEl.textContent =
-          'This email is already registered. Try signing in instead.';
-        const nav = btn.closest('.step-nav');
-        if (nav) nav.before(errEl);
-        setTimeout(() => errEl.remove(), 5000);
-        return;
-      }
-
       btn.classList.add('loading');
       btn.disabled = true;
 
-      /* Small delay so loading spinner renders */
-      setTimeout(() => {
-        /* Create account */
-        VaultStore.createUser({
-          name: `${firstName} ${lastName}`.trim(),
-          email,
-          password,
-          phone,
-          accountType,
-          country,
-          dob,
-        });
+      // Create Supabase auth user + profile (via trigger)
+      const result = await VaultStore.createUser({
+        name: `${firstName} ${lastName}`.trim(),
+        email,
+        password,
+        phone,
+        accountType,
+        country,
+        dob,
+      });
 
-        /* Auto-login so the KYC page has a session */
-        VaultStore.login(email, password);
+      if (!result.ok) {
+        btn.classList.remove('loading');
+        btn.disabled = false;
 
-        /* Gold confetti + success overlay */
-        if (typeof triggerConfetti === 'function') triggerConfetti();
+        let errEl = document.querySelector('.signup-server-error');
+        if (!errEl) {
+          errEl = document.createElement('p');
+          errEl.className = 'signup-server-error';
+          errEl.style.cssText = 'color:#EF4444;font-size:0.8125rem;text-align:center;margin-bottom:0.5rem;';
+          btn.closest('.step-nav')?.before(errEl);
+        }
+        errEl.textContent = result.error || 'Something went wrong. Please try again.';
+        setTimeout(() => errEl.remove(), 6000);
+        return;
+      }
 
+      // Auto-login
+      const loginResult = await VaultStore.login(email, password);
+      if (!loginResult.ok) {
+        // Account created but email confirmation may be required
         const overlay = document.getElementById('success-overlay');
         if (overlay) {
           const sub = overlay.querySelector('p');
-          if (sub) sub.textContent = 'Welcome to Vaultstone. Redirecting to identity verification…';
+          if (sub) sub.textContent = 'Account created! Please check your email to confirm, then log in.';
           overlay.classList.add('visible');
         }
+        setTimeout(() => { window.location.href = 'login.html'; }, 3000);
+        return;
+      }
 
-        setTimeout(() => { window.location.href = 'kyc.html'; }, 2200);
-      }, 1200);
+      // Success: confetti + redirect to KYC
+      if (typeof triggerConfetti === 'function') triggerConfetti();
+
+      const overlay = document.getElementById('success-overlay');
+      if (overlay) {
+        const sub = overlay.querySelector('p');
+        if (sub) sub.textContent = 'Welcome to Vaultstone. Redirecting to identity verification…';
+        overlay.classList.add('visible');
+      }
+
+      setTimeout(() => { window.location.href = 'kyc.html'; }, 2200);
     });
   });
 })();

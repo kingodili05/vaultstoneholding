@@ -1,24 +1,31 @@
 'use strict';
 
-/* Integrates VaultStore with the existing login form in login.html.
+/* Integrates VaultStore (Supabase) with the login form in login.html.
    Runs after auth.js so the Three.js vault scene is already initialized. */
 
-(function () {
+(async function () {
   if (typeof VaultStore === 'undefined') return;
 
-  // If already logged in, skip to dashboard
+  // Wait for Supabase auth state to resolve
+  await VaultStore.ready;
+
+  // Already logged in → skip login
   const existing = VaultStore.getCurrentUser();
   if (existing) {
-    window.location.href = existing.status === 'pending_kyc' ? 'kyc.html' : 'dashboard.html';
+    window.location.href = (existing.status === 'pending_kyc' || existing.kycStatus === 'not_started')
+      ? 'kyc.html'
+      : 'dashboard.html';
     return;
   }
 
-  const form     = document.getElementById('login-form');
-  const emailEl  = document.getElementById('login-email');
-  const passEl   = document.getElementById('login-password');
-  const btn      = document.getElementById('login-btn');
+  const form    = document.getElementById('login-form');
+  const emailEl = document.getElementById('login-email');
+  const passEl  = document.getElementById('login-password');
+  const btn     = document.getElementById('login-btn');
 
-  // Inject error message container beneath password field
+  if (!form) return;
+
+  // Error message element
   let errEl = document.getElementById('login-error');
   if (!errEl) {
     errEl = document.createElement('p');
@@ -29,33 +36,25 @@
   }
 
   function showError(msg) {
-    errEl.textContent = msg;
-    errEl.style.display = 'block';
-    // Shake animation on the card
+    errEl.textContent    = msg;
+    errEl.style.display  = 'block';
     const card = form.closest('.auth-card');
     if (card && window.gsap) {
-      gsap.fromTo(card, { x: -8 }, { x: 0, duration: 0.4, ease: 'elastic.out(1, 0.4)',
-        keyframes: [{ x: -8 }, { x: 8 }, { x: -5 }, { x: 5 }, { x: 0 }] });
+      gsap.fromTo(card, { x: -8 }, {
+        x: 0, duration: 0.4, ease: 'elastic.out(1, 0.4)',
+        keyframes: [{ x: -8 }, { x: 8 }, { x: -5 }, { x: 5 }, { x: 0 }],
+      });
     }
   }
 
   function clearError() {
     errEl.style.display = 'none';
-    errEl.textContent = '';
+    errEl.textContent   = '';
   }
 
-  // Demo credentials hint (remove in production)
-  const hint = document.createElement('p');
-  hint.style.cssText = 'font-size:0.75rem;color:var(--muted,#6B7280);margin-top:0.5rem;text-align:center;line-height:1.5';
-  hint.innerHTML = 'Demo: <strong style="color:#C9A84C">alex@vaultstone.com</strong> / <strong style="color:#C9A84C">Password1!</strong>';
-  form.insertAdjacentElement('afterend', hint);
-
-  if (!form) return;
-
-  form.addEventListener('submit', function (e) {
+  form.addEventListener('submit', async function (e) {
     e.preventDefault();
-    e.stopImmediatePropagation(); // prevent auth.js's own handler from also firing redirect
-
+    e.stopImmediatePropagation();
     clearError();
 
     const email    = emailEl.value.trim();
@@ -66,32 +65,29 @@
       return;
     }
 
-    // Loading state
     btn.disabled = true;
     btn.classList.add('loading');
 
+    const result = await VaultStore.login(email, password);
+
+    if (!result.ok) {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      showError(result.error);
+      return;
+    }
+
+    const user = result.user;
+
+    // Let vault door animation play, then redirect
     setTimeout(() => {
-      const result = VaultStore.login(email, password);
-
-      if (!result.ok) {
-        btn.disabled = false;
-        btn.classList.remove('loading');
-        showError(result.error);
-        return;
+      if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
+        window.location.href = 'kyc.html';
+      } else {
+        window.location.href = 'dashboard.html';
       }
+    }, 1800);
 
-      const user = result.user;
-
-      // Success — let auth.js vault animation play (it uses a flag), then redirect
-      setTimeout(() => {
-        if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
-          window.location.href = 'kyc.html';
-        } else {
-          window.location.href = 'dashboard.html';
-        }
-      }, 1800); // matches vault door animation timing in auth.js
-
-    }, 600); // brief spinner before hitting store
-  }, true); // capture phase so we run before auth.js listener
+  }, true);
 
 })();

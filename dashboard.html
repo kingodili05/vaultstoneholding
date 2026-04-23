@@ -1049,9 +1049,14 @@
   </div>
 </div>
 
-<!-- Store must load before dashboard.js -->
-<script src="scripts/store.js"></script>
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- VaultStore (Supabase-backed) -->
+<script src="scripts/supabase-client.js"></script>
+<script src="scripts/supabase-store.js"></script>
+<!-- Dashboard UI + Supabase data layer -->
 <script src="scripts/dashboard.js"></script>
+<script src="scripts/dashboard-supabase.js"></script>
 
 </body>
 </html>
