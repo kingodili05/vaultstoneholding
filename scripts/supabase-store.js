@@ -275,11 +275,10 @@ const VaultStore = (() => {
     return { ok: true, user: authData.user };
   }
 
-  async function sendOtp(email, metadata) {
-    const { error } = await sb.auth.signInWithOtp({
-      email,
-      options: { shouldCreateUser: true, data: metadata },
-    });
+  async function sendOtp(email, metadata, emailRedirectTo) {
+    const options = { shouldCreateUser: true, data: metadata };
+    if (emailRedirectTo) options.emailRedirectTo = emailRedirectTo;
+    const { error } = await sb.auth.signInWithOtp({ email, options });
     return error ? { ok: false, error: error.message } : { ok: true };
   }
 
