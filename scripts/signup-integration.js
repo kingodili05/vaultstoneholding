@@ -35,14 +35,13 @@ async function sendOtp() {
   const hint = document.getElementById('otp-hint');
   if (hint) hint.textContent = `Sending a 6-digit code to ${email}…`;
 
-  const redirectTo = `${window.location.origin}${window.location.pathname}`;
   const result = await VaultStore.sendOtp(email, {
     full_name:    `${firstName} ${lastName}`.trim(),
     phone,
     country,
     dob,
     account_type: accountType,
-  }, redirectTo);
+  });
 
   if (hint) {
     hint.textContent = result.ok
