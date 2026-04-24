@@ -166,7 +166,7 @@ function showMagicLinkPasswordSetup() {
       const otpInputs = [...document.querySelectorAll('.otp-input')];
       const token     = otpInputs.map(i => i.value).join('');
 
-      if (token.length < 6) {
+      if (token.length < 8) {
         const panel = btn.closest('.step-panel');
         if (panel) {
           panel.classList.remove('shake');

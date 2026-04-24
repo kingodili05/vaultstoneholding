@@ -674,7 +674,7 @@ function initSignupPage() {
   if (signupBtn) {
     signupBtn.addEventListener('click', () => {
       const otp = otpInputs.map(i => i.value).join('');
-      if (otp.length < 6) {
+      if (otp.length < 8) {
         shakeElement(signupBtn.closest('.step-panel'));
         otpInputs.forEach(i => i.classList.add('error'));
         return;

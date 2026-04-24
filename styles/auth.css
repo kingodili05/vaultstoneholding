@@ -980,14 +980,14 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
    ============================================================ */
 .otp-grid {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   justify-content: center;
   margin: 28px 0;
 }
 
 .otp-input {
-  width: 52px;
-  height: 60px;
+  width: 46px;
+  height: 56px;
   border-radius: var(--radius-md);
   background: rgba(255,255,255,0.04);
   border: 1.5px solid rgba(255,255,255,0.08);
@@ -1282,8 +1282,8 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
     padding: 16px 20px;
   }
 
-  .otp-grid { gap: 8px; }
-  .otp-input { width: 44px; height: 54px; font-size: 1.25rem; }
+  .otp-grid { gap: 6px; }
+  .otp-input { width: 38px; height: 48px; font-size: 1.125rem; }
 
   .step-progress__label { display: none; }
 }
