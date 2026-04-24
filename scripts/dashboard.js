@@ -12,6 +12,12 @@ const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* Statements pagination state */
+let _stmtPage  = 1;
+const _stmtPerPage = 15;
+let _stmtMonth = '';
+let _stmtYear  = '';
+
 function animateCounter(el, target, duration = 1400, prefix = '', suffix = '') {
   if (reduced) { el.textContent = prefix + target + suffix; return; }
   const start = performance.now();
@@ -98,8 +104,17 @@ function switchPanel(name) {
 
   // Lazy-init panel content
   if (name === 'investments' && !window._investInit) { initInvestPanel(); window._investInit = true; }
-  if (name === 'accounts' && !window._acctInit) { initAccountsPanel(); window._acctInit = true; }
-  if (name === 'cards' && !window._cardsInit) { initCardsPanel(); window._cardsInit = true; }
+  if (name === 'accounts'    && !window._acctInit)   { initAccountsPanel(); window._acctInit = true; }
+  if (name === 'cards'       && !window._cardsInit)  { initCardsPanel(); window._cardsInit = true; }
+  if (name === 'statements'  && !window._stmtInit) {
+    const uid = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
+    if (uid) renderStatements(uid);
+    window._stmtInit = true;
+  }
+  if (name === 'transfers' && !window._xferTabInit) {
+    renderMyTransfers();
+    window._xferTabInit = true;
+  }
 }
 
 /* ───────────────────────────────────────────
@@ -342,90 +357,154 @@ function initAccountsPanel() {
    TRANSFERS PANEL
 ─────────────────────────────────────────── */
 function initTransfersPanel() {
-  const contacts = [
-    { name: 'Sarah Johnson', account: '****4521', initials: 'SJ' },
-    { name: 'Michael Chen', account: '****8834', initials: 'MC' },
-    { name: 'Emma Wilson', account: '****2217', initials: 'EW' },
-    { name: 'David Park', account: '****6650', initials: 'DP' },
-    { name: 'Lisa Torres', account: '****9943', initials: 'LT' },
-  ];
-
-  const recipientInput = document.getElementById('recipient-input');
-  const dropdown = document.getElementById('recipient-dropdown');
-
-  if (recipientInput && dropdown) {
-    recipientInput.addEventListener('input', () => {
-      const val = recipientInput.value.toLowerCase().trim();
-      if (!val) { dropdown.classList.remove('visible'); return; }
-      const filtered = contacts.filter(c => c.name.toLowerCase().includes(val));
-      dropdown.innerHTML = filtered.map(c => `
-        <div class="recipient-item" data-name="${c.name}" data-account="${c.account}">
-          <div class="avatar">${c.initials}</div>
-          <div><div style="font-weight:500">${c.name}</div><div style="font-size:0.75rem;color:var(--muted)">${c.account}</div></div>
-        </div>`).join('');
-      dropdown.classList.toggle('visible', filtered.length > 0);
-      $$('.recipient-item', dropdown).forEach(item => {
-        item.addEventListener('click', () => {
-          recipientInput.value = item.dataset.name;
-          dropdown.classList.remove('visible');
-        });
-      });
-    });
-    document.addEventListener('click', e => {
-      if (!recipientInput.contains(e.target) && !dropdown.contains(e.target))
-        dropdown.classList.remove('visible');
-    });
-  }
-
-  // Transfer form submit
-  const transferForm = document.getElementById('transfer-form');
-  const transferOrb = document.getElementById('transfer-orb');
-  const transferPath = document.querySelector('.transfer-path');
-
-  if (transferForm) {
-    transferForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const recipient = recipientInput?.value?.trim();
-      const amount = document.getElementById('transfer-amount')?.value;
-      if (!recipient || !amount) { showToast('Please fill in all required fields.', 'warning'); return; }
-      animateTransfer(recipient, amount);
-    });
-  }
-
-  function animateTransfer(recipient, amount) {
-    if (transferOrb && window.gsap && !reduced) {
-      transferOrb.style.display = 'block';
-      const scene = document.querySelector('.transfer-scene');
-      const sceneRect = scene.getBoundingClientRect();
-      const pathW = scene.querySelector('.transfer-path')?.offsetWidth || 200;
-
-      if (transferPath) transferPath.classList.add('animating');
-
-      gsap.fromTo(transferOrb,
-        { x: 0, opacity: 1, scale: 1 },
-        { x: pathW + 20, opacity: 0, scale: 0.3, duration: 0.9, ease: 'power2.in',
-          onComplete: () => {
-            transferOrb.style.display = 'none';
-            if (transferPath) transferPath.classList.remove('animating');
-            showToast(`Sent $${parseFloat(amount).toLocaleString()} to ${recipient}`, 'success');
-            document.getElementById('transfer-form').reset();
-          }
-        }
-      );
-    } else {
-      showToast(`Sent $${parseFloat(amount).toLocaleString()} to ${recipient}`, 'success');
-      document.getElementById('transfer-form').reset();
-    }
-  }
-
-  // Tab switching (Send / International)
-  $$('.tab-btn[data-tab]').forEach(btn => {
+  /* ── Sub-tab switching (Send / My Transfers / Scheduled) ── */
+  $$('.tab-btn[data-transfer-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const group = btn.closest('.tabs').nextElementSibling?.parentElement || btn.closest('.card');
-      $$('.tab-btn', btn.closest('.tabs')).forEach(b => b.classList.remove('active'));
+      $$('.tab-btn[data-transfer-tab]').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
       btn.classList.add('active');
-      $$('.tab-content', group).forEach(tc => tc.classList.toggle('active', tc.dataset.tabContent === btn.dataset.tab));
+      btn.setAttribute('aria-selected', 'true');
+      $$('.transfer-tab-content').forEach(tc => {
+        const isTarget = tc.id === 'transfer-tab-' + btn.dataset.transferTab;
+        tc.style.display = isTarget ? '' : 'none';
+        tc.classList.toggle('active', isTarget);
+      });
+      if (btn.dataset.transferTab === 'my-transfers') renderMyTransfers();
     });
+  });
+
+  /*
+   * All remaining interactions use event delegation from #panel-transfers.
+   * This is necessary because dashboard-supabase.js clones and replaces
+   * #transfer-form to remove the wireTransferForm listener, which would
+   * destroy any direct listeners attached to child elements.
+   */
+  const panel = document.getElementById('panel-transfers');
+  if (!panel) return;
+
+  /* ── Input events (recipient search + fee calculation) ── */
+  panel.addEventListener('input', e => {
+
+    /* Recipient search */
+    if (e.target.id === 'recipient-input') {
+      const val          = e.target.value.toLowerCase().trim();
+      const dropdown     = document.getElementById('recipient-dropdown');
+      const internalInfo = document.getElementById('internal-recipient-info');
+      const extFields    = document.getElementById('external-fields');
+      if (!dropdown) return;
+
+      if (!val) {
+        dropdown.classList.remove('visible');
+        if (internalInfo) internalInfo.style.display = 'none';
+        if (extFields)    extFields.style.display    = 'none';
+        return;
+      }
+
+      /* "External" keyword → show bank details fields */
+      if (val === 'external' || val.startsWith('external ')) {
+        if (extFields)    extFields.style.display    = 'block';
+        if (internalInfo) internalInfo.style.display = 'none';
+        dropdown.classList.remove('visible');
+        return;
+      }
+      if (extFields) extFields.style.display = 'none';
+
+      /* Search real users from VaultStore cache */
+      const currentId = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
+      const users = (typeof VaultStore !== 'undefined' ? VaultStore.getUsers() : [])
+        .filter(u => u.id !== currentId)
+        .filter(u =>
+          u.name.toLowerCase().includes(val) ||
+          (u.email || '').toLowerCase().includes(val)
+        )
+        .slice(0, 6);
+
+      if (!users.length) { dropdown.classList.remove('visible'); return; }
+
+      dropdown.innerHTML = users.map(u => `
+        <div class="recipient-item" data-name="${u.name}"
+             data-account="${u.accountNumber || '—'}" data-uid="${u.id}">
+          <div class="avatar" style="width:32px;height:32px;font-size:0.75rem;flex-shrink:0">
+            ${u.avatar || u.name.slice(0, 2).toUpperCase()}
+          </div>
+          <div>
+            <div style="font-weight:500">${u.name}</div>
+            <div style="font-size:0.75rem;color:var(--muted)">${u.accountNumber || u.email || ''}</div>
+          </div>
+        </div>`).join('');
+      dropdown.classList.add('visible');
+    }
+
+    /* Live fee calculation */
+    if (e.target.id === 'transfer-amount') {
+      const amount = parseFloat(e.target.value) || 0;
+      const fee    = amount >= 10000 ? +(amount * 0.001).toFixed(2) : 0;
+      const total  = amount + fee;
+      const fmt    = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      const feeAmountEl  = document.getElementById('fee-amount');
+      const feeDisplayEl = document.getElementById('fee-display');
+      const feeTotalEl   = document.getElementById('fee-total');
+      const summaryEl    = document.getElementById('transfer-summary');
+      const summaryText  = document.getElementById('summary-text');
+      if (feeAmountEl)  feeAmountEl.textContent  = fmt(amount);
+      if (feeDisplayEl) feeDisplayEl.textContent = fmt(fee);
+      if (feeTotalEl)   feeTotalEl.textContent   = fmt(total);
+      if (summaryEl && summaryText) {
+        if (amount > 0) {
+          const recip = (document.getElementById('recipient-input')?.value || 'recipient').trim();
+          summaryText.textContent =
+            `Sending ${fmt(amount)} to ${recip}. Processing fee: ${fmt(fee)}. Total deducted: ${fmt(total)}.`;
+          summaryEl.style.display = 'block';
+        } else {
+          summaryEl.style.display = 'none';
+        }
+      }
+    }
+  });
+
+  /* ── Click events (dropdown select, clear button, close dropdown) ── */
+  panel.addEventListener('click', e => {
+    /* Recipient dropdown item selected */
+    const item = e.target.closest('.recipient-item');
+    if (item) {
+      const recipientInput = document.getElementById('recipient-input');
+      const dropdown       = document.getElementById('recipient-dropdown');
+      const internalInfo   = document.getElementById('internal-recipient-info');
+      if (recipientInput) recipientInput.value = item.dataset.name;
+      if (dropdown)       dropdown.classList.remove('visible');
+      if (internalInfo) {
+        internalInfo.style.display = 'block';
+        const avatarEl = document.getElementById('sel-recipient-avatar');
+        const nameEl   = document.getElementById('sel-recipient-name');
+        const acctEl   = document.getElementById('sel-recipient-acct');
+        if (avatarEl) avatarEl.textContent = item.dataset.name.slice(0, 2).toUpperCase();
+        if (nameEl)   nameEl.textContent   = item.dataset.name;
+        if (acctEl)   acctEl.textContent   = item.dataset.account || '—';
+      }
+      return;
+    }
+
+    /* Clear recipient button */
+    if (e.target.closest('#clear-recipient-btn')) {
+      const recipientInput = document.getElementById('recipient-input');
+      const dropdown       = document.getElementById('recipient-dropdown');
+      const internalInfo   = document.getElementById('internal-recipient-info');
+      const extFields      = document.getElementById('external-fields');
+      if (recipientInput) recipientInput.value      = '';
+      if (dropdown)       dropdown.classList.remove('visible');
+      if (internalInfo)   internalInfo.style.display = 'none';
+      if (extFields)      extFields.style.display    = 'none';
+      return;
+    }
+  });
+
+  /* Close dropdown when clicking outside the panel */
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#panel-transfers')) {
+      document.getElementById('recipient-dropdown')?.classList.remove('visible');
+    }
   });
 }
 
@@ -609,6 +688,33 @@ function initSettingsPanel() {
     });
   }
 
+  /* Password strength meter */
+  const pwInput = document.getElementById('new-password-input');
+  const pwBar   = document.getElementById('pw-strength-bar');
+  const pwLabel = document.getElementById('pw-strength-label');
+  if (pwInput && pwBar && pwLabel) {
+    pwInput.addEventListener('input', () => {
+      const v = pwInput.value;
+      if (!v) { pwBar.style.width = '0%'; pwLabel.textContent = 'Strength: —'; return; }
+      let score = 0;
+      if (v.length >= 8)          score++;
+      if (/[A-Z]/.test(v))        score++;
+      if (/[0-9]/.test(v))        score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      const levels = [
+        ['10%', 'var(--red)',   'Strength: Too short'],
+        ['25%', 'var(--red)',   'Strength: Weak'],
+        ['50%', '#F59E0B',      'Strength: Fair'],
+        ['75%', '#F59E0B',      'Strength: Good'],
+        ['100%','var(--green)', 'Strength: Strong'],
+      ];
+      const [w, c, t] = levels[score] || levels[0];
+      pwBar.style.width      = w;
+      pwBar.style.background = c;
+      pwLabel.textContent    = t;
+    });
+  }
+
   // Generate simple QR visual (decorative)
   const qrCanvas = document.getElementById('qr-canvas');
   if (qrCanvas) {
@@ -720,6 +826,10 @@ function loadUserData() {
   if (checkBal)    checkBal.textContent     = fmt(user.balance);
   if (savBal)      savBal.textContent       = fmt(user.savingsBalance);
   if (invBal)      invBal.textContent       = fmt(user.investmentBalance);
+
+  /* Transfer panel available balance */
+  const xferBal = document.getElementById('transfer-balance-display');
+  if (xferBal) xferBal.textContent = fmt(user.balance);
   if (checkNum)    checkNum.textContent     = user.accountNumber || '—';
   if (checkAvail)  checkAvail.textContent   = fmt(user.balance);
   if (savAvail)    savAvail.textContent     = fmt(user.savingsBalance);
@@ -785,6 +895,90 @@ function renderAccountTransactions(userId) {
       <td style="text-align:right;color:var(--muted);font-size:0.8rem">${fmt(tx.balance)}</td>
     </tr>`;
   }).join('');
+}
+
+/* ── My Transfers table ── */
+function renderMyTransfers() {
+  const tbody = document.getElementById('my-transfers-tbody');
+  if (!tbody || typeof VaultStore === 'undefined') return;
+  const transfers = typeof VaultStore.getTransfers === 'function' ? VaultStore.getTransfers() : [];
+
+  if (!transfers.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No transfers yet.</td></tr>';
+    return;
+  }
+
+  const statusColors = { pending: 'badge-yellow', approved: 'badge-green', rejected: 'badge-red', processing: 'badge-blue' };
+  const fmt = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  tbody.innerHTML = [...transfers]
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 50)
+    .map(t => {
+      const dateStr = new Date(t.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      const cls     = statusColors[t.status] || 'badge-muted';
+      return `<tr>
+        <td style="font-weight:500">${t.toName || '—'}</td>
+        <td style="color:var(--muted);font-size:0.8rem">${t.toBank || '—'}</td>
+        <td style="color:var(--muted);font-size:0.8rem">${dateStr}</td>
+        <td style="text-align:right;font-weight:600">${fmt(t.amount)}</td>
+        <td style="text-align:right">
+          <span class="badge ${cls}" style="font-size:0.7rem;text-transform:capitalize">${t.status}</span>
+        </td>
+      </tr>`;
+    }).join('');
+}
+
+/* ── Statements table with filter + pagination ── */
+function renderStatements(userId) {
+  const tbody = document.getElementById('statements-tbody');
+  if (!tbody || typeof VaultStore === 'undefined') return;
+
+  const uid = userId || VaultStore.getCurrentUser()?.id;
+  if (!uid) return;
+
+  let txs = [...VaultStore.getUserTransactions(uid)]
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  if (_stmtMonth !== '') txs = txs.filter(t => new Date(t.date).getMonth() === parseInt(_stmtMonth));
+  if (_stmtYear  !== '') txs = txs.filter(t => new Date(t.date).getFullYear() === parseInt(_stmtYear));
+
+  const total = txs.length;
+  const pages = Math.ceil(total / _stmtPerPage) || 1;
+  _stmtPage   = Math.min(_stmtPage, pages);
+  const slice = txs.slice((_stmtPage - 1) * _stmtPerPage, _stmtPage * _stmtPerPage);
+  const fmt   = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  if (!slice.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:2rem">No transactions found.</td></tr>';
+  } else {
+    tbody.innerHTML = slice.map(tx => {
+      const isCredit = tx.type === 'credit';
+      const dateStr  = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `<tr>
+        <td style="color:var(--muted);font-size:0.8rem">${dateStr}</td>
+        <td style="font-weight:500">${tx.description}</td>
+        <td><span class="badge badge-muted" style="font-size:0.7rem">${tx.category || '—'}</span></td>
+        <td style="text-align:right;font-weight:500;color:var(--red)">${isCredit ? '—' : fmt(tx.amount)}</td>
+        <td style="text-align:right;font-weight:500;color:var(--green)">${isCredit ? fmt(tx.amount) : '—'}</td>
+        <td style="text-align:right;color:var(--muted);font-size:0.8rem">${tx.balance ? fmt(tx.balance) : '—'}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  /* Pagination controls */
+  const pg = document.getElementById('stmt-pagination');
+  if (pg) {
+    if (pages <= 1) { pg.innerHTML = ''; return; }
+    pg.innerHTML = Array.from({ length: pages }, (_, i) => i + 1)
+      .map(i => `<button class="btn btn-ghost btn-sm${i === _stmtPage ? ' active' : ''}" data-stmt-page="${i}">${i}</button>`)
+      .join('');
+    pg.querySelectorAll('[data-stmt-page]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _stmtPage = parseInt(btn.dataset.stmtPage);
+        renderStatements(uid);
+      });
+    });
+  }
 }
 
 /* ── Notifications drawer ── */
@@ -924,6 +1118,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await VaultStore.ready;
   }
 
+  /* Auth guard — also redirect admins to their own panel */
+  if (typeof VaultStore !== 'undefined') {
+    const _u = VaultStore.getCurrentUser();
+    if (_u && _u.role === 'admin') { window.location.href = 'admin.html'; return; }
+  }
+
   /* Auth guard + load real user data */
   const currentUser = (typeof VaultStore !== 'undefined') ? loadUserData() : null;
 
@@ -1011,4 +1211,73 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   /* Wire transfer form to VaultStore */
   if (currentUser) wireTransferForm(currentUser);
+
+  /* ── Refresh transfers button ── */
+  document.getElementById('refresh-transfers-btn')?.addEventListener('click', async () => {
+    if (typeof VaultStore === 'undefined') return;
+    const u = VaultStore.getCurrentUser();
+    if (!u) return;
+    showToast('Refreshing transfers…', 'info');
+    if (typeof VaultStore.loadDashboardData === 'function') await VaultStore.loadDashboardData(u.id);
+    renderMyTransfers();
+    showToast('Transfers updated.', 'success');
+  });
+
+  /* ── Statements filter helpers ── */
+  function _applyStmtFilter() {
+    _stmtPage  = 1;
+    _stmtMonth = document.getElementById('stmt-month')?.value ?? '';
+    _stmtYear  = document.getElementById('stmt-year')?.value  ?? '';
+    const uid  = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
+    if (uid) { renderStatements(uid); window._stmtInit = true; }
+  }
+
+  document.getElementById('stmt-filter-btn')?.addEventListener('click', _applyStmtFilter);
+
+  document.getElementById('stmt-clear-btn')?.addEventListener('click', () => {
+    const monthEl = document.getElementById('stmt-month');
+    const yearEl  = document.getElementById('stmt-year');
+    if (monthEl) monthEl.value = '';
+    if (yearEl)  yearEl.value  = '';
+    _stmtMonth = '';
+    _stmtYear  = '';
+    _stmtPage  = 1;
+    const uid  = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
+    if (uid) { renderStatements(uid); window._stmtInit = true; }
+  });
+
+  /* ── Statements CSV download ── */
+  document.getElementById('download-csv-btn')?.addEventListener('click', () => {
+    if (typeof VaultStore === 'undefined') return;
+    const uid = VaultStore.getCurrentUser()?.id;
+    if (!uid) return;
+
+    let txs = [...VaultStore.getUserTransactions(uid)]
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
+    if (_stmtMonth !== '') txs = txs.filter(t => new Date(t.date).getMonth() === parseInt(_stmtMonth));
+    if (_stmtYear  !== '') txs = txs.filter(t => new Date(t.date).getFullYear() === parseInt(_stmtYear));
+
+    if (!txs.length) { showToast('No transactions to export.', 'warning'); return; }
+
+    const rows = [['Date', 'Description', 'Category', 'Type', 'Amount', 'Balance']];
+    txs.forEach(tx => rows.push([
+      new Date(tx.date).toLocaleDateString('en-US'),
+      '"' + (tx.description || '').replace(/"/g, '""') + '"',
+      tx.category || '',
+      tx.type,
+      tx.amount.toFixed(2),
+      (tx.balance || 0).toFixed(2),
+    ]));
+
+    const csv  = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `vaultstone-statements-${new Date().toISOString().slice(0, 10)}.csv`,
+    });
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV downloaded.', 'success');
+  });
 });

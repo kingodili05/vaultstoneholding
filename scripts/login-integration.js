@@ -12,9 +12,13 @@
   // Already logged in → skip login
   const existing = VaultStore.getCurrentUser();
   if (existing) {
-    window.location.href = (existing.status === 'pending_kyc' || existing.kycStatus === 'not_started')
-      ? 'kyc.html'
-      : 'dashboard.html';
+    if (existing.role === 'admin') {
+      window.location.href = 'admin.html';
+    } else if (existing.status === 'pending_kyc' || existing.kycStatus === 'not_started') {
+      window.location.href = 'kyc.html';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
     return;
   }
 
@@ -79,9 +83,17 @@
 
     const user = result.user;
 
-    // Let vault door animation play, then redirect
+    // Trigger vault door animation on successful login
+    if (typeof window.openVaultDoor === 'function') window.openVaultDoor();
+    if (typeof gsap !== 'undefined') {
+      gsap.to('.auth-card', { scale: 0.96, opacity: 0.8, duration: 0.5, ease: 'power2.in', delay: 1.1 });
+    }
+
+    // Redirect based on role and KYC status
     setTimeout(() => {
-      if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
+      if (user.role === 'admin') {
+        window.location.href = 'admin.html';
+      } else if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
         window.location.href = 'kyc.html';
       } else {
         window.location.href = 'dashboard.html';

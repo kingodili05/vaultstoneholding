@@ -504,43 +504,19 @@ function initLoginPage() {
     });
   });
 
-  /* Form submit */
+  /* Form submit — validation only.
+     Actual authentication and redirect are handled by login-integration.js. */
   const form = document.getElementById('login-form');
-  const btn  = document.getElementById('login-btn');
 
   form.addEventListener('submit', e => {
-    e.preventDefault();
-    let valid = true;
-
-    /* Validate */
     const emailInput = document.getElementById('login-email');
     const passInput  = document.getElementById('login-password');
-
-    valid = validateField(emailInput, 'email') && valid;
-    valid = validateField(passInput, 'password') && valid;
-
+    const valid = validateField(emailInput, 'email') & validateField(passInput, 'password');
     if (!valid) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
       shakeElement(form);
-      return;
     }
-
-    /* Loading state */
-    btn.classList.add('loading');
-    btn.disabled = true;
-
-    setTimeout(() => {
-      /* Trigger vault open */
-      if (typeof window.openVaultDoor === 'function') window.openVaultDoor();
-
-      /* GSAP success */
-      if (typeof gsap !== 'undefined') {
-        gsap.to('.auth-card', { scale: 0.96, opacity: 0.8, duration: 0.5, ease: 'power2.in' });
-      }
-
-      setTimeout(() => {
-        window.location.href = 'dashboard.html';
-      }, 1200);
-    }, 1600);
   });
 }
 
