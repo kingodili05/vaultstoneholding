@@ -519,20 +519,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
-<!-- VaultStore -->
-<script src="scripts/store.js"></script>
+<!-- VaultStore (Supabase) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="scripts/supabase-client.js"></script>
+<script src="scripts/supabase-store.js"></script>
 
 <script>
 'use strict';
 
 /* ── Auth guard ── */
-(function () {
+VaultStore.ready.then(() => {
   const user = VaultStore.getCurrentUser();
   if (!user) { window.location.href = 'login.html'; return; }
   if (user.kycStatus === 'approved' && user.status === 'active') {
     window.location.href = 'dashboard.html'; return;
   }
-})();
+}).catch(() => { window.location.href = 'login.html'; });
 
 /* ── Three.js Particle Background ── */
 function initKYCBackground() {
@@ -596,6 +598,7 @@ function initKYCBackground() {
 document.addEventListener('DOMContentLoaded', () => {
   initKYCBackground();
 
+  VaultStore.ready.then(() => {
   const user = VaultStore.getCurrentUser();
   let currentStep = 1;
   let selectedDocType = null;
@@ -832,6 +835,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   updateProgress();
+  }); // VaultStore.ready.then
 });
 </script>
 
