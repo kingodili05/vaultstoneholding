@@ -68,10 +68,16 @@
     btn.disabled = true;
     btn.classList.add('loading');
 
-    // Ensure auth state is resolved before attempting login
-    await VaultStore.ready;
-
-    const result = await VaultStore.login(email, password);
+    let result;
+    try {
+      result = await VaultStore.login(email, password);
+    } catch (err) {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      showError('Something went wrong. Please try again.');
+      console.error('[login]', err);
+      return;
+    }
 
     if (!result.ok) {
       btn.disabled = false;

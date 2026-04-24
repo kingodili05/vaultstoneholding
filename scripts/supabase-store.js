@@ -161,8 +161,14 @@ const VaultStore = (() => {
      SESSION
   ═══════════════════════════════════════════════════════════ */
   async function login(email, password) {
-    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    let data, error;
+    try {
+      ({ data, error } = await sb.auth.signInWithPassword({ email, password }));
+    } catch (e) {
+      return { ok: false, error: 'Network error. Please check your connection and try again.' };
+    }
     if (error) return { ok: false, error: error.message };
+    if (!data?.user) return { ok: false, error: 'Please confirm your email address before signing in.' };
 
     const [profileRes, accountsRes] = await Promise.all([
       sb.from('profiles').select('*').eq('id', data.user.id).single(),
