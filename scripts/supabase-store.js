@@ -548,6 +548,136 @@ const VaultStore = (() => {
     return flat;
   }
 
+  async function generateTransactions(userId, { targetBalance, count = 25, daysBack = 90 } = {}) {
+    const MERCHANTS = [
+      { name: 'Amazon',         cat: 'Shopping'      },
+      { name: 'Netflix',        cat: 'Entertainment' },
+      { name: 'Uber',           cat: 'Transport'     },
+      { name: 'Whole Foods',    cat: 'Groceries'     },
+      { name: 'Shell',          cat: 'Fuel'          },
+      { name: 'Starbucks',      cat: 'Food & Drink'  },
+      { name: 'Apple',          cat: 'Tech'          },
+      { name: 'Spotify',        cat: 'Music'         },
+      { name: 'Delta Airlines', cat: 'Travel'        },
+      { name: 'Target',         cat: 'Retail'        },
+      { name: 'Walmart',        cat: 'Groceries'     },
+      { name: 'Zara',           cat: 'Shopping'      },
+      { name: 'IKEA',           cat: 'Shopping'      },
+      { name: 'DoorDash',       cat: 'Food & Drink'  },
+      { name: 'Airbnb',         cat: 'Travel'        },
+      { name: 'Best Buy',       cat: 'Tech'          },
+      { name: 'Costco',         cat: 'Groceries'     },
+      { name: 'Lyft',           cat: 'Transport'     },
+      { name: 'Hulu',           cat: 'Entertainment' },
+      { name: 'AT&T',           cat: 'Utilities'     },
+    ];
+    const INCOMES = ['Salary Deposit', 'ACH Transfer', 'Wire Transfer', 'Client Payment', 'Invoice Payment'];
+
+    const now      = Date.now();
+    const msPerDay = 86_400_000;
+
+    // Sorted dates oldest → newest
+    const dates = Array.from({ length: count }, () =>
+      new Date(now - (Math.floor(Math.random() * daysBack) + 1) * msPerDay)
+    ).sort((a, b) => a - b);
+
+    const rows   = [];
+    let running  = 0;
+
+    for (let i = 0; i < count - 1; i++) {
+      const progress  = i / Math.max(count - 2, 1);
+      // Bias toward credits early to build up balance, then more debits
+      const isCredit  = Math.random() < 0.42 - progress * 0.12;
+
+      let type, amount, merchant, category, description;
+
+      if (isCredit) {
+        amount      = parseFloat((Math.random() * 3000 + 500).toFixed(2));
+        merchant    = INCOMES[Math.floor(Math.random() * INCOMES.length)];
+        category    = 'Transfer';
+        description = merchant;
+        type        = 'credit';
+      } else {
+        const m     = MERCHANTS[Math.floor(Math.random() * MERCHANTS.length)];
+        const cap   = Math.max(20, running + 200);   // keep balance from going deeply negative
+        amount      = parseFloat(Math.min(Math.random() * 400 + 5, cap).toFixed(2));
+        merchant    = m.name;
+        category    = m.cat;
+        description = m.name;
+        type        = 'debit';
+      }
+
+      running = parseFloat((running + (type === 'credit' ? amount : -amount)).toFixed(2));
+      rows.push({ type, amount, merchant, category, description, date: dates[i], balAfter: Math.max(0, running) });
+    }
+
+    // Final transaction to land exactly on targetBalance
+    const diff = parseFloat((targetBalance - running).toFixed(2));
+    if (Math.abs(diff) >= 0.01) {
+      rows.push({
+        type:        diff > 0 ? 'credit' : 'debit',
+        amount:      Math.abs(diff),
+        merchant:    diff > 0 ? 'Account Funding' : 'Account Adjustment',
+        category:    'Transfer',
+        description: diff > 0 ? 'Funding Credit'  : 'Balance Adjustment',
+        date:        dates[count - 1],
+        balAfter:    targetBalance,
+      });
+    }
+
+    const payloads = rows.map(r => ({
+      user_id:      userId,
+      type:         r.type,
+      amount:       parseFloat(r.amount.toFixed(2)),
+      balance_after: r.balAfter,
+      description:  r.description,
+      category:     r.category,
+      merchant:     r.merchant,
+      status:       'completed',
+      date:         r.date.toISOString(),
+    }));
+
+    // Batch inserts in chunks of 50 to stay within Supabase limits
+    const CHUNK    = 50;
+    const inserted = [];
+    for (let i = 0; i < payloads.length; i += CHUNK) {
+      const { data, error } = await sb.from('transactions').insert(payloads.slice(i, i + CHUNK)).select();
+      if (error) { console.error('[generateTransactions]', error); return { ok: false, error: error.message }; }
+      inserted.push(...(data || []));
+    }
+
+    const flat = inserted.map(_flattenTx);
+    if (!_txCache[userId]) _txCache[userId] = [];
+    _txCache[userId] = [...flat, ..._txCache[userId]].sort((a, b) => new Date(b.date) - new Date(a.date));
+    return { ok: true, count: flat.length };
+  }
+
+  async function fundAccount(userId, delta, acctType = 'checking', { generateHistory = false, txCount = 25, daysBack = 90 } = {}) {
+    const updatedUser = await adjustBalance(userId, delta, acctType);
+    if (!updatedUser) return { ok: false, error: 'Balance update failed.' };
+
+    const newBalance =
+      acctType === 'savings'    ? updatedUser.savingsBalance :
+      acctType === 'investment' ? updatedUser.investmentBalance :
+                                  updatedUser.balance;
+
+    if (generateHistory) {
+      return generateTransactions(userId, { targetBalance: newBalance, count: txCount, daysBack });
+    }
+
+    await addTransaction({
+      userId,
+      type:        'credit',
+      amount:      delta,
+      balance:     newBalance,
+      description: 'Admin Deposit',
+      category:    'Transfer',
+      merchant:    'Vaultstone Bank',
+      status:      'completed',
+    });
+    return { ok: true, user: updatedUser };
+  }
+
   /* ═══════════════════════════════════════════════════════════
      NOTIFICATIONS
   ═══════════════════════════════════════════════════════════ */
@@ -752,7 +882,7 @@ const VaultStore = (() => {
     // Account status (admin)
     lockAccount, unlockAccount, suspendAccount, activateAccount,
     // Balance (admin)
-    updateBalance, adjustBalance,
+    updateBalance, adjustBalance, fundAccount, generateTransactions,
     // Transfers
     getTransfers, getUserTransfers, getPendingTransfers,
     createTransfer, updateTransfer, approveTransfer, rejectTransfer,

@@ -58,19 +58,194 @@
   renderPendingTransfersSection(transfers);
 
   /* ─── Override user action handlers ─────────────────────── */
-  // View user — opens detail modal
   window.openViewUser = function (id) {
-    const u = window.usersData.find(x => x.id === id);
+    const u = window.usersData.find(x => String(x.id) === String(id));
     if (!u) return;
     if (typeof showToast === 'function')
-      showToast(`Viewing ${u.name} — Status: ${u.status}`, 'info');
+      showToast(`${u.name} — Balance: $${u.balance.toLocaleString()} · Status: ${u.status}`, 'info');
   };
 
-  // Edit user (stub — extend as needed)
+  // Open the edit drawer and populate it with live Supabase data
   window.openEditUser = function (id) {
-    if (typeof showToast === 'function')
-      showToast('Edit functionality: update via Supabase Dashboard or extend this panel.', 'info');
+    const u = window.usersData.find(x => String(x.id) === String(id));
+    if (!u) return;
+    const drawer   = document.getElementById('edit-drawer');
+    const backdrop = document.getElementById('edit-drawer-backdrop');
+    if (!drawer) return;
+    document.getElementById('edit-name').value    = u.name    || '';
+    document.getElementById('edit-email').value   = u.email   || '';
+    document.getElementById('edit-type').value    = u.type    || 'personal';
+    document.getElementById('edit-status').value  = u.status  || 'active';
+    document.getElementById('edit-balance').value = u.balance || 0;
+    drawer.dataset.editId = id;
+    drawer.classList.add('open');
+    backdrop?.classList.add('open');
+    document.getElementById('edit-name').focus();
   };
+
+  // Replace edit-save handler so it persists to Supabase
+  const _editSave = document.getElementById('edit-save');
+  if (_editSave) {
+    const freshSave = _editSave.cloneNode(true);
+    _editSave.parentNode.replaceChild(freshSave, _editSave);
+    freshSave.addEventListener('click', async () => {
+      const id = document.getElementById('edit-drawer')?.dataset.editId;
+      if (!id) return;
+      const u          = window.usersData.find(x => String(x.id) === String(id));
+      const name       = document.getElementById('edit-name')?.value.trim();
+      const status     = document.getElementById('edit-status')?.value;
+      const acctType   = document.getElementById('edit-type')?.value;
+      const newBalance = parseFloat(document.getElementById('edit-balance')?.value || 0);
+
+      freshSave.disabled    = true;
+      freshSave.textContent = 'Saving…';
+
+      await VaultStore.updateUser(id, { name, status, accountType: acctType });
+      if (u && newBalance !== u.balance) {
+        await VaultStore.adjustBalance(id, newBalance - u.balance);
+      }
+
+      freshSave.disabled    = false;
+      freshSave.textContent = 'Save Changes';
+
+      if (u) { u.name = name; u.status = status; u.type = acctType; u.balance = newBalance; }
+      if (typeof closeDrawer      === 'function') closeDrawer();
+      if (typeof renderUsersTable === 'function') renderUsersTable();
+      if (typeof showToast        === 'function') showToast('User updated.', 'success');
+    });
+  }
+
+  /* ─── Fund Account modal ─────────────────────────────────── */
+  window.openFundModal = function (id) {
+    const u = window.usersData.find(x => String(x.id) === String(id));
+    if (!u) return;
+    document.getElementById('fund-user-name').textContent    = u.name;
+    document.getElementById('fund-user-balance').textContent = `Current balance: $${u.balance.toLocaleString()}`;
+    document.getElementById('fund-amount').value             = '';
+    document.getElementById('fund-acct-type').value          = 'checking';
+    document.getElementById('fund-gen-history').checked      = false;
+    document.getElementById('fund-history-opts').style.display = 'none';
+    const overlay = document.getElementById('fund-modal-overlay');
+    overlay.dataset.userId = id;
+    overlay.style.display  = 'flex';
+    overlay.removeAttribute('aria-hidden');
+    document.getElementById('fund-amount').focus();
+  };
+
+  function _closeFundModal() {
+    const o = document.getElementById('fund-modal-overlay');
+    if (o) { o.style.display = 'none'; o.setAttribute('aria-hidden', 'true'); }
+  }
+
+  document.getElementById('fund-gen-history')?.addEventListener('change', function () {
+    document.getElementById('fund-history-opts').style.display = this.checked ? 'flex' : 'none';
+  });
+  document.getElementById('fund-modal-close')?.addEventListener('click', _closeFundModal);
+  document.getElementById('fund-cancel')?.addEventListener('click', _closeFundModal);
+  document.getElementById('fund-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) _closeFundModal();
+  });
+
+  document.getElementById('fund-submit')?.addEventListener('click', async function () {
+    const overlay  = document.getElementById('fund-modal-overlay');
+    const userId   = overlay?.dataset.userId;
+    const amount   = parseFloat(document.getElementById('fund-amount')?.value || 0);
+    const acctType = document.getElementById('fund-acct-type')?.value || 'checking';
+    const genHist  = document.getElementById('fund-gen-history')?.checked || false;
+    const txCount  = parseInt(document.getElementById('fund-tx-count')?.value  || 25, 10);
+    const daysBack = parseInt(document.getElementById('fund-days-back')?.value || 90, 10);
+
+    if (!userId || !(amount > 0)) {
+      if (typeof showToast === 'function') showToast('Enter a valid amount.', 'warning');
+      return;
+    }
+
+    this.disabled    = true;
+    this.textContent = genHist ? 'Generating…' : 'Funding…';
+
+    const result = await VaultStore.fundAccount(userId, amount, acctType, {
+      generateHistory: genHist, txCount, daysBack,
+    });
+
+    this.disabled    = false;
+    this.textContent = 'Fund Account';
+
+    if (!result.ok) {
+      if (typeof showToast === 'function') showToast(result.error || 'Funding failed.', 'error');
+      return;
+    }
+
+    _closeFundModal();
+    const u = window.usersData.find(x => String(x.id) === String(userId));
+    if (u) {
+      if (acctType === 'checking')   u.balance = (u.balance || 0) + amount;
+      if (acctType === 'savings')    u.savingsBalance    = (u.savingsBalance    || 0) + amount;
+      if (acctType === 'investment') u.investmentBalance = (u.investmentBalance || 0) + amount;
+      if (typeof renderUsersTable === 'function') renderUsersTable();
+    }
+    const msg = genHist
+      ? `$${amount.toLocaleString()} funded & ${result.count} transactions generated for ${u?.name}.`
+      : `$${amount.toLocaleString()} deposited to ${u?.name}'s ${acctType} account.`;
+    if (typeof showToast === 'function') showToast(msg, 'success');
+  });
+
+  /* ─── Generate Transaction History modal ─────────────────── */
+  window.openGenHistoryModal = function (id) {
+    const u = window.usersData.find(x => String(x.id) === String(id));
+    if (!u) return;
+    document.getElementById('gen-history-user-name').textContent    = u.name;
+    document.getElementById('gen-history-user-balance').textContent =
+      `Current balance: $${u.balance.toLocaleString()} — history will culminate at this amount`;
+    document.getElementById('gen-tx-count').value  = 25;
+    document.getElementById('gen-days-back').value = '90';
+    const overlay = document.getElementById('gen-history-modal-overlay');
+    overlay.dataset.userId      = id;
+    overlay.dataset.userBalance = u.balance;
+    overlay.style.display       = 'flex';
+    overlay.removeAttribute('aria-hidden');
+  };
+
+  function _closeGenModal() {
+    const o = document.getElementById('gen-history-modal-overlay');
+    if (o) { o.style.display = 'none'; o.setAttribute('aria-hidden', 'true'); }
+  }
+
+  document.getElementById('gen-history-close')?.addEventListener('click', _closeGenModal);
+  document.getElementById('gen-history-cancel')?.addEventListener('click', _closeGenModal);
+  document.getElementById('gen-history-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) _closeGenModal();
+  });
+
+  document.getElementById('gen-history-submit')?.addEventListener('click', async function () {
+    const overlay       = document.getElementById('gen-history-modal-overlay');
+    const userId        = overlay?.dataset.userId;
+    const targetBalance = parseFloat(overlay?.dataset.userBalance || 0);
+    const txCount       = parseInt(document.getElementById('gen-tx-count')?.value  || 25, 10);
+    const daysBack      = parseInt(document.getElementById('gen-days-back')?.value || 90, 10);
+
+    if (!userId || !(targetBalance > 0)) {
+      if (typeof showToast === 'function') showToast('This account has no balance to generate history for.', 'warning');
+      return;
+    }
+
+    this.disabled    = true;
+    this.textContent = 'Generating…';
+
+    const result = await VaultStore.generateTransactions(userId, { targetBalance, count: txCount, daysBack });
+
+    this.disabled    = false;
+    this.textContent = 'Generate History';
+
+    if (!result.ok) {
+      if (typeof showToast === 'function') showToast(result.error || 'Generation failed.', 'error');
+      return;
+    }
+
+    _closeGenModal();
+    const u = window.usersData.find(x => String(x.id) === String(userId));
+    if (typeof showToast === 'function')
+      showToast(`${result.count} transactions generated for ${u?.name}.`, 'success');
+  });
 
   // Toggle suspend / activate
   window.toggleSuspend = async function (id) {

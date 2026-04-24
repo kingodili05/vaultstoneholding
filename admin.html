@@ -89,6 +89,105 @@
   </div>
 </aside>
 
+<!-- ── Fund Account Modal ── -->
+<div class="modal-overlay" id="fund-modal-overlay" style="display:none" aria-hidden="true">
+  <div class="modal" style="max-width:500px;width:100%">
+    <div class="modal-header">
+      <h2 class="modal-title">Fund Account</h2>
+      <button class="modal-close" id="fund-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <div style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:1rem">
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:0.75rem 1rem">
+        <div id="fund-user-name"    style="font-weight:600;font-size:0.9375rem"></div>
+        <div id="fund-user-balance" style="color:var(--muted2);font-size:0.8125rem;margin-top:2px"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fund-acct-type">Account</label>
+          <select id="fund-acct-type" class="input">
+            <option value="checking">Checking</option>
+            <option value="savings">Savings</option>
+            <option value="investment">Investment</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fund-amount">Amount ($)</label>
+          <input id="fund-amount" class="input" type="number" min="1" step="100" placeholder="0.00" />
+        </div>
+      </div>
+      <label style="display:flex;align-items:flex-start;gap:0.625rem;cursor:pointer;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:8px">
+        <input type="checkbox" id="fund-gen-history" style="margin-top:2px;accent-color:#C9A84C;flex-shrink:0" />
+        <div>
+          <div style="font-weight:500;font-size:0.875rem">Generate transaction history</div>
+          <div style="font-size:0.8rem;color:var(--muted2);margin-top:1px">Create realistic past transactions that build up to the funded balance</div>
+        </div>
+      </label>
+      <div id="fund-history-opts" style="display:none;flex-direction:column;gap:0.75rem">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="fund-tx-count">Transactions</label>
+            <input id="fund-tx-count" class="input" type="number" min="5" max="200" value="25" />
+          </div>
+          <div class="form-group">
+            <label for="fund-days-back">Date Range</label>
+            <select id="fund-days-back" class="input">
+              <option value="30">Last 30 days</option>
+              <option value="60">Last 60 days</option>
+              <option value="90" selected>Last 90 days</option>
+              <option value="180">Last 6 months</option>
+              <option value="365">Last year</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost flex-1" id="fund-cancel">Cancel</button>
+      <button class="btn btn-primary flex-1" id="fund-submit" style="justify-content:center">Fund Account</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Generate Transaction History Modal ── -->
+<div class="modal-overlay" id="gen-history-modal-overlay" style="display:none" aria-hidden="true">
+  <div class="modal" style="max-width:480px;width:100%">
+    <div class="modal-header">
+      <h2 class="modal-title">Generate Transaction History</h2>
+      <button class="modal-close" id="gen-history-close" aria-label="Close">&times;</button>
+    </div>
+    <div style="padding:1.25rem 1.5rem;display:flex;flex-direction:column;gap:1rem">
+      <div style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);border-radius:8px;padding:0.75rem 1rem">
+        <div id="gen-history-user-name"    style="font-weight:600;font-size:0.9375rem"></div>
+        <div id="gen-history-user-balance" style="color:var(--muted2);font-size:0.8125rem;margin-top:2px"></div>
+      </div>
+      <p style="font-size:0.85rem;color:var(--muted2);margin:0">
+        Creates realistic past transactions that culminate in this account's current balance.
+        Existing transactions are preserved.
+      </p>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="gen-tx-count">Transactions</label>
+          <input id="gen-tx-count" class="input" type="number" min="5" max="200" value="25" />
+        </div>
+        <div class="form-group">
+          <label for="gen-days-back">Date Range</label>
+          <select id="gen-days-back" class="input">
+            <option value="30">Last 30 days</option>
+            <option value="60">Last 60 days</option>
+            <option value="90" selected>Last 90 days</option>
+            <option value="180">Last 6 months</option>
+            <option value="365">Last year</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost flex-1" id="gen-history-cancel">Cancel</button>
+      <button class="btn btn-primary flex-1" id="gen-history-submit" style="justify-content:center">Generate History</button>
+    </div>
+  </div>
+</div>
+
 <div class="app-layout">
 
   <!-- ────────────── SIDEBAR ────────────── -->

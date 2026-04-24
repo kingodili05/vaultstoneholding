@@ -332,6 +332,12 @@ function renderUsersTable() {
           <button class="btn btn-ghost btn-icon btn-sm edit-user" data-id="${u.id}" title="Edit" aria-label="Edit user">
             <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           </button>
+          <button class="btn btn-ghost btn-icon btn-sm fund-user" data-id="${u.id}" title="Fund Account" aria-label="Fund account">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </button>
+          <button class="btn btn-ghost btn-icon btn-sm gen-history-user" data-id="${u.id}" title="Generate History" aria-label="Generate transaction history">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 7 7 7"/></svg>
+          </button>
           <button class="btn btn-ghost btn-icon btn-sm suspend-user" data-id="${u.id}" title="${u.status === 'suspended' ? 'Activate' : 'Suspend'}" aria-label="${u.status === 'suspended' ? 'Activate' : 'Suspend'} user">
             <svg viewBox="0 0 24 24">${u.status === 'suspended'
               ? '<polyline points="20 6 9 17 4 12"/>'
@@ -347,7 +353,13 @@ function renderUsersTable() {
 
   // Bind row actions
   tbody.querySelectorAll('.view-user').forEach(btn => btn.addEventListener('click', () => openViewUser(+btn.dataset.id)));
-  tbody.querySelectorAll('.edit-user').forEach(btn => btn.addEventListener('click', () => openEditUser(+btn.dataset.id)));
+  tbody.querySelectorAll('.edit-user').forEach(btn => btn.addEventListener('click', () => openEditUser(btn.dataset.id)));
+  tbody.querySelectorAll('.fund-user').forEach(btn => btn.addEventListener('click', () => {
+    if (typeof window.openFundModal === 'function') window.openFundModal(btn.dataset.id);
+  }));
+  tbody.querySelectorAll('.gen-history-user').forEach(btn => btn.addEventListener('click', () => {
+    if (typeof window.openGenHistoryModal === 'function') window.openGenHistoryModal(btn.dataset.id);
+  }));
   tbody.querySelectorAll('.suspend-user').forEach(btn => btn.addEventListener('click', () => toggleSuspend(+btn.dataset.id)));
   tbody.querySelectorAll('.delete-user').forEach(btn => btn.addEventListener('click', () => confirmDeleteUser(+btn.dataset.id)));
   tbody.querySelectorAll('.row-check').forEach(cb => cb.addEventListener('change', () => {
