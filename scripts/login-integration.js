@@ -13,19 +13,25 @@
 
   if (!form) return;
 
-  // Error message element
-  let errEl = document.getElementById('login-error');
-  if (!errEl) {
-    errEl = document.createElement('p');
-    errEl.id = 'login-error';
-    errEl.setAttribute('role', 'alert');
-    errEl.style.cssText = 'color:#EF4444;font-size:0.8125rem;margin:-0.5rem 0 0.75rem;display:none;';
-    passEl.closest('.field-group').insertAdjacentElement('afterend', errEl);
+  // Lazily create the error element only when first needed so nothing before
+  // addEventListener can throw and prevent the listener from being attached.
+  function getErrEl() {
+    let el = document.getElementById('login-error');
+    if (!el) {
+      el = document.createElement('p');
+      el.id = 'login-error';
+      el.setAttribute('role', 'alert');
+      el.style.cssText = 'color:#EF4444;font-size:0.8125rem;margin:-0.5rem 0 0.75rem;display:none;';
+      const anchor = passEl.closest('.field-group') || passEl.parentElement;
+      anchor.insertAdjacentElement('afterend', el);
+    }
+    return el;
   }
 
   function showError(msg) {
-    errEl.textContent    = msg;
-    errEl.style.display  = 'block';
+    const errEl = getErrEl();
+    errEl.textContent   = msg;
+    errEl.style.display = 'block';
     const card = form.closest('.auth-card');
     if (card && window.gsap) {
       gsap.fromTo(card, { x: -8 }, {
@@ -36,6 +42,8 @@
   }
 
   function clearError() {
+    const errEl = document.getElementById('login-error');
+    if (!errEl) return;
     errEl.style.display = 'none';
     errEl.textContent   = '';
   }
@@ -101,9 +109,15 @@
 
   // Check for an existing session after ready resolves — do this AFTER
   // attaching the submit listener so the form is always guarded first.
+  // Disable the button immediately when a session is found so the user
+  // cannot submit and race with the automatic redirect.
   VaultStore.ready.then(() => {
     const existing = VaultStore.getCurrentUser();
-    if (existing) redirectByRole(existing);
-  });
+    if (existing) {
+      btn.disabled    = true;
+      btn.textContent = 'Redirecting…';
+      redirectByRole(existing);
+    }
+  }).catch(() => {});
 
 })();
