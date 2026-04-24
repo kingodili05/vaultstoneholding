@@ -25,26 +25,27 @@ const VaultStore = (() => {
     const checking   = accounts.find(a => a.type === 'checking')   || {};
     const savings    = accounts.find(a => a.type === 'savings')    || {};
     const investment = accounts.find(a => a.type === 'investment') || {};
+    // Guard against null full_name — derive a safe display name from email fallback
+    const fullName   = profile.full_name || (profile.email ? profile.email.split('@')[0] : 'User');
     return {
       id:                profile.id,
-      name:              profile.full_name,
-      email:             profile.email,
+      name:              fullName,
+      email:             profile.email || '',
       phone:             profile.phone || '',
-      accountType:       profile.account_type,
+      accountType:       profile.account_type || 'checking',
       accountNumber:     profile.account_number || '',
       balance:           parseFloat(checking.balance   || 0),
       savingsBalance:    parseFloat(savings.balance    || 0),
       investmentBalance: parseFloat(investment.balance || 0),
-      status:            profile.status,
-      kycStatus:         profile.kyc_status,
-      role:              profile.role,
-      avatar:            profile.avatar || profile.full_name.slice(0, 2).toUpperCase(),
+      status:            profile.status    || 'pending_kyc',
+      kycStatus:         profile.kyc_status || 'not_started',
+      role:              profile.role       || 'user',
+      avatar:            profile.avatar     || fullName.slice(0, 2).toUpperCase(),
       country:           profile.country || 'US',
       dob:               profile.dob || '',
       createdAt:         profile.created_at,
       lastLogin:         profile.last_login,
       cardNumber:        (profile.account_number || '').slice(-4),
-      // raw profile for updates
       _raw: profile,
     };
   }
@@ -205,7 +206,7 @@ const VaultStore = (() => {
   function getCurrentUser() { return _user; }
 
   function requireAuth(redirectTo = 'login.html') {
-    if (!_user && !_session) {
+    if (!_user) {
       window.location.href = redirectTo;
       return null;
     }

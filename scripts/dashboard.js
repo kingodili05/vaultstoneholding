@@ -781,10 +781,10 @@ function loadUserData() {
   const sidebarBadge  = document.getElementById('sidebar-status-badge');
   const headerAvatar  = document.getElementById('header-avatar');
 
-  if (sidebarAvatar) sidebarAvatar.textContent = user.avatar || user.name.slice(0,2).toUpperCase();
-  if (sidebarName)   sidebarName.textContent   = user.name;
+  if (sidebarAvatar) sidebarAvatar.textContent = user.avatar || (user.name || 'U').slice(0,2).toUpperCase();
+  if (sidebarName)   sidebarName.textContent   = user.name || 'Unknown';
   if (sidebarAcct)   sidebarAcct.textContent   = user.accountNumber || '— — — —';
-  if (headerAvatar)  headerAvatar.textContent   = user.avatar || user.name.slice(0,2).toUpperCase();
+  if (headerAvatar)  headerAvatar.textContent   = user.avatar || (user.name || 'U').slice(0,2).toUpperCase();
 
   if (sidebarBadge) {
     const statusMap = { active: ['badge-green', 'Active'], pending: ['badge-yellow', 'Pending'], pending_kyc: ['badge-yellow', 'KYC'], suspended: ['badge-red', 'Suspended'] };
