@@ -275,6 +275,25 @@ const VaultStore = (() => {
     return { ok: true, user: authData.user };
   }
 
+  async function sendOtp(email, metadata) {
+    const { error } = await sb.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true, data: metadata },
+    });
+    return error ? { ok: false, error: error.message } : { ok: true };
+  }
+
+  async function verifyOtpCode(email, token) {
+    const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+    if (error) return { ok: false, error: error.message };
+    return { ok: true, user: data.user };
+  }
+
+  async function setPassword(password) {
+    const { error } = await sb.auth.updateUser({ password });
+    return error ? { ok: false, error: error.message } : { ok: true };
+  }
+
   async function updateUser(id, updates) {
     // Map old field names → new column names
     const mapped = {};
@@ -730,6 +749,7 @@ const VaultStore = (() => {
     adminLogin, getAdminSession, requireAdmin,
     // Users
     getUsers, getUser, getUserByEmail, createUser, updateUser, deleteUser,
+    sendOtp, verifyOtpCode, setPassword,
     // Account status (admin)
     lockAccount, unlockAccount, suspendAccount, activateAccount,
     // Balance (admin)
