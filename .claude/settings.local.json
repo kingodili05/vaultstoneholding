@@ -4,7 +4,22 @@
       "Bash(grep -E \"\\\\.\\(js|css\\)$\")",
       "Bash([ -f \"c:/Users/HP/Downloads/Bankwebsite/$f\" ])",
       "Bash(git --version)",
-      "Bash(git config *)"
+      "Bash(git config *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(git add *)",
+      "Bash(npm --version)",
+      "Bash(npm root *)",
+      "Bash(npm bin *)",
+      "Bash(npm prefix *)",
+      "Bash(winget --version)",
+      "Bash(winget install *)",
+      "Bash(winget search *)",
+      "Bash(npm install *)",
+      "Bash(cat)",
+      "Read(//tmp/**)",
+      "Bash(awk -F'id=\"' '{print $2}')",
+      "Bash(awk -F'\"' '{print $1}')"
     ]
   }
 }

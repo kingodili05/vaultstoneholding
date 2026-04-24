@@ -3,24 +3,8 @@
 /* Integrates VaultStore (Supabase) with the login form in login.html.
    Runs after auth.js so the Three.js vault scene is already initialized. */
 
-(async function () {
+(function () {
   if (typeof VaultStore === 'undefined') return;
-
-  // Wait for Supabase auth state to resolve
-  await VaultStore.ready;
-
-  // Already logged in → skip login
-  const existing = VaultStore.getCurrentUser();
-  if (existing) {
-    if (existing.role === 'admin') {
-      window.location.href = 'admin.html';
-    } else if (existing.status === 'pending_kyc' || existing.kycStatus === 'not_started') {
-      window.location.href = 'kyc.html';
-    } else {
-      window.location.href = 'dashboard.html';
-    }
-    return;
-  }
 
   const form    = document.getElementById('login-form');
   const emailEl = document.getElementById('login-email');
@@ -56,6 +40,18 @@
     errEl.textContent   = '';
   }
 
+  function redirectByRole(user) {
+    if (user.role === 'admin') {
+      window.location.href = 'admin.html';
+    } else if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
+      window.location.href = 'kyc.html';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  }
+
+  // Attach the submit listener IMMEDIATELY — before any async work — so
+  // e.preventDefault() is always in place even if VaultStore.ready is slow.
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
     e.stopImmediatePropagation();
@@ -71,6 +67,9 @@
 
     btn.disabled = true;
     btn.classList.add('loading');
+
+    // Ensure auth state is resolved before attempting login
+    await VaultStore.ready;
 
     const result = await VaultStore.login(email, password);
 
@@ -90,16 +89,15 @@
     }
 
     // Redirect based on role and KYC status
-    setTimeout(() => {
-      if (user.role === 'admin') {
-        window.location.href = 'admin.html';
-      } else if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
-        window.location.href = 'kyc.html';
-      } else {
-        window.location.href = 'dashboard.html';
-      }
-    }, 1800);
+    setTimeout(() => redirectByRole(user), 1800);
 
   }, true);
+
+  // Check for an existing session after ready resolves — do this AFTER
+  // attaching the submit listener so the form is always guarded first.
+  VaultStore.ready.then(() => {
+    const existing = VaultStore.getCurrentUser();
+    if (existing) redirectByRole(existing);
+  });
 
 })();
