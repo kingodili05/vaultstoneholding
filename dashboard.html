@@ -113,6 +113,92 @@
   </div>
 </div>
 
+<!-- Invest Modal -->
+<div class="modal-backdrop" id="invest-modal" role="dialog" aria-modal="true" aria-label="Invest funds">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Invest Funds</div>
+      <button class="modal-close" id="invest-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form id="invest-form" novalidate>
+      <div class="form-group">
+        <label for="invest-asset">Asset Class</label>
+        <select id="invest-asset" class="input">
+          <option value="stocks">Stocks (US Equities)</option>
+          <option value="bonds">Bonds</option>
+          <option value="etfs">ETFs</option>
+          <option value="crypto">Cryptocurrency</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="invest-amount-input">Amount (USD)</label>
+        <div class="input-group">
+          <span class="input-icon" style="font-weight:600;color:var(--gold)">$</span>
+          <input id="invest-amount-input" class="input" type="number" placeholder="100.00" min="100" step="0.01" required />
+        </div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:0.35rem">Minimum investment: $100.00</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:0.875rem;font-size:0.8125rem;margin-bottom:1.25rem">
+        <div style="font-weight:600;color:var(--gold);margin-bottom:0.35rem">How it works</div>
+        <div style="color:var(--muted)">Funds are moved from your Checking account to your Investment portfolio and allocated to the chosen asset class. Market orders execute next business day.</div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="invest-cancel-btn">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="invest-submit-btn">Invest Now</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- New Scheduled Transfer Modal -->
+<div class="modal-backdrop" id="schedule-modal" role="dialog" aria-modal="true" aria-label="New scheduled transfer">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">New Scheduled Transfer</div>
+      <button class="modal-close" id="schedule-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <form id="schedule-form" novalidate>
+      <div class="form-group">
+        <label for="sched-recipient">Recipient</label>
+        <input id="sched-recipient" class="input" type="text" placeholder="Name or account number" required />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sched-amount">Amount (USD)</label>
+          <div class="input-group">
+            <span class="input-icon" style="font-weight:600;color:var(--gold)">$</span>
+            <input id="sched-amount" class="input" type="number" placeholder="0.00" min="0.01" step="0.01" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="sched-frequency">Frequency</label>
+          <select id="sched-frequency" class="input">
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-weekly</option>
+            <option value="monthly" selected>Monthly</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="sched-start-date">Start Date</label>
+        <input id="sched-start-date" class="input" type="date" required />
+      </div>
+      <div class="form-group">
+        <label for="sched-note">Note (optional)</label>
+        <input id="sched-note" class="input" type="text" placeholder="What's this for?" />
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="schedule-cancel-btn">Cancel</button>
+        <button type="submit" class="btn btn-primary">Schedule Transfer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="app-layout">
 
   <!-- ────────────── SIDEBAR ────────────── -->
@@ -324,7 +410,7 @@
       <section class="panel" id="panel-accounts" aria-label="My Accounts">
         <div class="section-header">
           <h2 class="section-title">My Accounts</h2>
-          <button class="btn btn-primary btn-sm">+ Open New Account</button>
+          <button class="btn btn-primary btn-sm" id="open-new-acct-btn">+ Open New Account</button>
         </div>
 
         <!-- Three account cards with 3D tilt -->
@@ -598,7 +684,7 @@
           <div class="card">
             <div class="card-header">
               <div class="card-title">Scheduled Transfers</div>
-              <button class="btn btn-primary btn-sm">+ New Schedule</button>
+              <button class="btn btn-primary btn-sm" id="new-schedule-btn">+ New Schedule</button>
             </div>
             <div>
               <div class="sched-item">
@@ -627,7 +713,7 @@
       <section class="panel" id="panel-cards" aria-label="Cards">
         <div class="section-header">
           <h2 class="section-title">My Cards</h2>
-          <button class="btn btn-primary btn-sm">+ Add New Card</button>
+          <button class="btn btn-primary btn-sm" id="add-new-card-btn">+ Add New Card</button>
         </div>
 
         <div class="grid-2" style="align-items:start">
@@ -750,8 +836,8 @@
         <div class="section-header">
           <h2 class="section-title">Investment Portfolio</h2>
           <div style="display:flex;gap:0.5rem">
-            <button class="btn btn-ghost btn-sm">Rebalance</button>
-            <button class="btn btn-primary btn-sm">+ Invest</button>
+            <button class="btn btn-ghost btn-sm" id="rebalance-btn">Rebalance</button>
+            <button class="btn btn-primary btn-sm" id="invest-btn">+ Invest</button>
           </div>
         </div>
 

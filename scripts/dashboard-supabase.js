@@ -9,7 +9,6 @@
 (async function () {
   if (typeof VaultStore === 'undefined' || !VaultStore.ready) return;
 
-  // Wait for Supabase session + profile to be in cache
   await VaultStore.ready;
 
   const user = VaultStore.requireAuth('login.html');
@@ -23,97 +22,20 @@
     loadUserData();
   }
 
-  // Patch transfer form to use async VaultStore.createTransfer
-  const form = document.getElementById('transfer-form');
-  if (form) {
-    // Remove existing listener (wireTransferForm attached one in dashboard.js)
-    const fresh = form.cloneNode(true);
-    form.parentNode.replaceChild(fresh, form);
-
-    fresh.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const recipientInput = document.getElementById('recipient-input');
-      const amountInput    = document.getElementById('transfer-amount');
-      const noteInput      = document.getElementById('transfer-note');
-      const currencyEl     = document.getElementById('transfer-currency');
-
-      const recipient = recipientInput?.value?.trim();
-      const amount    = parseFloat(amountInput?.value || '0');
-      if (!recipient || !amount || amount <= 0) {
-        if (typeof showToast === 'function') showToast('Please fill in all required fields.', 'warning');
-        return;
-      }
-      if (amount > user.balance) {
-        if (typeof showToast === 'function') showToast('Insufficient funds for this transfer.', 'error');
-        return;
-      }
-
-      // Find internal recipient by name
-      const allUsers  = VaultStore.getUsers();
-      const recipUser = allUsers.find(u => u.name.toLowerCase() === recipient.toLowerCase() && u.id !== user.id);
-
-      const btn = fresh.querySelector('[type=submit]');
-      if (btn) { btn.disabled = true; btn.classList.add('loading'); }
-
-      await VaultStore.createTransfer({
-        fromUserId:      user.id,
-        fromName:        user.name,
-        toUserId:        recipUser?.id || null,
-        toName:          recipient,
-        toAccountNumber: recipUser?.accountNumber || document.getElementById('ext-account-number')?.value || '',
-        toBank:          recipUser ? 'Vaultstone Bank' : (document.getElementById('ext-bank-name')?.value || 'External Bank'),
-        amount,
-        currency:        currencyEl?.value || 'USD',
-        note:            noteInput?.value?.trim() || '',
-        type:            recipUser ? 'internal' : 'external',
-      });
-
-      if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
-
-      const orb  = document.getElementById('transfer-orb');
-      const path = document.querySelector('.transfer-path');
-      const destName = document.getElementById('dest-node-name');
-      if (destName) destName.textContent = recipient;
-
-      if (orb && window.gsap) {
-        orb.style.display = 'block';
-        const pathW = document.querySelector('.transfer-scene')?.offsetWidth || 200;
-        if (path) path.classList.add('animating');
-        gsap.fromTo(orb, { x: 0, opacity: 1, scale: 1 }, {
-          x: pathW, opacity: 0, scale: 0.3, duration: 0.9, ease: 'power2.in',
-          onComplete: () => {
-            orb.style.display = 'none';
-            if (path) path.classList.remove('animating');
-            if (typeof showToast === 'function')
-              showToast(`Transfer of $${amount.toLocaleString()} to ${recipient} submitted for approval.`, 'success');
-            fresh.reset();
-            if (destName) destName.textContent = 'Recipient';
-          },
-        });
-      } else {
-        if (typeof showToast === 'function')
-          showToast(`Transfer of $${amount.toLocaleString()} to ${recipient} submitted.`, 'success');
-        fresh.reset();
-      }
-    }, true);
-  }
-
   // Patch mark-all-read button
   document.getElementById('mark-all-read-btn')?.addEventListener('click', async () => {
     await VaultStore.markAllRead(user.id);
-    await VaultStore._loadNotifications?.(user.id);
     if (typeof loadNotifications === 'function') loadNotifications(user.id);
     if (typeof showToast === 'function') showToast('All notifications marked as read.', 'info');
   });
 
-  // Patch notification click mark-as-read (override the sync version)
+  // Update notification badge on new notification
   VaultStore.on('notification', () => {
     const badge = document.getElementById('notif-badge');
     const count = VaultStore.getUnreadCount(user.id);
     if (badge) {
-      badge.textContent    = count > 9 ? '9+' : count;
-      badge.style.display  = count > 0 ? 'flex' : 'none';
+      badge.textContent   = count > 9 ? '9+' : count;
+      badge.style.display = count > 0 ? 'flex' : 'none';
     }
   });
 
@@ -128,20 +50,39 @@
     if (typeof showToast === 'function') showToast('New notification received.', 'info');
   });
 
-  // Patch profile update form
+  // Subscribe to real-time transfer status changes
+  VaultStore.subscribeToTransfers(user.id, (eventType, transfer) => {
+    if (eventType !== 'UPDATE') return;
+    if (window._xferTabInit && typeof renderMyTransfers === 'function') renderMyTransfers();
+    if (transfer.status === 'approved') {
+      if (typeof showToast === 'function')
+        showToast(`Transfer of $${transfer.amount.toLocaleString()} to ${transfer.toName} was approved!`, 'success');
+      VaultStore.loadDashboardData(user.id).then(() => {
+        if (typeof loadUserData === 'function') loadUserData();
+      });
+    } else if (transfer.status === 'rejected') {
+      if (typeof showToast === 'function')
+        showToast(`Transfer to ${transfer.toName} was rejected. ${transfer.rejectionReason || ''}`.trim(), 'error');
+    }
+  });
+
+  // Profile update form (real save via Supabase)
   const profileForm = document.getElementById('profile-form');
   if (profileForm) {
     profileForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const name  = document.getElementById('profile-name')?.value.trim();
       const phone = document.getElementById('profile-phone')?.value.trim();
-      if (!name) return;
+      if (!name) { if (typeof showToast === 'function') showToast('Name is required.', 'warning'); return; }
+      const btn = profileForm.querySelector('[type=submit]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
       await VaultStore.updateUser(user.id, { name, phone });
+      if (btn) { btn.disabled = false; btn.textContent = 'Save Changes'; }
       if (typeof showToast === 'function') showToast('Profile updated successfully.', 'success');
     });
   }
 
-  // Patch password change form
+  // Password change form (real update via Supabase Auth)
   const pwForm = document.getElementById('password-form');
   if (pwForm) {
     pwForm.addEventListener('submit', async (e) => {
@@ -150,7 +91,10 @@
       const cp = pwForm.querySelector('[name=confirm-password]')?.value;
       if (!np || np.length < 8) { if (typeof showToast === 'function') showToast('Password must be at least 8 characters.', 'error'); return; }
       if (np !== cp)            { if (typeof showToast === 'function') showToast('Passwords do not match.', 'error'); return; }
+      const btn = pwForm.querySelector('[type=submit]');
+      if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
       const { error } = await window._sb.auth.updateUser({ password: np });
+      if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
       if (error) {
         if (typeof showToast === 'function') showToast(error.message, 'error');
       } else {
@@ -160,7 +104,7 @@
     });
   }
 
-  // Patch logout button
+  // Logout button (real Supabase sign-out)
   document.getElementById('logout-btn')?.addEventListener('click', async () => {
     if (typeof showToast === 'function') showToast('Logging out…', 'info');
     await VaultStore.logout();

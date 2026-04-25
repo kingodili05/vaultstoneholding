@@ -351,6 +351,10 @@ function initAccountsPanel() {
       }
     });
   });
+
+  document.getElementById('open-new-acct-btn')?.addEventListener('click', () => {
+    showToast('New account application submitted. Our team will review it within 1–2 business days.', 'success');
+  });
 }
 
 /* ───────────────────────────────────────────
@@ -536,6 +540,10 @@ function initCardsPanel() {
       limitDisplay.textContent = '$' + parseInt(limitRange.value).toLocaleString();
     });
   }
+
+  document.getElementById('add-new-card-btn')?.addEventListener('click', () => {
+    showToast('Card request submitted. Your new Vaultstone Visa Infinite card will arrive within 5–7 business days.', 'success');
+  });
 }
 
 /* ───────────────────────────────────────────
@@ -543,7 +551,7 @@ function initCardsPanel() {
 ─────────────────────────────────────────── */
 function initInvestPanel() {
   const container = document.getElementById('invest-canvas');
-  if (!container || !window.THREE) return;
+  if (container && window.THREE) try {
 
   const W = container.clientWidth, H = container.clientHeight;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -603,6 +611,7 @@ function initInvestPanel() {
     renderer.render(scene, camera);
   }
   animate2();
+  } catch (e) { console.warn('[Dashboard] Invest Three.js error:', e); }
 
   // Performance Chart.js
   const perfCtx = document.getElementById('perf-chart')?.getContext('2d');
@@ -640,6 +649,13 @@ function initInvestPanel() {
       }
     });
   }
+
+  document.getElementById('rebalance-btn')?.addEventListener('click', () => {
+    showToast('Portfolio rebalance request submitted. Our advisors will review and execute within 24 hours.', 'info');
+  });
+  document.getElementById('invest-btn')?.addEventListener('click', () => {
+    document.getElementById('invest-modal')?.classList.add('open');
+  });
 }
 
 /* ───────────────────────────────────────────
@@ -662,29 +678,6 @@ function initSettingsPanel() {
     twoFA.addEventListener('change', () => {
       qrSection.style.display = twoFA.checked ? 'flex' : 'none';
       showToast(twoFA.checked ? 'Scan QR code with your authenticator app.' : '2FA disabled.', twoFA.checked ? 'info' : 'warning');
-    });
-  }
-
-  // Profile form
-  const profileForm = document.getElementById('profile-form');
-  if (profileForm) {
-    profileForm.addEventListener('submit', e => {
-      e.preventDefault();
-      showToast('Profile updated successfully.', 'success');
-    });
-  }
-
-  // Password form
-  const pwForm = document.getElementById('password-form');
-  if (pwForm) {
-    pwForm.addEventListener('submit', e => {
-      e.preventDefault();
-      const np = pwForm.querySelector('[name=new-password]')?.value;
-      const cp = pwForm.querySelector('[name=confirm-password]')?.value;
-      if (!np || np.length < 8) { showToast('Password must be at least 8 characters.', 'error'); return; }
-      if (np !== cp) { showToast('Passwords do not match.', 'error'); return; }
-      showToast('Password changed successfully.', 'success');
-      pwForm.reset();
     });
   }
 
@@ -806,6 +799,17 @@ function loadUserData() {
   const receiveNameEl = document.getElementById('receive-name');
   if (receiveAcctEl) receiveAcctEl.textContent = user.accountNumber || '—';
   if (receiveNameEl) receiveNameEl.textContent = user.name || '—';
+
+  /* Card panel — populate holder name and masked number from account */
+  const cardHolder    = document.getElementById('card-holder-name');
+  const cardNumMasked = document.getElementById('card-number-masked');
+  const cardNumFull   = document.getElementById('card-number-full');
+  const cardBackNum   = document.getElementById('card-back-number');
+  const last4 = user.cardNumber || (user.accountNumber || '').replace(/\D/g, '').slice(-4) || '——';
+  if (cardHolder)    cardHolder.textContent    = user.name || '—';
+  if (cardNumMasked) cardNumMasked.textContent = `•••• •••• •••• ${last4}`;
+  if (cardNumFull)   cardNumFull.textContent   = `•••• •••• •••• ${last4}`;
+  if (cardBackNum)   cardBackNum.textContent   = last4;
 
   /* Transfer scene — "from" node */
   const fromNodeAcct = document.getElementById('from-node-acct');
@@ -1050,16 +1054,19 @@ function wireTransferForm(user) {
   const form = document.getElementById('transfer-form');
   if (!form) return;
 
-  form.addEventListener('submit', e => {
+  form.addEventListener('submit', async e => {
     e.preventDefault();
+
     const recipientInput = document.getElementById('recipient-input');
     const amountInput    = document.getElementById('transfer-amount');
     const noteInput      = document.getElementById('transfer-note');
+    const currencyEl     = document.getElementById('transfer-currency');
 
     const recipient = recipientInput?.value?.trim();
     const amount    = parseFloat(amountInput?.value || '0');
+
     if (!recipient || !amount || amount <= 0) {
-      showToast('Please fill in all required fields.', 'warning');
+      showToast('Please fill in recipient and amount.', 'warning');
       return;
     }
     if (amount > user.balance) {
@@ -1067,11 +1074,13 @@ function wireTransferForm(user) {
       return;
     }
 
-    /* Find internal recipient by name */
-    const allUsers = VaultStore.getUsers();
+    const allUsers  = VaultStore.getUsers();
     const recipUser = allUsers.find(u => u.name.toLowerCase() === recipient.toLowerCase() && u.id !== user.id);
 
-    VaultStore.createTransfer({
+    const btn = form.querySelector('[type=submit]');
+    if (btn) { btn.disabled = true; btn.classList.add('loading'); }
+
+    const result = await VaultStore.createTransfer({
       fromUserId:      user.id,
       fromName:        user.name,
       toUserId:        recipUser?.id || null,
@@ -1079,34 +1088,56 @@ function wireTransferForm(user) {
       toAccountNumber: recipUser?.accountNumber || document.getElementById('ext-account-number')?.value || '',
       toBank:          recipUser ? 'Vaultstone Bank' : (document.getElementById('ext-bank-name')?.value || 'External Bank'),
       amount,
-      currency:        'USD',
+      currency:        currencyEl?.value || 'USD',
       note:            noteInput?.value?.trim() || '',
       type:            recipUser ? 'internal' : 'external',
     });
 
-    /* Animate the transfer orb */
-    const orb  = document.getElementById('transfer-orb');
-    const path = document.querySelector('.transfer-path');
+    if (btn) { btn.disabled = false; btn.classList.remove('loading'); }
+
+    if (!result) {
+      showToast('Transfer failed. Please try again.', 'error');
+      return;
+    }
+
+    const orb      = document.getElementById('transfer-orb');
+    const path     = document.querySelector('.transfer-path');
     const destName = document.getElementById('dest-node-name');
     if (destName) destName.textContent = recipient;
+
+    const _resetForm = () => {
+      form.reset();
+      if (destName) destName.textContent = 'Recipient';
+      const infoEl = document.getElementById('internal-recipient-info');
+      const extEl  = document.getElementById('external-fields');
+      const sumEl  = document.getElementById('transfer-summary');
+      if (infoEl) infoEl.style.display = 'none';
+      if (extEl)  extEl.style.display  = 'none';
+      if (sumEl)  sumEl.style.display  = 'none';
+      ['fee-amount','fee-display','fee-total'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = '$0.00';
+      });
+    };
 
     if (orb && window.gsap && !reduced) {
       orb.style.display = 'block';
       const pathW = document.querySelector('.transfer-scene')?.offsetWidth || 200;
       if (path) path.classList.add('animating');
-      gsap.fromTo(orb, { x: 0, opacity: 1, scale: 1 },
-        { x: pathW, opacity: 0, scale: 0.3, duration: 0.9, ease: 'power2.in', onComplete: () => {
+      gsap.fromTo(orb, { x: 0, opacity: 1, scale: 1 }, {
+        x: pathW, opacity: 0, scale: 0.3, duration: 0.9, ease: 'power2.in',
+        onComplete: () => {
           orb.style.display = 'none';
           if (path) path.classList.remove('animating');
           showToast(`Transfer of $${amount.toLocaleString()} to ${recipient} submitted for approval.`, 'success');
-          form.reset();
-          if (destName) destName.textContent = 'Recipient';
-        }});
+          _resetForm();
+        },
+      });
     } else {
-      showToast(`Transfer of $${amount.toLocaleString()} to ${recipient} submitted.`, 'success');
-      form.reset();
+      showToast(`Transfer of $${amount.toLocaleString()} to ${recipient} submitted for approval.`, 'success');
+      _resetForm();
     }
-  }, true);
+  });
 }
 
 /* ───────────────────────────────────────────
@@ -1128,8 +1159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const currentUser = (typeof VaultStore !== 'undefined') ? loadUserData() : null;
 
   initNav();
-  initOverviewPanel(currentUser);
-  initHeroScene();
+  try { initOverviewPanel(currentUser); } catch (e) { console.warn('[Dashboard] Overview init error:', e); }
+  try { initHeroScene(); } catch (e) { console.warn('[Dashboard] Hero scene error:', e); }
   initTransfersPanel();
   initSettingsPanel();
 
@@ -1203,10 +1234,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     setTimeout(() => { window.location.href = 'login.html'; }, 1000);
   });
 
-  /* CSV download for accounts */
+  /* CSV download for accounts — real export */
   document.getElementById('acct-csv-btn')?.addEventListener('click', () => {
-    showToast('Downloading transaction history…', 'info');
-    setTimeout(() => showToast('CSV saved: transactions.csv', 'success'), 1200);
+    if (typeof VaultStore === 'undefined') return;
+    const uid = VaultStore.getCurrentUser()?.id;
+    if (!uid) return;
+    const txs = [...VaultStore.getUserTransactions(uid)];
+    if (!txs.length) { showToast('No transactions to export.', 'warning'); return; }
+    const rows = [['Date','Description','Category','Type','Amount','Balance']];
+    txs.forEach(tx => rows.push([
+      new Date(tx.date).toLocaleDateString('en-US'),
+      '"' + (tx.description || '').replace(/"/g, '""') + '"',
+      tx.category || '',
+      tx.type,
+      tx.amount.toFixed(2),
+      (tx.balance || 0).toFixed(2),
+    ]));
+    const csv  = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `vaultstone-transactions-${new Date().toISOString().slice(0,10)}.csv`,
+    });
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV downloaded.', 'success');
   });
 
   /* Wire transfer form to VaultStore */
@@ -1245,6 +1298,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     const uid  = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
     if (uid) { renderStatements(uid); window._stmtInit = true; }
   });
+
+  /* ── Invest modal ── */
+  document.getElementById('invest-modal-close')?.addEventListener('click', () => {
+    document.getElementById('invest-modal')?.classList.remove('open');
+  });
+  document.getElementById('invest-cancel-btn')?.addEventListener('click', () => {
+    document.getElementById('invest-modal')?.classList.remove('open');
+  });
+  document.getElementById('invest-modal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  document.getElementById('invest-form')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const amount   = parseFloat(document.getElementById('invest-amount-input')?.value || '0');
+    const assetEl  = document.getElementById('invest-asset');
+    const assetLbl = assetEl?.options[assetEl.selectedIndex]?.text || 'Stocks';
+    if (!amount || amount < 100) { showToast('Minimum investment is $100.00.', 'warning'); return; }
+    document.getElementById('invest-modal')?.classList.remove('open');
+    document.getElementById('invest-form')?.reset();
+    showToast(`Investment of $${amount.toLocaleString()} in ${assetLbl} submitted. Funds will be allocated next business day.`, 'success');
+  });
+
+  /* ── New Scheduled Transfer modal ── */
+  document.getElementById('new-schedule-btn')?.addEventListener('click', () => {
+    const schedDate = document.getElementById('sched-start-date');
+    if (schedDate && !schedDate.value) {
+      const t = new Date(); t.setDate(t.getDate() + 1);
+      schedDate.value = t.toISOString().split('T')[0];
+    }
+    document.getElementById('schedule-modal')?.classList.add('open');
+  });
+  document.getElementById('schedule-modal-close')?.addEventListener('click', () => {
+    document.getElementById('schedule-modal')?.classList.remove('open');
+  });
+  document.getElementById('schedule-cancel-btn')?.addEventListener('click', () => {
+    document.getElementById('schedule-modal')?.classList.remove('open');
+  });
+  document.getElementById('schedule-modal')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  document.getElementById('schedule-form')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const recipient = document.getElementById('sched-recipient')?.value.trim();
+    const amount    = parseFloat(document.getElementById('sched-amount')?.value || '0');
+    const frequency = document.getElementById('sched-frequency')?.value;
+    const startDate = document.getElementById('sched-start-date')?.value;
+    if (!recipient || !amount || !startDate) { showToast('Please fill in all required fields.', 'warning'); return; }
+    const freqLbl  = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' }[frequency] || frequency;
+    const dateLbl  = new Date(startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    document.getElementById('schedule-modal')?.classList.remove('open');
+    document.getElementById('schedule-form')?.reset();
+    showToast(`${freqLbl} transfer of $${amount.toLocaleString()} to ${recipient} scheduled from ${dateLbl}.`, 'success');
+  });
+
+  /* Header avatar → navigate to settings */
+  document.getElementById('header-avatar')?.addEventListener('click', () => switchPanel('settings'));
 
   /* ── Statements CSV download ── */
   document.getElementById('download-csv-btn')?.addEventListener('click', () => {
