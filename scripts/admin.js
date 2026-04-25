@@ -292,22 +292,10 @@ function initHealthBars() {
 /* ───────────────────────────────────────────
    USERS PANEL
 ─────────────────────────────────────────── */
-const usersData = [
-  { id: 1, name: 'Alex Morgan',     email: 'alex.morgan@gmail.com',    type: 'personal', balance: 142850, status: 'active',    joined: '2022-03-14', initials: 'AM' },
-  { id: 2, name: 'Sarah Johnson',   email: 'sjohnson@techcorp.io',     type: 'business', balance: 540200, status: 'active',    joined: '2021-11-02', initials: 'SJ' },
-  { id: 3, name: 'Carlos Mendes',   email: 'c.mendes@corp.mx',         type: 'business', balance: 89400,  status: 'active',    joined: '2023-01-08', initials: 'CM' },
-  { id: 4, name: 'Priya Sharma',    email: 'priya.sharma@gmail.com',   type: 'personal', balance: 18600,  status: 'pending',   joined: '2024-02-19', initials: 'PS' },
-  { id: 5, name: 'James Whitfield', email: 'jwhitfield@wealth.co',     type: 'wealth',   balance: 2840000,status: 'active',    joined: '2020-07-22', initials: 'JW' },
-  { id: 6, name: 'Elena Novak',     email: 'enovak@finance.cz',        type: 'personal', balance: 31200,  status: 'suspended', joined: '2022-09-05', initials: 'EN' },
-  { id: 7, name: 'David Park',      email: 'dpark@seoultech.kr',       type: 'business', balance: 210500, status: 'active',    joined: '2021-05-30', initials: 'DP' },
-  { id: 8, name: 'Fatima Al-Rashid',email: 'f.alrashid@gulf.ae',      type: 'wealth',   balance: 1120000,status: 'active',    joined: '2020-12-11', initials: 'FA' },
-  { id: 9, name: 'Michael Chen',    email: 'mchen@globallog.com',      type: 'business', balance: 67300,  status: 'active',    joined: '2023-04-17', initials: 'MC' },
-  { id: 10,name: 'Olivia Turner',   email: 'olivia.t@personal.net',    type: 'personal', balance: 9800,   status: 'suspended', joined: '2024-01-03', initials: 'OT' },
-  { id: 11,name: 'Rajan Iyer',      email: 'rajan.iyer@bankco.in',     type: 'personal', balance: 44700,  status: 'pending',   joined: '2024-03-28', initials: 'RI' },
-  { id: 12,name: 'Sophie Laurent',  email: 's.laurent@banque.fr',      type: 'wealth',   balance: 990000, status: 'active',    joined: '2021-08-14', initials: 'SL' },
-];
-
-let filteredUsers = [...usersData];
+// Declared as var so admin-supabase.js can replace window.usersData / window.filteredUsers
+// and have these references update in place (const/let are NOT window properties).
+var usersData = [];
+var filteredUsers = [];
 let selectedUsers = new Set();
 let sortCol = null, sortDir = 1;
 
@@ -351,8 +339,8 @@ function renderUsersTable() {
       </td>
     </tr>`).join('');
 
-  // Bind row actions
-  tbody.querySelectorAll('.view-user').forEach(btn => btn.addEventListener('click', () => openViewUser(+btn.dataset.id)));
+  // Bind row actions — IDs are UUIDs (strings), never coerce with +
+  tbody.querySelectorAll('.view-user').forEach(btn => btn.addEventListener('click', () => openViewUser(btn.dataset.id)));
   tbody.querySelectorAll('.edit-user').forEach(btn => btn.addEventListener('click', () => openEditUser(btn.dataset.id)));
   tbody.querySelectorAll('.fund-user').forEach(btn => btn.addEventListener('click', () => {
     if (typeof window.openFundModal === 'function') window.openFundModal(btn.dataset.id);
@@ -360,10 +348,10 @@ function renderUsersTable() {
   tbody.querySelectorAll('.gen-history-user').forEach(btn => btn.addEventListener('click', () => {
     if (typeof window.openGenHistoryModal === 'function') window.openGenHistoryModal(btn.dataset.id);
   }));
-  tbody.querySelectorAll('.suspend-user').forEach(btn => btn.addEventListener('click', () => toggleSuspend(+btn.dataset.id)));
-  tbody.querySelectorAll('.delete-user').forEach(btn => btn.addEventListener('click', () => confirmDeleteUser(+btn.dataset.id)));
+  tbody.querySelectorAll('.suspend-user').forEach(btn => btn.addEventListener('click', () => toggleSuspend(btn.dataset.id)));
+  tbody.querySelectorAll('.delete-user').forEach(btn => btn.addEventListener('click', () => confirmDeleteUser(btn.dataset.id)));
   tbody.querySelectorAll('.row-check').forEach(cb => cb.addEventListener('change', () => {
-    const id = +cb.dataset.id;
+    const id = cb.dataset.id;
     cb.checked ? selectedUsers.add(id) : selectedUsers.delete(id);
     updateBulkBar();
     const row = tbody.querySelector(`tr[data-id="${id}"]`);
@@ -402,7 +390,7 @@ function updateBulkBar() {
 }
 
 function toggleSuspend(id) {
-  const u = usersData.find(x => x.id === id);
+  const u = usersData.find(x => String(x.id) === String(id));
   if (!u) return;
   u.status = u.status === 'suspended' ? 'active' : 'suspended';
   filterUsers();
@@ -410,14 +398,14 @@ function toggleSuspend(id) {
 }
 
 function confirmDeleteUser(id) {
-  const u = usersData.find(x => x.id === id);
+  const u = usersData.find(x => String(x.id) === String(id));
   if (!u) return;
   openConfirmModal(
     'Delete User',
     `Are you sure you want to permanently delete <strong>${u.name}</strong>? This action cannot be undone.`,
     'Delete', 'btn-danger',
     () => {
-      const idx = usersData.findIndex(x => x.id === id);
+      const idx = usersData.findIndex(x => String(x.id) === String(id));
       if (idx > -1) usersData.splice(idx, 1);
       filterUsers();
       showToast(`User ${u.name} deleted.`, 'error');
@@ -426,7 +414,7 @@ function confirmDeleteUser(id) {
 }
 
 function openEditUser(id) {
-  const u = usersData.find(x => x.id === id);
+  const u = usersData.find(x => String(x.id) === String(id));
   if (!u) return;
   const drawer = document.getElementById('edit-drawer');
   const backdrop = document.getElementById('edit-drawer-backdrop');
@@ -445,7 +433,7 @@ function openEditUser(id) {
 }
 
 function openViewUser(id) {
-  const u = usersData.find(x => x.id === id);
+  const u = usersData.find(x => String(x.id) === String(id));
   if (!u) return;
   showToast(`Viewing profile: ${u.name} — Balance: $${u.balance.toLocaleString()}`, 'info');
 }
@@ -504,8 +492,8 @@ function initUsersPanel() {
 
   // Edit drawer save
   document.getElementById('edit-save')?.addEventListener('click', () => {
-    const id = +document.getElementById('edit-drawer').dataset.editId;
-    const u = usersData.find(x => x.id === id);
+    const id = document.getElementById('edit-drawer').dataset.editId;
+    const u = usersData.find(x => String(x.id) === String(id));
     if (!u) return;
     u.name    = document.getElementById('edit-name').value;
     u.email   = document.getElementById('edit-email').value;
@@ -534,23 +522,9 @@ function closeDrawer() {
 /* ───────────────────────────────────────────
    TRANSACTIONS PANEL
 ─────────────────────────────────────────── */
-const txData = [
-  { id:'TXN-00001', user:'Alex Morgan',     type:'Debit',    amount:4200,    merchant:'Amazon',       date:'2026-04-21', status:'completed', risk:12 },
-  { id:'TXN-00002', user:'James Whitfield', type:'Transfer', amount:142000,  merchant:'Wire — SWIFT', date:'2026-04-21', status:'completed', risk:45 },
-  { id:'TXN-00003', user:'Sarah Johnson',   type:'Credit',   amount:25000,   merchant:'ACH Deposit',  date:'2026-04-20', status:'completed', risk:8  },
-  { id:'TXN-00004', user:'Elena Novak',     type:'Debit',    amount:1800,    merchant:'Unknown POS',  date:'2026-04-20', status:'flagged',   risk:87 },
-  { id:'TXN-00005', user:'Carlos Mendes',   type:'Transfer', amount:88000,   merchant:'Intl Wire',    date:'2026-04-19', status:'pending',   risk:62 },
-  { id:'TXN-00006', user:'Priya Sharma',    type:'Credit',   amount:500,     merchant:'Salary',       date:'2026-04-19', status:'completed', risk:5  },
-  { id:'TXN-00007', user:'David Park',      type:'Debit',    amount:12400,   merchant:'Seoul Trade',  date:'2026-04-18', status:'completed', risk:18 },
-  { id:'TXN-00008', user:'Fatima Al-Rashid',type:'Transfer', amount:500000,  merchant:'Dubai RE',     date:'2026-04-18', status:'completed', risk:30 },
-  { id:'TXN-00009', user:'Olivia Turner',   type:'Debit',    amount:340,     merchant:'Casino',       date:'2026-04-17', status:'flagged',   risk:91 },
-  { id:'TXN-00010', user:'Michael Chen',    type:'Credit',   amount:9800,    merchant:'Invoice #402', date:'2026-04-17', status:'completed', risk:7  },
-  { id:'TXN-00011', user:'Rajan Iyer',      type:'Debit',    amount:220,     merchant:'FX Bureau',    date:'2026-04-16', status:'completed', risk:24 },
-  { id:'TXN-00012', user:'Sophie Laurent',  type:'Transfer', amount:75000,   merchant:'Paris Fund',   date:'2026-04-16', status:'pending',   risk:40 },
-  { id:'TXN-00013', user:'Alex Morgan',     type:'Debit',    amount:680,     merchant:'Uber Eats',    date:'2026-04-15', status:'completed', risk:4  },
-  { id:'TXN-00014', user:'James Whitfield', type:'Credit',   amount:310000,  merchant:'Dividends',    date:'2026-04-15', status:'completed', risk:3  },
-  { id:'TXN-00015', user:'Elena Novak',     type:'Transfer', amount:6200,    merchant:'Unknown',      date:'2026-04-14', status:'flagged',   risk:88 },
-];
+// Declared as var so admin-supabase.js can replace window.txData and have
+// the local txData reference update (const is NOT a window property).
+var txData = [];
 
 function riskBadge(score) {
   if (score < 30) return `<span class="badge badge-green">${score}</span>`;
