@@ -361,41 +361,41 @@
       </div><!-- /#step-3 -->
 
       <!-- ════════════════════════════════
-           STEP 4 — Email Confirmation
+           STEP 4 — OTP Verification
       ════════════════════════════════ -->
       <div class="step-panel" id="step-4" role="tabpanel" aria-labelledby="step-label-4">
 
         <div class="signup-header">
-          <h2>Check Your Email</h2>
+          <h2>Verify Your Identity</h2>
         </div>
 
-        <!-- Email confirmation card -->
-        <div class="email-confirm-card">
-          <div class="email-confirm-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25H4.5a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5H4.5a2.25 2.25 0 00-2.25 2.25m19.5 0l-9.75 6.75L2.25 6.75" />
-            </svg>
-          </div>
-          <p id="otp-hint" class="email-confirm-msg">
-            We've sent a confirmation link to<br>
-            <strong id="sent-email" class="email-confirm-addr"></strong>
-          </p>
-          <p class="email-confirm-sub">Click the link in the email to activate your account. You'll be taken straight to identity verification.</p>
-          <p class="email-confirm-spam">Can't find it? Check your spam or junk folder.</p>
+        <p class="otp-hint" id="otp-hint">
+          We've sent a 6-digit code to <strong id="sent-email"></strong>.
+          Enter it below to complete your registration.
+        </p>
+
+        <!-- OTP Inputs -->
+        <div class="otp-grid" role="group" aria-label="One-time verification code">
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" autocomplete="one-time-code" aria-label="Digit 1" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 2" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 3" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 4" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 5" />
+          <input type="text" class="otp-input" maxlength="1" inputmode="numeric" pattern="[0-9]" aria-label="Digit 6" />
         </div>
 
         <!-- Resend -->
         <div class="resend-link">
           Didn't receive it?
-          <button type="button" id="resend-otp">Resend email</button>
+          <button type="button" id="resend-otp">Resend code</button>
         </div>
 
         <!-- Nav -->
         <div class="step-nav">
           <button type="button" class="btn btn--ghost" data-back>Back</button>
-          <button type="button" class="btn btn--primary" id="signup-submit" disabled style="opacity:0.5;cursor:not-allowed;">
-            <span class="btn__text">Waiting for confirmation…</span>
-            <span class="btn__spinner" role="status" aria-label="Waiting..."></span>
+          <button type="button" class="btn btn--primary" id="signup-submit">
+            <span class="btn__text">Verify &amp; Open Account</span>
+            <span class="btn__spinner" role="status" aria-label="Creating account..."></span>
           </button>
         </div>
 

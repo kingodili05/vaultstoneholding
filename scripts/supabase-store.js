@@ -297,7 +297,11 @@ const VaultStore = (() => {
   }
 
   async function verifyOtpCode(email, token) {
-    const { data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' });
+    // type:'signup' matches the OTP sent by signUp(); try 'email' as fallback
+    let { data, error } = await sb.auth.verifyOtp({ email, token, type: 'signup' });
+    if (error) {
+      ({ data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' }));
+    }
     if (error) return { ok: false, error: error.message };
     return { ok: true, user: data.user };
   }

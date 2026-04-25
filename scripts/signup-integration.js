@@ -72,31 +72,30 @@ function restoreFields(draft) {
   }
 }
 
-// Save draft on every [data-next] click so we know which step they reached
+// Save draft on every [data-next] click
 function wireNextSave() {
   document.querySelectorAll('[data-next]').forEach(btn => {
     btn.addEventListener('click', () => {
-      // current active panel tells us the step they just completed
       const active = document.querySelector('.step-panel.active');
       if (!active) return;
       const completedStep = parseInt(active.id.replace('step-', ''), 10);
       if (!isNaN(completedStep)) saveDraft(completedStep + 1);
-    }, true); // capture phase — runs before auth.js validation
+    }, true);
   });
 }
 
-/* ── Email confirmation ────────────────────────────────────── */
+/* ── OTP ───────────────────────────────────────────────────── */
 function getRedirectUrl() {
   return window.location.origin + '/kyc.html';
 }
 
 let _skipNextStep4Send = false;
 
-async function registerAndSendConfirmation() {
+// Called when step-4 becomes active: register the user, Supabase sends the 6-digit code
+async function registerAndSendOtp() {
   const { firstName, lastName, email, password, phone, country, dob, accountType } = getFormData();
   if (!email) return;
 
-  // Always persist step 4 with current email so reload restores here
   saveDraft(4);
 
   const sentEmailEl = document.getElementById('sent-email');
@@ -117,9 +116,10 @@ async function registerAndSendConfirmation() {
   const hint = document.getElementById('otp-hint');
   if (!result.ok) {
     if (result.error && result.error.toLowerCase().includes('already registered')) {
+      // Account already created — resend the OTP
       await VaultStore.resendConfirmation(email);
       if (hint) hint.innerHTML =
-        `Confirmation resent to<br><strong class="email-confirm-addr">${email}</strong>`;
+        `Code resent to <strong>${email}</strong>. Check your inbox.`;
     } else {
       if (hint) hint.innerHTML = `<span style="color:#EF4444">${result.error}</span>`;
     }
@@ -127,14 +127,14 @@ async function registerAndSendConfirmation() {
   }
 
   if (hint) hint.innerHTML =
-    `We've sent a confirmation link to<br><strong class="email-confirm-addr">${email}</strong>`;
+    `We've sent a 6-digit code to <strong>${email}</strong>. Enter it below.`;
 }
 
 function watchForStep4() {
   const step4 = document.getElementById('step-4');
   if (!step4) return;
   new MutationObserver(async () => {
-    if (step4.classList.contains('active')) await registerAndSendConfirmation();
+    if (step4.classList.contains('active')) await registerAndSendOtp();
   }).observe(step4, { attributes: true, attributeFilter: ['class'] });
 }
 
@@ -147,21 +147,71 @@ function wireResendButton() {
     const { email } = getFormData();
     const result = await VaultStore.resendConfirmation(email);
     resendBtn.textContent = result.ok ? 'Sent! Check your inbox.' : 'Failed — try again';
-    setTimeout(() => { resendBtn.disabled = false; resendBtn.textContent = 'Resend email'; }, 30000);
+    setTimeout(() => { resendBtn.disabled = false; resendBtn.textContent = 'Resend code'; }, 30000);
   });
 }
 
-function watchForConfirmation() {
-  const sb = window._sb;
-  if (!sb) return;
-  sb.auth.onAuthStateChange((event, session) => {
-    if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
-      clearDraft();
-      const { firstName, lastName, email } = getFormData();
-      callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
-      if (typeof triggerConfetti === 'function') triggerConfetti();
-      setTimeout(() => { window.location.href = 'kyc.html'; }, 800);
+// Verify button — user entered the 6-digit code
+function wireVerifyButton() {
+  const oldBtn = document.getElementById('signup-submit');
+  if (!oldBtn) return;
+
+  // Clone to strip any listener auth.js may have attached
+  const btn = oldBtn.cloneNode(true);
+  oldBtn.parentNode.replaceChild(btn, oldBtn);
+
+  btn.addEventListener('click', async () => {
+    const otpInputs = [...document.querySelectorAll('.otp-input')];
+    const token     = otpInputs.map(i => i.value).join('');
+
+    if (token.length < 6) {
+      const panel = btn.closest('.step-panel');
+      if (panel) {
+        panel.classList.remove('shake');
+        void panel.offsetWidth;
+        panel.classList.add('shake');
+        panel.addEventListener('animationend', () => panel.classList.remove('shake'), { once: true });
+      }
+      otpInputs.forEach(i => i.classList.add('error'));
+      return;
     }
+
+    const { email, firstName, lastName, password } = getFormData();
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const verifyResult = await VaultStore.verifyOtpCode(email, token);
+
+    if (!verifyResult.ok) {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      otpInputs.forEach(i => i.classList.add('error'));
+      showError(btn, verifyResult.error || 'Incorrect or expired code. Please try again.');
+      return;
+    }
+
+    // Code verified — set password (the signUp may not have set it yet in some flows)
+    const pwResult = await VaultStore.setPassword(password);
+    if (!pwResult.ok) {
+      btn.classList.remove('loading');
+      btn.disabled = false;
+      showError(btn, pwResult.error || 'Could not set password. Please try again.');
+      return;
+    }
+
+    clearDraft();
+    callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
+    if (typeof triggerConfetti === 'function') triggerConfetti();
+
+    const overlay = document.getElementById('success-overlay');
+    if (overlay) {
+      const sub = overlay.querySelector('p');
+      if (sub) sub.textContent = 'Welcome to Vaultstone. Redirecting to identity verification…';
+      overlay.classList.add('visible');
+    }
+
+    setTimeout(() => { window.location.href = 'kyc.html'; }, 2200);
   });
 }
 
@@ -197,12 +247,10 @@ function runWhenReady(fn) {
     return;
   }
 
-  // Use runWhenReady instead of DOMContentLoaded — handles the case where
-  // VaultStore.ready resolves after DOMContentLoaded has already fired.
   runWhenReady(() => {
     watchForStep4();
     wireResendButton();
-    watchForConfirmation();
+    wireVerifyButton();
     wireNextSave();
 
     // Restore draft on reload
@@ -216,21 +264,12 @@ function runWhenReady(fn) {
         if (sentEmailEl) sentEmailEl.textContent = draft.email || '';
       }
 
-      // auth.js exposes _signupGoToStep inside its own DOMContentLoaded.
-      // If readyState is already 'complete', auth.js has run so _signupGoToStep
-      // exists. If not, wait a tick for auth.js's listener to also fire first.
       const jump = () => {
         if (typeof window._signupGoToStep === 'function') {
           window._signupGoToStep(draft.step);
         }
       };
-      if (document.readyState === 'loading') {
-        // Both DOMContentLoaded handlers fire; auth.js registered first so it
-        // runs first. A 0-tick timeout ensures we run after auth.js finishes.
-        setTimeout(jump, 0);
-      } else {
-        jump();
-      }
+      document.readyState === 'loading' ? setTimeout(jump, 0) : jump();
     }
   });
 })();
