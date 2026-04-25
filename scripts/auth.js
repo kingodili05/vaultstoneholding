@@ -760,6 +760,15 @@ function initSignupPage() {
 
   /* Init first step active */
   updateProgress();
+
+  // Expose step-jump for signup-integration.js to use on draft restore
+  window._signupGoToStep = (n) => {
+    currentStep = Math.max(1, Math.min(n, TOTAL_STEPS));
+    document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('step-' + currentStep);
+    if (target) target.classList.add('active');
+    updateProgress();
+  };
 }
 
 /* ============================================================

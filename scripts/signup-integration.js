@@ -28,60 +28,117 @@ function getFormData() {
   };
 }
 
-// Builds the URL Supabase will redirect to after email confirmation.
-// Points to kyc.html so the session is picked up automatically there.
+/* ── Draft persistence ─────────────────────────────────────── */
+const DRAFT_KEY = 'signup_draft';
+
+function saveDraft(step) {
+  const { firstName, lastName, email, dob, country, phone, accountType } = getFormData();
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(
+      { step, firstName, lastName, email, dob, country, phone, accountType }
+    ));
+  } catch {}
+}
+
+function loadDraft() {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+
+function clearDraft() {
+  try { sessionStorage.removeItem(DRAFT_KEY); } catch {}
+}
+
+function restoreFields(draft) {
+  const set = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val || '';
+  };
+  set('first-name',    draft.firstName);
+  set('last-name',     draft.lastName);
+  set('signup-email',  draft.email);
+  set('dob',           draft.dob);
+  set('country',       draft.country);
+  set('phone',         draft.phone);
+
+  if (draft.accountType) {
+    document.querySelectorAll('.account-type-card').forEach(c => {
+      c.classList.toggle('selected', c.dataset.type === draft.accountType);
+    });
+  }
+}
+
+// Save draft whenever any step panel becomes active
+function watchStepChanges() {
+  for (let i = 1; i <= 4; i++) {
+    const panel = document.getElementById('step-' + i);
+    if (!panel) continue;
+    const step = i;
+    new MutationObserver(() => {
+      if (panel.classList.contains('active')) saveDraft(step);
+    }).observe(panel, { attributes: true, attributeFilter: ['class'] });
+  }
+}
+
+/* ── Email confirmation ────────────────────────────────────── */
 function getRedirectUrl() {
   return window.location.origin + '/kyc.html';
 }
 
-// Called when step-4 becomes active: register the user and send the confirmation email.
+// Set to true when restoring to step 4 so we don't resend the confirmation email
+let _skipNextStep4Send = false;
+
 async function registerAndSendConfirmation() {
   const { firstName, lastName, email, password, phone, country, dob, accountType } = getFormData();
-  if (!email || !password) return;
+  if (!email) return;
 
-  // Show the user's email address in the UI
   const sentEmailEl = document.getElementById('sent-email');
   if (sentEmailEl) sentEmailEl.textContent = email;
+
+  if (_skipNextStep4Send) {
+    _skipNextStep4Send = false;
+    return;
+  }
 
   const result = await VaultStore.createUser({
     email,
     password,
-    name:             `${firstName} ${lastName}`.trim(),
+    name:            `${firstName} ${lastName}`.trim(),
     phone,
     country,
     dob,
     accountType,
-    emailRedirectTo:  getRedirectUrl(),
+    emailRedirectTo: getRedirectUrl(),
   });
 
   const hint = document.getElementById('otp-hint');
   if (!result.ok) {
-    // "User already registered" just means the account exists — resend the confirmation
     if (result.error && result.error.toLowerCase().includes('already registered')) {
       await VaultStore.resendConfirmation(email);
-      if (hint) hint.innerHTML = `Confirmation resent to<br><strong class="email-confirm-addr">${email}</strong>`;
+      if (hint) hint.innerHTML =
+        `Confirmation resent to<br><strong class="email-confirm-addr">${email}</strong>`;
     } else {
-      if (hint) hint.innerHTML = `<span style="color:#EF4444">${result.error}</span>`;
+      if (hint) hint.innerHTML =
+        `<span style="color:#EF4444">${result.error}</span>`;
     }
     return;
   }
 
-  if (hint) hint.innerHTML = `We've sent a confirmation link to<br><strong class="email-confirm-addr">${email}</strong>`;
+  if (hint) hint.innerHTML =
+    `We've sent a confirmation link to<br><strong class="email-confirm-addr">${email}</strong>`;
 }
 
 function watchForStep4() {
   const step4 = document.getElementById('step-4');
   if (!step4) return;
 
-  const observer = new MutationObserver(async (mutations) => {
-    for (const m of mutations) {
-      if (m.type === 'attributes' && m.attributeName === 'class' && step4.classList.contains('active')) {
-        await registerAndSendConfirmation();
-      }
+  new MutationObserver(async () => {
+    if (step4.classList.contains('active')) {
+      await registerAndSendConfirmation();
     }
-  });
-
-  observer.observe(step4, { attributes: true, attributeFilter: ['class'] });
+  }).observe(step4, { attributes: true, attributeFilter: ['class'] });
 }
 
 function wireResendButton() {
@@ -103,15 +160,14 @@ function wireResendButton() {
   });
 }
 
-// Detect when the user has confirmed their email (via the link in another tab/window)
-// and auto-redirect them without needing to do anything on this page.
+// Listen for Supabase auth state change — fires when user clicks the confirmation link
 function watchForConfirmation() {
   const sb = window._sb;
   if (!sb) return;
 
   sb.auth.onAuthStateChange((event, session) => {
     if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
-      // User clicked the confirmation link — redirect to KYC
+      clearDraft();
       const { firstName, lastName, email } = getFormData();
       callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
       if (typeof triggerConfetti === 'function') triggerConfetti();
@@ -126,17 +182,18 @@ function watchForConfirmation() {
 
   await VaultStore.ready;
 
-  // Handle magic link / confirmation redirect (user clicked link in email)
+  // Handle confirmation redirect (user clicked link in email)
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
   const isConfirmRedirect = hashParams.get('type') === 'magiclink' || hashParams.get('type') === 'signup';
   if (isConfirmRedirect && VaultStore.getCurrentUser()) {
-    // Session already established by supabase-js from the URL hash — go straight to KYC
+    clearDraft();
     window.location.href = 'kyc.html';
     return;
   }
 
   const existing = VaultStore.getCurrentUser();
   if (existing) {
+    clearDraft();
     window.location.href = (existing.kycStatus === 'approved' || existing.status === 'active')
       ? 'dashboard.html'
       : 'kyc.html';
@@ -147,6 +204,28 @@ function watchForConfirmation() {
     watchForStep4();
     wireResendButton();
     watchForConfirmation();
+    watchStepChanges();
+
+    // Restore draft if user reloaded mid-signup
+    const draft = loadDraft();
+    if (draft && draft.step > 1) {
+      restoreFields(draft);
+
+      // If we're restoring to step 4, suppress the confirmation resend
+      if (draft.step === 4) {
+        _skipNextStep4Send = true;
+        // Show email address immediately
+        const sentEmailEl = document.getElementById('sent-email');
+        if (sentEmailEl) sentEmailEl.textContent = draft.email || '';
+      }
+
+      // Jump to the saved step (auth.js exposes _signupGoToStep after its own DOMContentLoaded)
+      setTimeout(() => {
+        if (typeof window._signupGoToStep === 'function') {
+          window._signupGoToStep(draft.step);
+        }
+      }, 0);
+    }
   });
 })();
 
