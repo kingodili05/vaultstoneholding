@@ -598,8 +598,6 @@ function initKYCBackground() {
 document.addEventListener('DOMContentLoaded', () => {
   initKYCBackground();
 
-  VaultStore.ready.then(() => {
-  const user = VaultStore.getCurrentUser();
   let currentStep = 1;
   let selectedDocType = null;
   let frontUploaded = false;
@@ -810,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(() => {
       /* Save KYC to VaultStore */
+      const user = VaultStore.getCurrentUser();
       if (user) {
         VaultStore.submitKYC(user.id, {
           documentType:   selectedDocType,
@@ -835,7 +834,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   updateProgress();
-  }); // VaultStore.ready.then
 });
 </script>
 
