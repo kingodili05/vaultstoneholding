@@ -191,15 +191,7 @@ function wireVerifyButton() {
       return;
     }
 
-    // Code verified — set password (the signUp may not have set it yet in some flows)
-    const pwResult = await VaultStore.setPassword(password);
-    if (!pwResult.ok) {
-      btn.classList.remove('loading');
-      btn.disabled = false;
-      showError(btn, pwResult.error || 'Could not set password. Please try again.');
-      return;
-    }
-
+    // Password was already set by createUser() on step-4 entry — no need to set it again.
     clearDraft();
     callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
     if (typeof triggerConfetti === 'function') triggerConfetti();
