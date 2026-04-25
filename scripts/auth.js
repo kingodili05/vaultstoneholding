@@ -669,27 +669,7 @@ function initSignupPage() {
     });
   });
 
-  /* ── Final Submit ── */
-  const signupBtn = document.getElementById('signup-submit');
-  if (signupBtn) {
-    signupBtn.addEventListener('click', () => {
-      const otp = otpInputs.map(i => i.value).join('');
-      if (otp.length < 8) {
-        shakeElement(signupBtn.closest('.step-panel'));
-        otpInputs.forEach(i => i.classList.add('error'));
-        return;
-      }
-      signupBtn.classList.add('loading');
-      signupBtn.disabled = true;
-
-      setTimeout(() => {
-        triggerConfetti();
-        const overlay = document.getElementById('success-overlay');
-        if (overlay) overlay.classList.add('visible');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2200);
-      }, 1500);
-    });
-  }
+  /* ── Final Submit (disabled — handled by signup-integration.js via email confirmation) ── */
 
   /* ── Step Navigation ── */
   function goToStep(next, dir) {

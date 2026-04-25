@@ -265,21 +265,28 @@ const VaultStore = (() => {
   }
 
   async function createUser(data) {
+    const opts = {
+      data: {
+        full_name:    data.name         || '',
+        phone:        data.phone        || '',
+        country:      data.country      || 'US',
+        dob:          data.dob          || '',
+        account_type: data.accountType  || 'personal',
+      },
+    };
+    if (data.emailRedirectTo) opts.emailRedirectTo = data.emailRedirectTo;
     const { data: authData, error } = await sb.auth.signUp({
       email:    data.email,
       password: data.password,
-      options:  {
-        data: {
-          full_name:    data.name,
-          phone:        data.phone    || '',
-          country:      data.country  || 'US',
-          dob:          data.dob      || '',
-          account_type: data.accountType || 'personal',
-        },
-      },
+      options:  opts,
     });
     if (error) return { ok: false, error: error.message };
     return { ok: true, user: authData.user };
+  }
+
+  async function resendConfirmation(email) {
+    const { error } = await sb.auth.resend({ email, type: 'signup' });
+    return error ? { ok: false, error: error.message } : { ok: true };
   }
 
   async function sendOtp(email, metadata, emailRedirectTo) {
@@ -885,7 +892,7 @@ const VaultStore = (() => {
     adminLogin, getAdminSession, requireAdmin,
     // Users
     getUsers, getUser, getUserByEmail, createUser, updateUser, deleteUser,
-    sendOtp, verifyOtpCode, setPassword,
+    sendOtp, verifyOtpCode, resendConfirmation, setPassword,
     // Account status (admin)
     lockAccount, unlockAccount, suspendAccount, activateAccount,
     // Balance (admin)

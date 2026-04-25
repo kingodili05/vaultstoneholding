@@ -28,27 +28,45 @@ function getFormData() {
   };
 }
 
-async function sendOtp() {
-  const { email, firstName, lastName, phone, country, dob, accountType } = getFormData();
-  if (!email) return false;
+// Builds the URL Supabase will redirect to after email confirmation.
+// Points to kyc.html so the session is picked up automatically there.
+function getRedirectUrl() {
+  return window.location.origin + '/kyc.html';
+}
 
-  const hint = document.getElementById('otp-hint');
-  if (hint) hint.textContent = `Sending a 6-digit code to ${email}…`;
+// Called when step-4 becomes active: register the user and send the confirmation email.
+async function registerAndSendConfirmation() {
+  const { firstName, lastName, email, password, phone, country, dob, accountType } = getFormData();
+  if (!email || !password) return;
 
-  const result = await VaultStore.sendOtp(email, {
-    full_name:    `${firstName} ${lastName}`.trim(),
+  // Show the user's email address in the UI
+  const sentEmailEl = document.getElementById('sent-email');
+  if (sentEmailEl) sentEmailEl.textContent = email;
+
+  const result = await VaultStore.createUser({
+    email,
+    password,
+    name:             `${firstName} ${lastName}`.trim(),
     phone,
     country,
     dob,
-    account_type: accountType,
+    accountType,
+    emailRedirectTo:  getRedirectUrl(),
   });
 
-  if (hint) {
-    hint.textContent = result.ok
-      ? `We've sent a 6-digit code to ${email}. Enter it below to complete your registration.`
-      : `Couldn't send a code to ${email}. Please click Resend code to try again.`;
+  const hint = document.getElementById('otp-hint');
+  if (!result.ok) {
+    // "User already registered" just means the account exists — resend the confirmation
+    if (result.error && result.error.toLowerCase().includes('already registered')) {
+      await VaultStore.resendConfirmation(email);
+      if (hint) hint.innerHTML = `Confirmation resent to<br><strong class="email-confirm-addr">${email}</strong>`;
+    } else {
+      if (hint) hint.innerHTML = `<span style="color:#EF4444">${result.error}</span>`;
+    }
+    return;
   }
-  return result.ok;
+
+  if (hint) hint.innerHTML = `We've sent a confirmation link to<br><strong class="email-confirm-addr">${email}</strong>`;
 }
 
 function watchForStep4() {
@@ -58,7 +76,7 @@ function watchForStep4() {
   const observer = new MutationObserver(async (mutations) => {
     for (const m of mutations) {
       if (m.type === 'attributes' && m.attributeName === 'class' && step4.classList.contains('active')) {
-        await sendOtp();
+        await registerAndSendConfirmation();
       }
     }
   });
@@ -74,58 +92,31 @@ function wireResendButton() {
     resendBtn.disabled    = true;
     resendBtn.textContent = 'Sending…';
 
-    await sendOtp();
+    const { email } = getFormData();
+    const result = await VaultStore.resendConfirmation(email);
 
-    resendBtn.textContent = 'Sent!';
+    resendBtn.textContent = result.ok ? 'Sent! Check your inbox.' : 'Failed — try again';
     setTimeout(() => {
       resendBtn.disabled    = false;
-      resendBtn.textContent = 'Resend code';
+      resendBtn.textContent = 'Resend email';
     }, 30000);
   });
 }
 
-function showMagicLinkPasswordSetup() {
-  const overlay = document.createElement('div');
-  overlay.id = 'ml-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:9999;';
-  overlay.innerHTML = `
-    <div style="background:var(--surface,#1a1a2e);border:1px solid var(--border,#333);border-radius:16px;padding:2rem;max-width:400px;width:90%;color:var(--text,#fff);">
-      <h2 style="margin:0 0 0.5rem;font-size:1.4rem;">Email confirmed!</h2>
-      <p style="color:var(--text2,#aaa);margin:0 0 1.5rem;font-size:0.9rem;">Set a password to complete your Vaultstone account.</p>
-      <input type="password" id="ml-pw" placeholder="Password (min 8 characters)"
-        style="width:100%;padding:0.75rem;border-radius:8px;border:1px solid var(--border,#444);background:var(--bg,#111);color:var(--text,#fff);font-size:0.95rem;box-sizing:border-box;margin-bottom:0.75rem;" />
-      <input type="password" id="ml-pw2" placeholder="Confirm password"
-        style="width:100%;padding:0.75rem;border-radius:8px;border:1px solid var(--border,#444);background:var(--bg,#111);color:var(--text,#fff);font-size:0.95rem;box-sizing:border-box;" />
-      <p id="ml-err" style="color:#EF4444;font-size:0.85rem;min-height:1.4em;margin:0.5rem 0 1rem;"></p>
-      <button id="ml-btn" style="width:100%;padding:0.8rem;background:var(--accent,#4F46E5);color:#fff;border:none;border-radius:8px;font-size:1rem;cursor:pointer;font-weight:600;">
-        Set Password &amp; Continue
-      </button>
-    </div>`;
-  document.body.appendChild(overlay);
+// Detect when the user has confirmed their email (via the link in another tab/window)
+// and auto-redirect them without needing to do anything on this page.
+function watchForConfirmation() {
+  const sb = window._sb;
+  if (!sb) return;
 
-  const pwEl  = overlay.querySelector('#ml-pw');
-  const pw2El = overlay.querySelector('#ml-pw2');
-  const errEl = overlay.querySelector('#ml-err');
-  const btn   = overlay.querySelector('#ml-btn');
-
-  btn.addEventListener('click', async () => {
-    errEl.textContent = '';
-    const pw = pwEl.value;
-    if (pw.length < 8)    { errEl.textContent = 'Password must be at least 8 characters.'; return; }
-    if (pw !== pw2El.value) { errEl.textContent = 'Passwords do not match.'; return; }
-
-    btn.textContent = 'Saving…';
-    btn.disabled = true;
-
-    const result = await VaultStore.setPassword(pw);
-    if (!result.ok) {
-      errEl.textContent = result.error || 'Could not set password. Please try again.';
-      btn.textContent = 'Set Password & Continue';
-      btn.disabled = false;
-      return;
+  sb.auth.onAuthStateChange((event, session) => {
+    if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session) {
+      // User clicked the confirmation link — redirect to KYC
+      const { firstName, lastName, email } = getFormData();
+      callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
+      if (typeof triggerConfetti === 'function') triggerConfetti();
+      setTimeout(() => { window.location.href = 'kyc.html'; }, 800);
     }
-
-    window.location.href = 'kyc.html';
   });
 }
 
@@ -135,11 +126,12 @@ function showMagicLinkPasswordSetup() {
 
   await VaultStore.ready;
 
-  // Handle magic link redirect (user clicked link in email instead of entering code)
+  // Handle magic link / confirmation redirect (user clicked link in email)
   const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
-  const isMagicLink = hashParams.get('type') === 'magiclink' || hashParams.get('type') === 'signup';
-  if (isMagicLink && VaultStore.getCurrentUser()) {
-    document.addEventListener('DOMContentLoaded', showMagicLinkPasswordSetup);
+  const isConfirmRedirect = hashParams.get('type') === 'magiclink' || hashParams.get('type') === 'signup';
+  if (isConfirmRedirect && VaultStore.getCurrentUser()) {
+    // Session already established by supabase-js from the URL hash — go straight to KYC
+    window.location.href = 'kyc.html';
     return;
   }
 
@@ -154,68 +146,7 @@ function showMagicLinkPasswordSetup() {
   document.addEventListener('DOMContentLoaded', () => {
     watchForStep4();
     wireResendButton();
-
-    const oldBtn = document.getElementById('signup-submit');
-    if (!oldBtn) return;
-
-    // Clone to strip any existing listener from auth.js
-    const btn = oldBtn.cloneNode(true);
-    oldBtn.parentNode.replaceChild(btn, oldBtn);
-
-    btn.addEventListener('click', async () => {
-      const otpInputs = [...document.querySelectorAll('.otp-input')];
-      const token     = otpInputs.map(i => i.value).join('');
-
-      if (token.length < 8) {
-        const panel = btn.closest('.step-panel');
-        if (panel) {
-          panel.classList.remove('shake');
-          void panel.offsetWidth;
-          panel.classList.add('shake');
-          panel.addEventListener('animationend', () => panel.classList.remove('shake'), { once: true });
-        }
-        otpInputs.forEach(i => i.classList.add('error'));
-        return;
-      }
-
-      const { email, firstName, lastName, password } = getFormData();
-
-      btn.classList.add('loading');
-      btn.disabled = true;
-
-      const verifyResult = await VaultStore.verifyOtpCode(email, token);
-
-      if (!verifyResult.ok) {
-        btn.classList.remove('loading');
-        btn.disabled = false;
-        showError(btn, verifyResult.error || 'Incorrect or expired code. Please try again.');
-        otpInputs.forEach(i => i.classList.add('error'));
-        return;
-      }
-
-      const pwResult = await VaultStore.setPassword(password);
-
-      if (!pwResult.ok) {
-        btn.classList.remove('loading');
-        btn.disabled = false;
-        showError(btn, pwResult.error || 'Could not set password. Please try again.');
-        return;
-      }
-
-      // Welcome email (fire-and-forget)
-      callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
-
-      if (typeof triggerConfetti === 'function') triggerConfetti();
-
-      const overlay = document.getElementById('success-overlay');
-      if (overlay) {
-        const sub = overlay.querySelector('p');
-        if (sub) sub.textContent = 'Welcome to Vaultstone. Redirecting to identity verification…';
-        overlay.classList.add('visible');
-      }
-
-      setTimeout(() => { window.location.href = 'kyc.html'; }, 2200);
-    });
+    watchForConfirmation();
   });
 })();
 

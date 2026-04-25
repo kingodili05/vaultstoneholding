@@ -978,6 +978,44 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
 /* ============================================================
    20. OTP Input Grid
    ============================================================ */
+.email-confirm-card {
+  text-align: center;
+  padding: 2rem 1rem 1rem;
+}
+
+.email-confirm-icon {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  color: var(--accent, #C9A84C);
+}
+
+.email-confirm-msg {
+  font-size: 0.9375rem;
+  color: var(--text2, #aaa);
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+
+.email-confirm-addr {
+  display: inline-block;
+  color: var(--text, #fff);
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.email-confirm-sub {
+  font-size: 0.875rem;
+  color: var(--text2, #aaa);
+  margin-bottom: 0.5rem;
+  line-height: 1.55;
+}
+
+.email-confirm-spam {
+  font-size: 0.8125rem;
+  color: var(--text3, #666);
+}
+
 .otp-grid {
   display: flex;
   gap: 8px;
