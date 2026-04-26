@@ -11,7 +11,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 // ─── Admin / service-role key — bypasses RLS for admin dashboard
 // Get from: Supabase Dashboard → Settings → API → service_role (secret key)
 // Paste your service_role key below (the long JWT starting with "eyJ...")
-const SUPABASE_SERVICE_KEY = '';
+const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indra3d3b2Fsb3Z1d2hndnpwcm92Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njk0ODEyMywiZXhwIjoyMDkyNTI0MTIzfQ.0bnCaOPkaI7yjz3ij3n1VxDnuJ6nXCkyMD13435Mxg0';
 
 const _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
