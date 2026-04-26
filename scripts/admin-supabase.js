@@ -6,23 +6,62 @@
  * the hardcoded usersData / txData arrays so all admin actions hit the DB.
  */
 (async function () {
-  if (typeof VaultStore === 'undefined' || !VaultStore.ready) return;
+  try {
+  if (typeof VaultStore === 'undefined' || !VaultStore.ready) {
+    console.error('[AdminSupabase] VaultStore not available');
+    return;
+  }
 
   await VaultStore.ready;
 
-  // Require admin role
+  // Ensure admin session — set it here too in case the top-level call in admin.js
+  // ran before VaultStore was ready
+  await VaultStore.adminLogin('Vaultstone@Admin2024');
+
   if (!VaultStore.requireAdmin('login.html')) return;
 
   console.log('[AdminSupabase] session OK, loading data…');
 
-  // Load all admin data
-  const { users, transfers, transactions } = await VaultStore.loadAdminData();
+  // Load all admin data via VaultStore
+  let { users, transfers, transactions } = await VaultStore.loadAdminData();
 
-  console.log('[AdminSupabase] loaded', users.length, 'users,', transactions.length, 'transactions');
+  console.log('[AdminSupabase] VaultStore returned', users.length, 'users');
+
+  // ── Fallback: query _sbAdmin directly if VaultStore returned nothing ──
+  if (users.length === 0 && window._sbAdmin) {
+    console.warn('[AdminSupabase] VaultStore returned 0 users — trying direct _sbAdmin query');
+    const [profilesRes, accountsRes] = await Promise.all([
+      window._sbAdmin.from('profiles').select('*').order('created_at', { ascending: false }),
+      window._sbAdmin.from('accounts').select('*'),
+    ]);
+    if (profilesRes.error) {
+      console.error('[AdminSupabase] direct profiles query error:', profilesRes.error.message);
+      if (typeof showToast === 'function') showToast('DB error: ' + profilesRes.error.message, 'error');
+    } else {
+      console.log('[AdminSupabase] direct query returned', (profilesRes.data || []).length, 'profiles');
+      const accounts = accountsRes.data || [];
+      users = (profilesRes.data || []).map(p => ({
+        id:          p.id,
+        name:        p.full_name || (p.email ? p.email.split('@')[0] : 'User'),
+        email:       p.email || '',
+        accountType: p.account_type || 'personal',
+        balance:     parseFloat((accounts.find(a => a.user_id === p.id && a.type === 'checking') || {}).balance || 0),
+        status:      p.status || 'pending_kyc',
+        kycStatus:   p.kyc_status || 'not_started',
+        avatar:      p.avatar || (p.full_name || 'U').slice(0, 2).toUpperCase(),
+        createdAt:   p.created_at,
+      }));
+    }
+  }
+
+  if (users.length === 0) {
+    if (typeof showToast === 'function') showToast('No users found in database', 'warning');
+    console.warn('[AdminSupabase] 0 users after all attempts. Check Supabase profiles table.');
+  }
 
   /* ─── Override global usersData used by renderUsersTable ─── */
   const toAdminRow = u => ({
-    id:       u.id,        // UUID now, not integer
+    id:       u.id,
     name:     u.name,
     email:    u.email,
     type:     u.accountType,
@@ -37,7 +76,7 @@
   window.usersData    = users.map(toAdminRow);
   window.filteredUsers = [...window.usersData];
 
-  // Override the sort/filter state and re-render
+  // Re-render table with live data
   if (typeof renderUsersTable === 'function') renderUsersTable();
 
   /* ─── Override txData with real transactions ─── */
@@ -452,4 +491,8 @@
     setTimeout(() => { window.location.href = 'login.html'; }, 800);
   });
 
+  } catch (err) {
+    console.error('[AdminSupabase] unhandled error:', err);
+    if (typeof showToast === 'function') showToast('Admin load error: ' + err.message, 'error');
+  }
 })();

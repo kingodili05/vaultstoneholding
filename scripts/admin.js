@@ -1157,12 +1157,14 @@ function updateKPIs() {
 /* ───────────────────────────────────────────
    INIT
 ─────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
-  /* Ensure admin session exists (auto-grant for demo) */
-  if (typeof VaultStore !== 'undefined' && !VaultStore.getAdminSession()) {
-    VaultStore.adminLogin('Vaultstone@Admin2024');
-  }
 
+// Set admin session synchronously at the top level so admin-supabase.js
+// can read it after VaultStore.ready resolves (before DOMContentLoaded fires).
+if (typeof VaultStore !== 'undefined') {
+  VaultStore.adminLogin('Vaultstone@Admin2024');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
   initNav();
   initUsersPanel();
   initConfirmModal();
