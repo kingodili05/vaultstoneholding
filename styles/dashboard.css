@@ -287,6 +287,18 @@ tbody tr.selected { background: rgba(201,168,76,0.06); }
 .toast.toast-warning { border-left: 3px solid var(--yellow); }
 .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
 
+/* ── Modal overlay (admin pages use this class instead of modal-backdrop) ── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(6px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
 /* ── Modal ── */
 .modal-backdrop {
   position: fixed; inset: 0;
@@ -1070,7 +1082,8 @@ tbody tr.selected { background: rgba(201,168,76,0.06); }
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-.hamburger svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.hamburger svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+.btn svg, .sidebar__link svg, .sidebar__close svg, .notif-btn svg, .modal-close svg, .page-btn svg { pointer-events: none; }
 
 /* ── Touch-only overrides (no hover on mobile) ── */
 @media (hover: none) and (pointer: coarse) {

@@ -84,6 +84,8 @@ function initNav() {
   const closeBtn = document.getElementById('sidebar-close');
 
   function openSidebar() {
+    sidebar.style.transform = '';
+    sidebar.style.opacity = '';
     sidebar.classList.add('open');
     overlay.classList.add('visible');
     overlay.setAttribute('aria-hidden', 'false');
@@ -91,6 +93,8 @@ function initNav() {
   }
   function closeSidebar() {
     sidebar.classList.remove('open');
+    sidebar.style.transform = '';
+    sidebar.style.opacity = '';
     overlay.classList.remove('visible');
     overlay.setAttribute('aria-hidden', 'true');
     unlockScroll();

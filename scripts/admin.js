@@ -76,8 +76,8 @@ function initNav() {
   const overlay = document.getElementById('sidebar-overlay');
   const closeBtn = document.getElementById('sidebar-close');
 
-  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('visible'); document.body.style.overflow = 'hidden'; }
-  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); document.body.style.overflow = ''; }
+  function openSidebar()  { sidebar.style.transform = ''; sidebar.style.opacity = ''; sidebar.classList.add('open'); overlay.classList.add('visible'); document.body.style.overflow = 'hidden'; }
+  function closeSidebar() { sidebar.classList.remove('open'); sidebar.style.transform = ''; sidebar.style.opacity = ''; overlay.classList.remove('visible'); document.body.style.overflow = ''; }
   hamburger?.addEventListener('click', openSidebar);
   closeBtn?.addEventListener('click', closeSidebar);
   overlay?.addEventListener('click', closeSidebar);
@@ -380,11 +380,6 @@ function renderUsersTable() {
       menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     });
   });
-  // Close menus on outside click
-  document.addEventListener('click', () => {
-    tbody.querySelectorAll('.row-actions-menu').forEach(m => { m.style.display = 'none'; });
-  }, { capture: true, once: false });
-
   updateBulkBar();
 }
 
@@ -467,6 +462,11 @@ function openViewUser(id) {
 
 function initUsersPanel() {
   renderUsersTable();
+
+  // Close all row context menus when clicking anywhere else — registered once here
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.row-actions-menu').forEach(m => { m.style.display = 'none'; });
+  }, { capture: true });
 
   document.getElementById('user-search')?.addEventListener('input', filterUsers);
   document.getElementById('filter-status')?.addEventListener('change', filterUsers);
