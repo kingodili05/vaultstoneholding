@@ -13,8 +13,12 @@
   // Require admin role
   if (!VaultStore.requireAdmin('login.html')) return;
 
+  console.log('[AdminSupabase] session OK, loading data…');
+
   // Load all admin data
   const { users, transfers, transactions } = await VaultStore.loadAdminData();
+
+  console.log('[AdminSupabase] loaded', users.length, 'users,', transactions.length, 'transactions');
 
   /* ─── Override global usersData used by renderUsersTable ─── */
   const toAdminRow = u => ({

@@ -254,12 +254,24 @@ const VaultStore = (() => {
   ═══════════════════════════════════════════════════════════ */
   async function _loadAllUsers() {
     if (!_hasAdminSession()) return [];
-    const { data, error } = await _adm().from('profiles').select('*, accounts(*)').order('created_at', { ascending: false });
-    if (error) {
-      console.error('[VaultStore] _loadAllUsers error:', error.message, '— Add SUPABASE_SERVICE_KEY to supabase-client.js.');
+    // Fetch profiles and accounts as separate flat queries — avoids dependency on
+    // PostgREST schema-cache foreign-key relationships which can silently fail.
+    const [profilesRes, accountsRes] = await Promise.all([
+      _adm().from('profiles').select('*').order('created_at', { ascending: false }),
+      _adm().from('accounts').select('*'),
+    ]);
+    if (profilesRes.error) {
+      console.error('[VaultStore] _loadAllUsers profiles error:', profilesRes.error.message);
       return [];
     }
-    _allUsers = (data || []).map(p => _flattenProfile(p, p.accounts || []));
+    if (accountsRes.error) {
+      console.warn('[VaultStore] _loadAllUsers accounts error (non-fatal):', accountsRes.error.message);
+    }
+    const accounts = accountsRes.data || [];
+    _allUsers = (profilesRes.data || []).map(p => {
+      const userAccounts = accounts.filter(a => a.user_id === p.id);
+      return _flattenProfile(p, userAccounts);
+    });
     return _allUsers;
   }
 
@@ -396,12 +408,12 @@ const VaultStore = (() => {
   }
 
   async function _refreshUser(userId) {
-    const { data } = await _adm().from('profiles')
-      .select('*, accounts(*)')
-      .eq('id', userId)
-      .single();
-    if (!data) return;
-    const flat = _flattenProfile(data, data.accounts || []);
+    const [profileRes, accountsRes] = await Promise.all([
+      _adm().from('profiles').select('*').eq('id', userId).single(),
+      _adm().from('accounts').select('*').eq('user_id', userId),
+    ]);
+    if (!profileRes.data) return;
+    const flat = _flattenProfile(profileRes.data, accountsRes.data || []);
     const idx  = _allUsers.findIndex(u => u.id === userId);
     if (idx > -1) _allUsers[idx] = flat;
     if (_user && _user.id === userId) _user = flat;
