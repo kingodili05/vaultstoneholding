@@ -9,6 +9,8 @@
 const VaultStore = (() => {
 
   const sb = window._sb;
+  // Admin client: uses service-role key (bypasses RLS). Falls back to anon if not configured.
+  const _adm = () => window._sbAdmin || sb;
 
   /* ── In-memory cache ─────────────────────────────────────── */
   let _user    = null;   // current user profile (flat object matching old schema)
@@ -252,9 +254,9 @@ const VaultStore = (() => {
   ═══════════════════════════════════════════════════════════ */
   async function _loadAllUsers() {
     if (!_hasAdminSession()) return [];
-    const { data, error } = await sb.from('profiles').select('*, accounts(*)').order('created_at', { ascending: false });
+    const { data, error } = await _adm().from('profiles').select('*, accounts(*)').order('created_at', { ascending: false });
     if (error) {
-      console.error('[VaultStore] _loadAllUsers error:', error.message, '— Check Supabase RLS policies.');
+      console.error('[VaultStore] _loadAllUsers error:', error.message, '— Add SUPABASE_SERVICE_KEY to supabase-client.js.');
       return [];
     }
     _allUsers = (data || []).map(p => _flattenProfile(p, p.accounts || []));
@@ -335,12 +337,12 @@ const VaultStore = (() => {
 
     if (Object.keys(mapped).length === 0) return _user;
 
-    const { data, error } = await sb.from('profiles').update(mapped).eq('id', id).select('*').single();
+    const { data, error } = await _adm().from('profiles').update(mapped).eq('id', id).select('*').single();
     if (error) { console.error('[updateUser]', error); return null; }
 
     if (_user && _user.id === id) {
       const [accountsRes] = await Promise.all([
-        sb.from('accounts').select('*').eq('user_id', id),
+        _adm().from('accounts').select('*').eq('user_id', id),
       ]);
       _user = _flattenProfile(data, accountsRes.data || []);
       emit('user_updated', _user);
@@ -349,7 +351,7 @@ const VaultStore = (() => {
   }
 
   async function deleteUser(id) {
-    await sb.from('profiles').delete().eq('id', id);
+    await _adm().from('profiles').delete().eq('id', id);
     _allUsers = _allUsers.filter(u => u.id !== id);
     emit('user_deleted', { id });
   }
@@ -358,8 +360,8 @@ const VaultStore = (() => {
      ACCOUNT STATUS  (admin)
   ═══════════════════════════════════════════════════════════ */
   async function lockAccount(userId) {
-    const res = await sb.rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'locked', p_admin_id: _user.id,
+    const res = await _adm().rpc('admin_set_status', {
+      p_user_id: userId, p_status: 'locked', p_admin_id: _user?.id,
     });
     await _refreshUser(userId);
     emit('account_updated', { userId });
@@ -367,8 +369,8 @@ const VaultStore = (() => {
   }
 
   async function unlockAccount(userId) {
-    const res = await sb.rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'active', p_admin_id: _user.id,
+    const res = await _adm().rpc('admin_set_status', {
+      p_user_id: userId, p_status: 'active', p_admin_id: _user?.id,
     });
     await _refreshUser(userId);
     emit('account_updated', { userId });
@@ -376,8 +378,8 @@ const VaultStore = (() => {
   }
 
   async function suspendAccount(userId) {
-    const res = await sb.rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'suspended', p_admin_id: _user.id,
+    const res = await _adm().rpc('admin_set_status', {
+      p_user_id: userId, p_status: 'suspended', p_admin_id: _user?.id,
     });
     await _refreshUser(userId);
     emit('account_updated', { userId });
@@ -385,8 +387,8 @@ const VaultStore = (() => {
   }
 
   async function activateAccount(userId) {
-    const res = await sb.rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'active', p_admin_id: _user.id,
+    const res = await _adm().rpc('admin_set_status', {
+      p_user_id: userId, p_status: 'active', p_admin_id: _user?.id,
     });
     await _refreshUser(userId);
     emit('account_updated', { userId });
@@ -394,7 +396,7 @@ const VaultStore = (() => {
   }
 
   async function _refreshUser(userId) {
-    const { data } = await sb.from('profiles')
+    const { data } = await _adm().from('profiles')
       .select('*, accounts(*)')
       .eq('id', userId)
       .single();
@@ -416,10 +418,10 @@ const VaultStore = (() => {
   }
 
   async function adjustBalance(userId, delta, acctType = 'checking') {
-    const { data } = await sb.rpc('admin_adjust_balance', {
+    const { data } = await _adm().rpc('admin_adjust_balance', {
       p_user_id:   userId,
       p_delta:     delta,
-      p_admin_id:  _user.id,
+      p_admin_id:  _user?.id,
       p_acct_type: acctType,
     });
     await _refreshUser(userId);
@@ -441,7 +443,7 @@ const VaultStore = (() => {
   }
 
   async function _loadAllTransfers() {
-    const { data } = await sb.from('transfers')
+    const { data } = await _adm().from('transfers')
       .select('*')
       .order('created_at', { ascending: false });
     return (data || []).map(_flattenTransfer);
@@ -566,7 +568,7 @@ const VaultStore = (() => {
       transfer_id:  data.transferId  || null,
       date:         data.date        || new Date().toISOString(),
     };
-    const { data: row, error } = await sb.from('transactions').insert(payload).select().single();
+    const { data: row, error } = await _adm().from('transactions').insert(payload).select().single();
     if (error) { console.error('[addTransaction]', error); return null; }
     const flat = _flattenTx(row);
     if (!_txCache[data.userId]) _txCache[data.userId] = [];
@@ -668,7 +670,7 @@ const VaultStore = (() => {
     const CHUNK    = 50;
     const inserted = [];
     for (let i = 0; i < payloads.length; i += CHUNK) {
-      const { data, error } = await sb.from('transactions').insert(payloads.slice(i, i + CHUNK)).select();
+      const { data, error } = await _adm().from('transactions').insert(payloads.slice(i, i + CHUNK)).select();
       if (error) { console.error('[generateTransactions]', error); return { ok: false, error: error.message }; }
       inserted.push(...(data || []));
     }
@@ -875,7 +877,7 @@ const VaultStore = (() => {
     const [users, transfers, txs] = await Promise.all([
       _loadAllUsers(),
       _loadAllTransfers(),
-      sb.from('transactions').select('*').order('date', { ascending: false }).limit(200)
+      _adm().from('transactions').select('*').order('date', { ascending: false }).limit(200)
         .then(({ data }) => (data || []).map(_flattenTx)),
     ]);
     // Cache all user transactions globally
