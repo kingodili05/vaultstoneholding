@@ -76,8 +76,8 @@ function initNav() {
   const overlay = document.getElementById('sidebar-overlay');
   const closeBtn = document.getElementById('sidebar-close');
 
-  function openSidebar() { sidebar.classList.add('open'); overlay.classList.add('visible'); }
-  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); }
+  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('visible'); document.body.style.overflow = 'hidden'; }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('visible'); document.body.style.overflow = ''; }
   hamburger?.addEventListener('click', openSidebar);
   closeBtn?.addEventListener('click', closeSidebar);
   overlay?.addEventListener('click', closeSidebar);
@@ -306,14 +306,14 @@ function renderUsersTable() {
   tbody.innerHTML = filteredUsers.map(u => `
     <tr data-id="${u.id}" class="${selectedUsers.has(u.id) ? 'selected' : ''}">
       <td><input type="checkbox" class="row-check" data-id="${u.id}" ${selectedUsers.has(u.id) ? 'checked' : ''}></td>
-      <td><div style="display:flex;align-items:center;gap:0.75rem"><div class="avatar">${u.initials}</div><div><div style="font-weight:500">${u.name}</div></div></div></td>
-      <td style="color:var(--muted2)">${u.email}</td>
-      <td><span class="badge ${u.type === 'wealth' ? 'badge-gold' : u.type === 'business' ? 'badge-blue' : 'badge-muted'}">${u.type}</span></td>
+      <td><div style="display:flex;align-items:center;gap:0.75rem"><div class="avatar">${u.initials}</div><div><div style="font-weight:500">${u.name}</div><div class="hide-desktop" style="font-size:0.75rem;color:var(--muted2)">${u.email}</div></div></div></td>
+      <td class="hide-mobile" style="color:var(--muted2)">${u.email}</td>
+      <td class="hide-mobile"><span class="badge ${u.type === 'wealth' ? 'badge-gold' : u.type === 'business' ? 'badge-blue' : 'badge-muted'}">${u.type}</span></td>
       <td style="font-weight:600">$${u.balance.toLocaleString()}</td>
       <td><span class="badge ${u.status === 'active' ? 'badge-green' : u.status === 'suspended' ? 'badge-red' : 'badge-yellow'}">${u.status}</span></td>
-      <td style="color:var(--muted2)">${u.joined}</td>
+      <td class="hide-mobile" style="color:var(--muted2)">${u.joined}</td>
       <td>
-        <div class="action-btns">
+        <div class="action-btns hide-mobile">
           <button class="btn btn-ghost btn-icon btn-sm view-user" data-id="${u.id}" title="View" aria-label="View user">
             <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
@@ -336,6 +336,17 @@ function renderUsersTable() {
             <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
           </button>
         </div>
+        <div class="show-mobile" style="position:relative">
+          <button class="btn btn-ghost btn-sm row-actions-btn" data-id="${u.id}" aria-label="Actions" style="padding:0.5rem 0.75rem;font-size:1.25rem;line-height:1">⋯</button>
+          <div class="row-actions-menu" data-id="${u.id}" style="display:none;position:absolute;right:0;top:100%;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);box-shadow:var(--shadow);min-width:160px;padding:0.375rem 0">
+            <button class="row-menu-item view-user" data-id="${u.id}">View Profile</button>
+            <button class="row-menu-item edit-user" data-id="${u.id}">Edit User</button>
+            <button class="row-menu-item fund-user" data-id="${u.id}">Fund Account</button>
+            <button class="row-menu-item gen-history-user" data-id="${u.id}">Generate History</button>
+            <button class="row-menu-item suspend-user" data-id="${u.id}">${u.status === 'suspended' ? 'Activate' : 'Suspend'}</button>
+            <button class="row-menu-item delete-user" data-id="${u.id}" style="color:var(--red)">Delete User</button>
+          </div>
+        </div>
       </td>
     </tr>`).join('');
 
@@ -357,6 +368,22 @@ function renderUsersTable() {
     const row = tbody.querySelector(`tr[data-id="${id}"]`);
     if (row) row.classList.toggle('selected', cb.checked);
   }));
+
+  // Mobile ⋯ context menu
+  tbody.querySelectorAll('.row-actions-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const id   = btn.dataset.id;
+      const menu = tbody.querySelector(`.row-actions-menu[data-id="${id}"]`);
+      // close any open menus first
+      tbody.querySelectorAll('.row-actions-menu').forEach(m => { if (m !== menu) m.style.display = 'none'; });
+      menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+    });
+  });
+  // Close menus on outside click
+  document.addEventListener('click', () => {
+    tbody.querySelectorAll('.row-actions-menu').forEach(m => { m.style.display = 'none'; });
+  }, { capture: true, once: false });
 
   updateBulkBar();
 }

@@ -12,6 +12,15 @@ const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+/* ── Body scroll lock for modals/drawers ── */
+let _scrollLockCount = 0;
+function lockScroll()   { if (++_scrollLockCount === 1) document.body.style.overflow = 'hidden'; }
+function unlockScroll() { if (--_scrollLockCount <= 0) { _scrollLockCount = 0; document.body.style.overflow = ''; } }
+
+/* Patch all modal open/close with scroll lock */
+function openModal(id)  { document.getElementById(id)?.classList.add('open');    lockScroll(); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); unlockScroll(); }
+
 /* Statements pagination state */
 let _stmtPage  = 1;
 const _stmtPerPage = 15;
@@ -78,11 +87,13 @@ function initNav() {
     sidebar.classList.add('open');
     overlay.classList.add('visible');
     overlay.setAttribute('aria-hidden', 'false');
+    lockScroll();
   }
   function closeSidebar() {
     sidebar.classList.remove('open');
     overlay.classList.remove('visible');
     overlay.setAttribute('aria-hidden', 'true');
+    unlockScroll();
   }
   hamburger?.addEventListener('click', openSidebar);
   closeBtn?.addEventListener('click', closeSidebar);
@@ -653,9 +664,7 @@ function initInvestPanel() {
   document.getElementById('rebalance-btn')?.addEventListener('click', () => {
     showToast('Portfolio rebalance request submitted. Our advisors will review and execute within 24 hours.', 'info');
   });
-  document.getElementById('invest-btn')?.addEventListener('click', () => {
-    document.getElementById('invest-modal')?.classList.add('open');
-  });
+  document.getElementById('invest-btn')?.addEventListener('click', () => { openModal('invest-modal'); });
 }
 
 /* ───────────────────────────────────────────
@@ -1040,12 +1049,14 @@ function openNotifDrawer(userId) {
   document.getElementById('notif-drawer')?.classList.add('open');
   document.getElementById('notif-backdrop')?.classList.add('open');
   document.getElementById('notif-drawer')?.setAttribute('aria-hidden', 'false');
+  lockScroll();
 }
 
 function closeNotifDrawer() {
   document.getElementById('notif-drawer')?.classList.remove('open');
   document.getElementById('notif-backdrop')?.classList.remove('open');
   document.getElementById('notif-drawer')?.setAttribute('aria-hidden', 'true');
+  unlockScroll();
 }
 
 /* ── Wire transfer form to VaultStore ── */
@@ -1192,14 +1203,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* Receive modal */
-  document.getElementById('receive-btn')?.addEventListener('click', () => {
-    document.getElementById('receive-modal')?.classList.add('open');
-  });
-  document.getElementById('receive-modal-close')?.addEventListener('click', () => {
-    document.getElementById('receive-modal')?.classList.remove('open');
-  });
+  document.getElementById('receive-btn')?.addEventListener('click', () => { openModal('receive-modal'); });
+  document.getElementById('receive-modal-close')?.addEventListener('click', () => { closeModal('receive-modal'); });
   document.getElementById('receive-modal')?.addEventListener('click', e => {
-    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    if (e.target === e.currentTarget) closeModal('receive-modal');
   });
   document.getElementById('copy-account-btn')?.addEventListener('click', () => {
     const acct = document.getElementById('receive-account-number')?.textContent || '';
@@ -1208,22 +1215,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* Close account modal */
-  document.getElementById('close-account-btn')?.addEventListener('click', () => {
-    document.getElementById('close-account-modal')?.classList.add('open');
-  });
-  document.getElementById('close-account-cancel-btn')?.addEventListener('click', () => {
-    document.getElementById('close-account-modal')?.classList.remove('open');
-  });
-  document.getElementById('close-account-modal-close')?.addEventListener('click', () => {
-    document.getElementById('close-account-modal')?.classList.remove('open');
-  });
+  document.getElementById('close-account-btn')?.addEventListener('click', () => { openModal('close-account-modal'); });
+  document.getElementById('close-account-cancel-btn')?.addEventListener('click', () => { closeModal('close-account-modal'); });
+  document.getElementById('close-account-modal-close')?.addEventListener('click', () => { closeModal('close-account-modal'); });
   document.getElementById('close-account-submit-btn')?.addEventListener('click', () => {
     const confirmInput = document.getElementById('close-confirm-input');
     if (confirmInput?.value !== 'CLOSE MY ACCOUNT') {
       showToast('Please type "CLOSE MY ACCOUNT" to confirm.', 'warning');
       return;
     }
-    document.getElementById('close-account-modal')?.classList.remove('open');
+    closeModal('close-account-modal');
     showToast('Account closure request submitted. You will be contacted within 3 business days.', 'info');
   });
 
@@ -1300,14 +1301,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   /* ── Invest modal ── */
-  document.getElementById('invest-modal-close')?.addEventListener('click', () => {
-    document.getElementById('invest-modal')?.classList.remove('open');
-  });
-  document.getElementById('invest-cancel-btn')?.addEventListener('click', () => {
-    document.getElementById('invest-modal')?.classList.remove('open');
-  });
+  document.getElementById('invest-modal-close')?.addEventListener('click', () => { closeModal('invest-modal'); });
+  document.getElementById('invest-cancel-btn')?.addEventListener('click', () => { closeModal('invest-modal'); });
   document.getElementById('invest-modal')?.addEventListener('click', e => {
-    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    if (e.target === e.currentTarget) closeModal('invest-modal');
   });
   document.getElementById('invest-form')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -1315,7 +1312,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const assetEl  = document.getElementById('invest-asset');
     const assetLbl = assetEl?.options[assetEl.selectedIndex]?.text || 'Stocks';
     if (!amount || amount < 100) { showToast('Minimum investment is $100.00.', 'warning'); return; }
-    document.getElementById('invest-modal')?.classList.remove('open');
+    closeModal('invest-modal');
     document.getElementById('invest-form')?.reset();
     showToast(`Investment of $${amount.toLocaleString()} in ${assetLbl} submitted. Funds will be allocated next business day.`, 'success');
   });
@@ -1327,16 +1324,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       const t = new Date(); t.setDate(t.getDate() + 1);
       schedDate.value = t.toISOString().split('T')[0];
     }
-    document.getElementById('schedule-modal')?.classList.add('open');
+    openModal('schedule-modal');
   });
-  document.getElementById('schedule-modal-close')?.addEventListener('click', () => {
-    document.getElementById('schedule-modal')?.classList.remove('open');
-  });
-  document.getElementById('schedule-cancel-btn')?.addEventListener('click', () => {
-    document.getElementById('schedule-modal')?.classList.remove('open');
-  });
+  document.getElementById('schedule-modal-close')?.addEventListener('click', () => { closeModal('schedule-modal'); });
+  document.getElementById('schedule-cancel-btn')?.addEventListener('click', () => { closeModal('schedule-modal'); });
   document.getElementById('schedule-modal')?.addEventListener('click', e => {
-    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+    if (e.target === e.currentTarget) closeModal('schedule-modal');
   });
   document.getElementById('schedule-form')?.addEventListener('submit', e => {
     e.preventDefault();
@@ -1347,7 +1340,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!recipient || !amount || !startDate) { showToast('Please fill in all required fields.', 'warning'); return; }
     const freqLbl  = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' }[frequency] || frequency;
     const dateLbl  = new Date(startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-    document.getElementById('schedule-modal')?.classList.remove('open');
+    closeModal('schedule-modal');
     document.getElementById('schedule-form')?.reset();
     showToast(`${freqLbl} transfer of $${amount.toLocaleString()} to ${recipient} scheduled from ${dateLbl}.`, 'success');
   });
@@ -1388,5 +1381,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     a.click();
     URL.revokeObjectURL(url);
     showToast('CSV downloaded.', 'success');
+  });
+
+  /* ── Mobile FAB → jump to Transfers panel ── */
+  document.getElementById('mobile-fab')?.addEventListener('click', () => {
+    switchPanel('transfers');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
