@@ -77,7 +77,8 @@
   window.filteredUsers = [...window.usersData];
 
   // Re-render table with live data
-  if (typeof renderUsersTable === 'function') renderUsersTable();
+  if (typeof renderUsersTable    === 'function') renderUsersTable();
+  if (typeof window.updateAdminKPIs === 'function') window.updateAdminKPIs();
 
   /* ─── Override txData with real transactions ─── */
   const toTxRow = tx => ({

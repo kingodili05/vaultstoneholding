@@ -559,6 +559,24 @@ function initCardsPanel() {
   document.getElementById('add-new-card-btn')?.addEventListener('click', () => {
     showToast('Card request submitted. Your new Vaultstone Visa Infinite card will arrive within 5–7 business days.', 'success');
   });
+
+  // Card preferences — persist to localStorage
+  const cardPrefs = [
+    ['pref-contactless',  'Contactless Payments'],
+    ['pref-online',       'Online Transactions'],
+    ['pref-international','International Payments'],
+    ['pref-atm',          'ATM Withdrawals'],
+  ];
+  cardPrefs.forEach(([id, label]) => {
+    const toggle = document.getElementById(id);
+    if (!toggle) return;
+    const stored = localStorage.getItem('vs_card_' + id);
+    if (stored !== null) toggle.checked = stored === 'true';
+    toggle.addEventListener('change', () => {
+      localStorage.setItem('vs_card_' + id, toggle.checked);
+      showToast(`${label} ${toggle.checked ? 'enabled' : 'disabled'}.`, toggle.checked ? 'success' : 'warning');
+    });
+  });
 }
 
 /* ───────────────────────────────────────────
@@ -675,12 +693,19 @@ function initInvestPanel() {
    SETTINGS PANEL
 ─────────────────────────────────────────── */
 function initSettingsPanel() {
-  // Theme toggle
+  // Theme toggle — persist and restore
   const themeToggle = document.getElementById('theme-toggle');
   if (themeToggle) {
+    const savedTheme = localStorage.getItem('vs_theme');
+    if (savedTheme === 'light') {
+      themeToggle.checked = true;
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
     themeToggle.addEventListener('change', () => {
-      document.documentElement.setAttribute('data-theme', themeToggle.checked ? 'light' : '');
-      showToast(themeToggle.checked ? 'Light theme applied.' : 'Dark theme applied.', 'info');
+      const isLight = themeToggle.checked;
+      document.documentElement.setAttribute('data-theme', isLight ? 'light' : '');
+      localStorage.setItem('vs_theme', isLight ? 'light' : 'dark');
+      showToast(isLight ? 'Light theme applied.' : 'Dark theme applied.', 'info');
     });
   }
 
@@ -746,6 +771,25 @@ function initSettingsPanel() {
       if (v) ctx.fillRect(c * (120/row.length), r * (120/pattern.length), 120/row.length - 0.5, 120/pattern.length - 0.5);
     }));
   }
+
+  // Notification preferences — persist to localStorage
+  const notifPrefs = [
+    ['notif-pref-transactions', 'Transaction alerts'],
+    ['notif-pref-transfers',    'Transfer alerts'],
+    ['notif-pref-statements',   'Monthly statements'],
+    ['notif-pref-promo',        'Promotional emails'],
+    ['notif-pref-invest',       'Investment updates'],
+  ];
+  notifPrefs.forEach(([id, label]) => {
+    const toggle = document.getElementById(id);
+    if (!toggle) return;
+    const stored = localStorage.getItem('vs_notif_' + id);
+    if (stored !== null) toggle.checked = stored === 'true';
+    toggle.addEventListener('change', () => {
+      localStorage.setItem('vs_notif_' + id, toggle.checked);
+      showToast(`${label} ${toggle.checked ? 'enabled' : 'disabled'}.`, toggle.checked ? 'success' : 'warning');
+    });
+  });
 }
 
 /* ───────────────────────────────────────────
@@ -1391,5 +1435,46 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('mobile-fab')?.addEventListener('click', () => {
     switchPanel('transfers');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+
+  /* ── Header search → filter account transaction history ── */
+  document.getElementById('header-search')?.addEventListener('input', function () {
+    const query = this.value.toLowerCase().trim();
+    const tbody = document.getElementById('acct-tx-tbody');
+    if (!tbody) return;
+
+    if (!query) {
+      if (currentUser) renderAccountTransactions(currentUser.id);
+      return;
+    }
+
+    if (typeof VaultStore === 'undefined' || !currentUser) return;
+    const txs = VaultStore.getUserTransactions(currentUser.id).filter(tx =>
+      tx.description.toLowerCase().includes(query) ||
+      (tx.category  || '').toLowerCase().includes(query)
+    );
+
+    if (!txs.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:2rem">No transactions match your search.</td></tr>';
+      return;
+    }
+    const fmt = v => '$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    tbody.innerHTML = txs.slice(0, 50).map(tx => {
+      const isCredit = tx.type === 'credit';
+      const dateStr  = new Date(tx.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `<tr>
+        <td style="font-weight:500">${tx.description}</td>
+        <td style="color:var(--muted);font-size:0.8rem">${dateStr}</td>
+        <td><span class="badge badge-muted" style="font-size:0.7rem">${tx.category}</span></td>
+        <td style="text-align:right;font-weight:600;color:${isCredit ? 'var(--green)' : 'var(--red)'}">
+          ${isCredit ? '+' : '−'}${fmt(tx.amount)}
+        </td>
+        <td style="text-align:right;color:var(--muted);font-size:0.8rem">${tx.balance ? fmt(tx.balance) : '—'}</td>
+      </tr>`;
+    }).join('');
+
+    if (!document.getElementById('panel-accounts')?.classList.contains('active')) {
+      switchPanel('accounts');
+    }
   });
 });

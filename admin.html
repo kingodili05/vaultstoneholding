@@ -249,7 +249,7 @@
       </div>
       <div class="sidebar__section">
         <div class="sidebar__section-label">System</div>
-        <button class="sidebar__link" data-panel="users">
+        <button class="sidebar__link" data-panel="settings">
           <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           System Settings
         </button>
@@ -432,7 +432,7 @@
           </div>
           <!-- Pagination -->
           <div style="padding:1rem 1.5rem;border-top:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem">
-            <span style="font-size:0.8125rem;color:var(--muted)">Showing 1–12 of 847 users</span>
+            <span id="users-count-text" style="font-size:0.8125rem;color:var(--muted)">Loading users…</span>
             <div class="pagination" aria-label="Pagination">
               <button class="page-btn" disabled aria-label="Previous page">‹</button>
               <button class="page-btn active" aria-current="page" aria-label="Page 1">1</button>
@@ -474,8 +474,8 @@
             <option value="pending">Pending</option>
             <option value="flagged">Flagged</option>
           </select>
-          <input class="input" type="date" style="min-width:130px" aria-label="From date" />
-          <input class="input" type="date" style="min-width:130px" aria-label="To date" />
+          <input id="tx-date-from" class="input" type="date" style="min-width:130px" aria-label="From date" />
+          <input id="tx-date-to" class="input" type="date" style="min-width:130px" aria-label="To date" />
         </div>
 
         <div class="card" style="padding:0;margin-bottom:1.5rem">
@@ -652,6 +652,107 @@
             <div id="scan-progress" class="scan-progress" aria-live="polite" aria-label="Security scan progress">
               <div style="font-size:0.8125rem;font-weight:600;margin-bottom:0.5rem;color:var(--green)">Running Security Scan…</div>
               <div id="scan-log" class="scan-log" role="log"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════ PANEL: SETTINGS ══════════ -->
+      <section class="panel" id="panel-settings" aria-label="System Settings">
+        <div class="section-header">
+          <h2 class="section-title">System Settings</h2>
+        </div>
+
+        <div class="grid-2" style="align-items:start;margin-bottom:1.5rem">
+          <!-- General Settings -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">General</div></div>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">Maintenance Mode</div><div class="pref-desc">Redirect all users to a maintenance page</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-maintenance-toggle" /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">New Registrations</div><div class="pref-desc">Allow new user sign-ups</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-registrations-toggle" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">KYC Required</div><div class="pref-desc">Require identity verification before full access</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-kyc-toggle" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">2FA Enforcement</div><div class="pref-desc">Require 2FA for all admin logins</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-2fa-toggle" checked /><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transfer Limits -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Transfer Limits</div></div>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div class="form-group">
+                <label for="daily-limit-input">Daily transfer limit ($)</label>
+                <input id="daily-limit-input" class="input" type="number" value="50000" min="1000" step="1000" />
+              </div>
+              <div class="form-group">
+                <label for="single-tx-limit">Single transaction limit ($)</label>
+                <input id="single-tx-limit" class="input" type="number" value="25000" min="500" step="500" />
+              </div>
+              <div class="form-group">
+                <label for="intl-limit-input">International transfer limit ($)</label>
+                <input id="intl-limit-input" class="input" type="number" value="10000" min="1000" step="1000" />
+              </div>
+              <button class="btn btn-primary btn-sm" id="save-limits-btn" style="align-self:flex-start">Save Limits</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-2" style="align-items:start">
+          <!-- Notifications -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Admin Notifications</div></div>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">New User Alerts</div><div class="pref-desc">Email when a new user registers</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-notif-newuser" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">High-Risk Transactions</div><div class="pref-desc">Alert on risk score above 70</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-notif-highrisk" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">KYC Submissions</div><div class="pref-desc">Alert when a user submits KYC docs</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-notif-kyc" checked /><span class="toggle-slider"></span></label>
+              </div>
+              <div class="pref-row">
+                <div class="pref-info"><div class="pref-name">Large Transfers</div><div class="pref-desc">Alert on transfers above $50,000</div></div>
+                <label class="toggle"><input type="checkbox" id="admin-notif-large" checked /><span class="toggle-slider"></span></label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin Password -->
+          <div class="card">
+            <div class="card-header"><div class="card-title">Admin Credentials</div></div>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div class="form-group">
+                <label for="admin-current-pw">Current Password</label>
+                <input id="admin-current-pw" class="input" type="password" placeholder="••••••••" />
+              </div>
+              <div class="form-group">
+                <label for="admin-new-pw">New Password</label>
+                <input id="admin-new-pw" class="input" type="password" placeholder="Min. 12 characters" />
+                <div id="admin-pw-bar-wrap" style="margin-top:0.5rem;background:var(--border);border-radius:4px;height:4px;overflow:hidden">
+                  <div id="admin-pw-bar" style="height:100%;width:0%;transition:width 0.3s,background 0.3s"></div>
+                </div>
+                <div id="admin-pw-label" style="font-size:0.75rem;color:var(--muted);margin-top:0.3rem">Strength: —</div>
+              </div>
+              <div class="form-group">
+                <label for="admin-confirm-pw">Confirm New Password</label>
+                <input id="admin-confirm-pw" class="input" type="password" placeholder="Repeat new password" />
+              </div>
+              <button class="btn btn-primary btn-sm" id="admin-change-pw-btn" style="align-self:flex-start">Change Password</button>
             </div>
           </div>
         </div>

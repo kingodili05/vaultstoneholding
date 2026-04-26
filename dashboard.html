@@ -296,7 +296,7 @@
 
       <div class="header-search" role="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" placeholder="Search transactions…" aria-label="Search transactions" />
+        <input id="header-search" type="search" placeholder="Search transactions…" aria-label="Search transactions" />
       </div>
 
       <div class="header-actions">
@@ -814,19 +814,19 @@
               <div>
                 <div class="pref-row">
                   <div class="pref-info"><div class="pref-name">Contactless Payments</div><div class="pref-desc">NFC tap-to-pay</div></div>
-                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  <label class="toggle"><input type="checkbox" id="pref-contactless" checked /><span class="toggle-slider"></span></label>
                 </div>
                 <div class="pref-row">
                   <div class="pref-info"><div class="pref-name">Online Transactions</div><div class="pref-desc">Allow e-commerce purchases</div></div>
-                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  <label class="toggle"><input type="checkbox" id="pref-online" checked /><span class="toggle-slider"></span></label>
                 </div>
                 <div class="pref-row">
                   <div class="pref-info"><div class="pref-name">International Payments</div><div class="pref-desc">Allow overseas transactions</div></div>
-                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  <label class="toggle"><input type="checkbox" id="pref-international" checked /><span class="toggle-slider"></span></label>
                 </div>
                 <div class="pref-row">
                   <div class="pref-info"><div class="pref-name">ATM Withdrawals</div><div class="pref-desc">Allow cash advances</div></div>
-                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  <label class="toggle"><input type="checkbox" id="pref-atm" checked /><span class="toggle-slider"></span></label>
                 </div>
               </div>
             </div>

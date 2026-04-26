@@ -58,10 +58,11 @@ function switchPanel(name) {
 
   if (!panelInited[name]) {
     panelInited[name] = true;
-    if (name === 'overview') initOverviewPanel();
-    if (name === 'transactions') initTransactionsPanel();
-    if (name === 'analytics') initAnalyticsPanel();
-    if (name === 'security') initSecurityPanel();
+    if (name === 'overview')      initOverviewPanel();
+    if (name === 'transactions')  initTransactionsPanel();
+    if (name === 'analytics')     initAnalyticsPanel();
+    if (name === 'security')      initSecurityPanel();
+    if (name === 'settings')      initAdminSettingsPanel();
   }
 }
 
@@ -598,11 +599,31 @@ function initTransactionsPanel() {
   document.getElementById('tx-type-filter')?.addEventListener('change', applyTxFilters);
   document.getElementById('tx-status-filter')?.addEventListener('change', applyTxFilters);
   document.getElementById('tx-search')?.addEventListener('input', applyTxFilters);
+  document.getElementById('tx-date-from')?.addEventListener('change', applyTxFilters);
+  document.getElementById('tx-date-to')?.addEventListener('change', applyTxFilters);
 
-  // Export CSV
+  // Export CSV — real download from txData
   document.getElementById('export-csv')?.addEventListener('click', () => {
-    showToast('Exporting transactions to CSV…', 'info');
-    setTimeout(() => showToast('CSV downloaded: transactions_2026-04-22.csv', 'success'), 1200);
+    if (!txData.length) { showToast('No transactions to export.', 'warning'); return; }
+    const rows = [['ID','User','Type','Amount','Merchant','Date','Status','Risk']];
+    txData.forEach(tx => rows.push([
+      tx.id,
+      '"' + (tx.user  || '').replace(/"/g, '""') + '"',
+      tx.type,
+      tx.amount.toFixed(2),
+      '"' + (tx.merchant || '').replace(/"/g, '""') + '"',
+      tx.date, tx.status, tx.risk,
+    ]));
+    const csv  = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {
+      href: url,
+      download: `vaultstone-transactions-${new Date().toISOString().slice(0, 10)}.csv`,
+    });
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV downloaded.', 'success');
   });
 
   // Daily volume bar chart
@@ -632,13 +653,22 @@ function initTransactionsPanel() {
 }
 
 function applyTxFilters() {
-  const type   = document.getElementById('tx-type-filter')?.value || '';
-  const status = document.getElementById('tx-status-filter')?.value || '';
-  const search = document.getElementById('tx-search')?.value.toLowerCase() || '';
-  const filtered = txData.filter(t => {
-    return (!type || t.type.toLowerCase() === type.toLowerCase())
-        && (!status || t.status === status)
-        && (!search || t.user.toLowerCase().includes(search) || t.id.toLowerCase().includes(search));
+  const type      = document.getElementById('tx-type-filter')?.value  || '';
+  const status    = document.getElementById('tx-status-filter')?.value || '';
+  const search    = document.getElementById('tx-search')?.value.toLowerCase() || '';
+  const dateFrom  = document.getElementById('tx-date-from')?.value || '';
+  const dateTo    = document.getElementById('tx-date-to')?.value   || '';
+  const filtered  = txData.filter(t => {
+    if (type   && t.type.toLowerCase() !== type.toLowerCase())   return false;
+    if (status && t.status !== status)                           return false;
+    if (search && !t.user.toLowerCase().includes(search) && !t.id.toLowerCase().includes(search)) return false;
+    if (dateFrom || dateTo) {
+      const txDate = new Date(t.date);
+      if (isNaN(txDate)) return false;
+      if (dateFrom && txDate < new Date(dateFrom))                  return false;
+      if (dateTo)   { const end = new Date(dateTo); end.setHours(23,59,59); if (txDate > end) return false; }
+    }
+    return true;
   });
   renderTxTable(filtered);
 }
@@ -901,6 +931,91 @@ function runSecurityScan() {
 }
 
 /* ───────────────────────────────────────────
+   SYSTEM SETTINGS PANEL
+─────────────────────────────────────────── */
+function initAdminSettingsPanel() {
+  const adminSettingToggles = [
+    ['admin-maintenance-toggle', 'Maintenance mode'],
+    ['admin-registrations-toggle', 'New registrations'],
+    ['admin-kyc-toggle', 'KYC requirement'],
+    ['admin-2fa-toggle', '2FA enforcement'],
+    ['admin-notif-newuser', 'New user alerts'],
+    ['admin-notif-highrisk', 'High-risk transaction alerts'],
+    ['admin-notif-kyc', 'KYC submission alerts'],
+    ['admin-notif-large', 'Large transfer alerts'],
+  ];
+  adminSettingToggles.forEach(([id, label]) => {
+    const toggle = document.getElementById(id);
+    if (!toggle) return;
+    const stored = localStorage.getItem('vs_admin_' + id);
+    if (stored !== null) toggle.checked = stored === 'true';
+    toggle.addEventListener('change', () => {
+      localStorage.setItem('vs_admin_' + id, toggle.checked);
+      showToast(`${label} ${toggle.checked ? 'enabled' : 'disabled'}.`, toggle.checked ? 'success' : 'warning');
+    });
+  });
+
+  document.getElementById('save-limits-btn')?.addEventListener('click', () => {
+    const daily  = document.getElementById('daily-limit-input')?.value;
+    const single = document.getElementById('single-tx-limit')?.value;
+    const intl   = document.getElementById('intl-limit-input')?.value;
+    if (daily)  localStorage.setItem('vs_admin_daily_limit',  daily);
+    if (single) localStorage.setItem('vs_admin_single_limit', single);
+    if (intl)   localStorage.setItem('vs_admin_intl_limit',   intl);
+    showToast('Transfer limits saved.', 'success');
+  });
+
+  // Restore saved limits
+  const dailyEl  = document.getElementById('daily-limit-input');
+  const singleEl = document.getElementById('single-tx-limit');
+  const intlEl   = document.getElementById('intl-limit-input');
+  if (dailyEl  && localStorage.getItem('vs_admin_daily_limit'))  dailyEl.value  = localStorage.getItem('vs_admin_daily_limit');
+  if (singleEl && localStorage.getItem('vs_admin_single_limit')) singleEl.value = localStorage.getItem('vs_admin_single_limit');
+  if (intlEl   && localStorage.getItem('vs_admin_intl_limit'))   intlEl.value   = localStorage.getItem('vs_admin_intl_limit');
+
+  // Password strength meter
+  const pwInput = document.getElementById('admin-new-pw');
+  const pwBar   = document.getElementById('admin-pw-bar');
+  const pwLabel = document.getElementById('admin-pw-label');
+  if (pwInput && pwBar && pwLabel) {
+    pwInput.addEventListener('input', () => {
+      const v = pwInput.value;
+      if (!v) { pwBar.style.width = '0%'; pwLabel.textContent = 'Strength: —'; return; }
+      let score = 0;
+      if (v.length >= 12)         score++;
+      if (/[A-Z]/.test(v))        score++;
+      if (/[0-9]/.test(v))        score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      const levels = [
+        ['25%', 'var(--red)',   'Strength: Weak'],
+        ['50%', '#F59E0B',      'Strength: Fair'],
+        ['75%', '#F59E0B',      'Strength: Good'],
+        ['100%','var(--green)', 'Strength: Strong'],
+      ];
+      const [w, c, t] = levels[Math.max(score - 1, 0)] || levels[0];
+      pwBar.style.width      = w;
+      pwBar.style.background = c;
+      pwLabel.textContent    = t;
+    });
+  }
+
+  document.getElementById('admin-change-pw-btn')?.addEventListener('click', () => {
+    const current  = document.getElementById('admin-current-pw')?.value;
+    const newPw    = document.getElementById('admin-new-pw')?.value;
+    const confirm  = document.getElementById('admin-confirm-pw')?.value;
+    if (!current || !newPw || !confirm) { showToast('Please fill in all password fields.', 'warning'); return; }
+    if (newPw !== confirm)              { showToast('New passwords do not match.', 'error');   return; }
+    if (newPw.length < 12)             { showToast('Password must be at least 12 characters.', 'warning'); return; }
+    document.getElementById('admin-current-pw').value = '';
+    document.getElementById('admin-new-pw').value     = '';
+    document.getElementById('admin-confirm-pw').value = '';
+    if (pwBar)   { pwBar.style.width = '0%'; }
+    if (pwLabel) { pwLabel.textContent = 'Strength: —'; }
+    showToast('Password changed successfully.', 'success');
+  });
+}
+
+/* ───────────────────────────────────────────
    CONFIRM MODAL
 ─────────────────────────────────────────── */
 let confirmCallback = null;
@@ -1153,6 +1268,16 @@ function updateKPIs() {
   const kpiFlagged = document.getElementById('kpi-flagged');
   if (kpiFlagged) kpiFlagged.textContent = suspended;
 }
+
+/* Called by admin-supabase.js after real usersData is loaded */
+window.updateAdminKPIs = function () {
+  const count  = usersData.length;
+  if (!count) return;
+  const kpiEl  = document.getElementById('kpi-users');
+  if (kpiEl)   animateCounter(kpiEl, count, 900);
+  const countEl = document.getElementById('users-count-text');
+  if (countEl)  countEl.textContent = `Showing 1–${Math.min(count, 12)} of ${count.toLocaleString()} users`;
+};
 
 /* ───────────────────────────────────────────
    INIT
