@@ -104,49 +104,82 @@ const VaultStore = (() => {
   }
 
   /* ── Initialization ──────────────────────────────────────── */
-  const ready = (async () => {
+  // ready resolves once BOTH getSession() AND the first onAuthStateChange event
+  // have been processed. On mobile, getSession() can return null when the
+  // access token has expired and the network refresh fails, while
+  // onAuthStateChange INITIAL_SESSION still reads a valid token from
+  // localStorage. Waiting for both prevents a false "no session" that would
+  // redirect the user to login on every reload.
+  let _readyResolve;
+  const ready = new Promise(r => { _readyResolve = r; });
+  let _readySources = 0;
+
+  function _markReadySource() {
+    _readySources++;
+    if (_readySources >= 2 && _readyResolve) {
+      const fn = _readyResolve;
+      _readyResolve = null;
+      fn();
+    }
+  }
+
+  // Source 1 — getSession() (authoritative; performs token refresh via network)
+  (async () => {
     try {
       const { data: { session } } = await sb.auth.getSession();
-      _session = session;
-      if (!session) return;
-
-      const [profileRes, accountsRes] = await Promise.all([
-        sb.from('profiles').select('*').eq('id', session.user.id).single(),
-        sb.from('accounts').select('*').eq('user_id', session.user.id),
-      ]);
-
-      if (profileRes.data) {
-        _user = _flattenProfile(profileRes.data, accountsRes.data || []);
+      _session = _session || session;
+      if (session && !_user) {
+        const [profileRes, accountsRes] = await Promise.all([
+          sb.from('profiles').select('*').eq('id', session.user.id).single(),
+          sb.from('accounts').select('*').eq('user_id', session.user.id),
+        ]);
+        if (profileRes.data) {
+          _user = _flattenProfile(profileRes.data, accountsRes.data || []);
+        }
+        sb.from('profiles')
+          .update({ last_login: new Date().toISOString() })
+          .eq('id', session.user.id)
+          .then(() => {});
       }
-
-      // Update last_login
-      sb.from('profiles')
-        .update({ last_login: new Date().toISOString() })
-        .eq('id', session.user.id)
-        .then(() => {});
-
     } catch (e) {
-      console.error('[VaultStore] init error:', e);
+      console.error('[VaultStore] getSession error:', e);
     }
+    _markReadySource();
   })();
 
-  // Keep cache in sync when auth state changes
+  // Source 2 — onAuthStateChange (INITIAL_SESSION fires fast from localStorage;
+  // also handles TOKEN_REFRESHED, SIGNED_OUT, and subsequent sign-in/out)
+  let _firstAuthEvent = false;
   sb.auth.onAuthStateChange(async (event, session) => {
     _session = session;
     if (event === 'SIGNED_OUT') {
       _user = null;
+      if (!_firstAuthEvent) { _firstAuthEvent = true; _markReadySource(); }
       return;
     }
     if (session && (!_user || _user.id !== session.user.id)) {
-      const [profileRes, accountsRes] = await Promise.all([
-        sb.from('profiles').select('*').eq('id', session.user.id).single(),
-        sb.from('accounts').select('*').eq('user_id', session.user.id),
-      ]);
-      if (profileRes.data) {
-        _user = _flattenProfile(profileRes.data, accountsRes.data || []);
+      try {
+        const [profileRes, accountsRes] = await Promise.all([
+          sb.from('profiles').select('*').eq('id', session.user.id).single(),
+          sb.from('accounts').select('*').eq('user_id', session.user.id),
+        ]);
+        if (profileRes.data) {
+          _user = _flattenProfile(profileRes.data, accountsRes.data || []);
+        }
+      } catch (e) {
+        console.error('[VaultStore] auth state error:', e);
       }
+    } else if (!session) {
+      _user = null;
     }
+    if (!_firstAuthEvent) { _firstAuthEvent = true; _markReadySource(); }
   });
+
+  // Hard timeout — prevent permanent hang if a source never fires (e.g. offline)
+  setTimeout(() => {
+    _readySources = Math.max(_readySources, 2);
+    if (_readyResolve) { const fn = _readyResolve; _readyResolve = null; fn(); }
+  }, 8000);
 
   /* ── Emit helper (fires local listeners only) ────────────── */
   const _listeners = {};
