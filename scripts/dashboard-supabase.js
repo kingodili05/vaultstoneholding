@@ -57,7 +57,7 @@
     if (transfer.status === 'approved') {
       if (typeof showToast === 'function')
         showToast(`Transfer of $${transfer.amount.toLocaleString()} to ${transfer.toName} was approved!`, 'success');
-      VaultStore.loadDashboardData(user.id).then(() => {
+      VaultStore.refreshCurrentUser(user.id).then(() => {
         if (typeof loadUserData === 'function') loadUserData();
       });
     } else if (transfer.status === 'rejected') {
@@ -87,12 +87,23 @@
   if (pwForm) {
     pwForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const np = pwForm.querySelector('[name=new-password]')?.value;
-      const cp = pwForm.querySelector('[name=confirm-password]')?.value;
-      if (!np || np.length < 8) { if (typeof showToast === 'function') showToast('Password must be at least 8 characters.', 'error'); return; }
-      if (np !== cp)            { if (typeof showToast === 'function') showToast('Passwords do not match.', 'error'); return; }
+      const cur = pwForm.querySelector('[name=current-password]')?.value;
+      const np  = pwForm.querySelector('[name=new-password]')?.value;
+      const cp  = pwForm.querySelector('[name=confirm-password]')?.value;
+      if (!cur)                  { if (typeof showToast === 'function') showToast('Please enter your current password.', 'warning'); return; }
+      if (!np || np.length < 8)  { if (typeof showToast === 'function') showToast('New password must be at least 8 characters.', 'error'); return; }
+      if (np !== cp)             { if (typeof showToast === 'function') showToast('New passwords do not match.', 'error'); return; }
       const btn = pwForm.querySelector('[type=submit]');
-      if (btn) { btn.disabled = true; btn.textContent = 'Updating…'; }
+      if (btn) { btn.disabled = true; btn.textContent = 'Verifying…'; }
+      // Verify current password by re-authenticating
+      const email = user.email || VaultStore.getCurrentUser()?.email;
+      const { error: authErr } = await window._sb.auth.signInWithPassword({ email, password: cur });
+      if (authErr) {
+        if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
+        if (typeof showToast === 'function') showToast('Current password is incorrect.', 'error');
+        return;
+      }
+      if (btn) btn.textContent = 'Updating…';
       const { error } = await window._sb.auth.updateUser({ password: np });
       if (btn) { btn.disabled = false; btn.textContent = 'Update Password'; }
       if (error) {

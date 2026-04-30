@@ -440,7 +440,7 @@
           <div class="acct-card" id="acct-savings" tabindex="0" role="button" aria-label="Savings account details" style="border-color:rgba(59,130,246,0.2)">
             <div class="acct-type" style="color:var(--blue)">High-Yield Savings</div>
             <div class="acct-balance" id="acct-savings-balance">$0.00</div>
-            <div class="acct-number">•••• •••• •••• 4412</div>
+            <div class="acct-number" id="acct-savings-number">•••• •••• •••• ––––</div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
               <span class="badge badge-blue">Active</span>
               <canvas class="sparkline" id="sparkline-savings" aria-hidden="true"></canvas>
@@ -455,7 +455,7 @@
           <div class="acct-card" id="acct-invest" tabindex="0" role="button" aria-label="Investment account details" style="border-color:rgba(16,185,129,0.2)">
             <div class="acct-type" style="color:var(--green)">Investment Account</div>
             <div class="acct-balance" id="acct-invest-balance">$0.00</div>
-            <div class="acct-number">•••• •••• •••• 9901</div>
+            <div class="acct-number" id="acct-invest-number">•••• •••• •••• ––––</div>
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem">
               <span class="badge badge-green">Active</span>
               <canvas class="sparkline" id="sparkline-invest" aria-hidden="true"></canvas>
@@ -524,6 +524,8 @@
               </div>
 
               <form id="transfer-form" novalidate>
+                <!-- Hidden field stores the selected internal recipient's user ID -->
+                <input type="hidden" id="recipient-uid" value="" />
                 <!-- Recipient search -->
                 <div class="form-group" style="position:relative">
                   <label for="recipient-input">Recipient</label>
@@ -533,7 +535,7 @@
                 </div>
 
                 <!-- Internal: show selected user info -->
-                <div id="internal-recipient-info" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:0.875rem;margin-bottom:1.25rem;display:none">
+                <div id="internal-recipient-info" style="display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:0.875rem;margin-bottom:1.25rem">
                   <div style="display:flex;align-items:center;gap:0.75rem">
                     <div class="avatar" id="sel-recipient-avatar" style="width:36px;height:36px;font-size:0.8rem">??</div>
                     <div>
@@ -691,23 +693,7 @@
               <div class="card-title">Scheduled Transfers</div>
               <button class="btn btn-primary btn-sm" id="new-schedule-btn">+ New Schedule</button>
             </div>
-            <div>
-              <div class="sched-item">
-                <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
-                <div class="sched-info"><div class="sched-name">Rent — Landlord</div><div class="sched-date">Monthly · May 1, 2026</div></div>
-                <div class="sched-amount text-red">-$2,400</div>
-              </div>
-              <div class="sched-item">
-                <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>
-                <div class="sched-info"><div class="sched-name">Savings Top-Up</div><div class="sched-date">Weekly · Every Monday</div></div>
-                <div class="sched-amount text-green">+$500</div>
-              </div>
-              <div class="sched-item">
-                <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
-                <div class="sched-info"><div class="sched-name">Car Loan Payment</div><div class="sched-date">Monthly · Apr 28, 2026</div></div>
-                <div class="sched-amount text-red">-$380</div>
-              </div>
-            </div>
+            <div id="sched-list"></div>
           </div>
         </div>
       </section>
@@ -1015,7 +1001,8 @@
                 </div>
                 <div class="form-group">
                   <label for="profile-email">Email Address</label>
-                  <input id="profile-email" class="input" type="email" placeholder="email@example.com" />
+                  <input id="profile-email" class="input" type="email" placeholder="email@example.com" readonly style="opacity:0.6;cursor:not-allowed" />
+                  <small style="color:var(--muted,#888);font-size:0.75rem">Email cannot be changed here. Contact support to update your email address.</small>
                 </div>
                 <div class="form-group">
                   <label for="profile-phone">Phone Number</label>
@@ -1073,16 +1060,16 @@
                   <div>
                     <div style="font-weight:600;margin-bottom:0.5rem">Scan with Authenticator</div>
                     <div style="font-size:0.8125rem;color:var(--muted);margin-bottom:0.75rem">Use Google Authenticator, Authy, or any TOTP app.</div>
-                    <div style="font-family:monospace;font-size:0.75rem;background:var(--surface2);padding:0.5rem;border-radius:4px;color:var(--gold)">JBSWY3DPEHPK3PXP</div>
+                    <div id="totp-secret" style="font-family:monospace;font-size:0.75rem;background:var(--surface2);padding:0.5rem;border-radius:4px;color:var(--gold)">—</div>
                   </div>
                 </div>
                 <div class="pref-row">
                   <div class="pref-info"><div class="pref-name">Login Notifications</div><div class="pref-desc">Email alert for each new login</div></div>
-                  <label class="toggle"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                  <label class="toggle"><input type="checkbox" id="toggle-login-notif" checked /><span class="toggle-slider"></span></label>
                 </div>
                 <div class="pref-row">
                   <div class="pref-info"><div class="pref-name">Trusted Devices Only</div><div class="pref-desc">Block unrecognized devices</div></div>
-                  <label class="toggle"><input type="checkbox" /><span class="toggle-slider"></span></label>
+                  <label class="toggle"><input type="checkbox" id="toggle-trusted-devices" /><span class="toggle-slider"></span></label>
                 </div>
               </div>
             </div>

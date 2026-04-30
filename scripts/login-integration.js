@@ -13,8 +13,11 @@
 
   if (!form) return;
 
-  // Lazily create the error element only when first needed so nothing before
-  // addEventListener can throw and prevent the listener from being attached.
+  // ── Brute-force protection (F4) ────────────────────────────────────────────
+  let _failCount   = 0;
+  let _lockedUntil = 0;
+
+  // ── Error display ──────────────────────────────────────────────────────────
   function getErrEl() {
     let el = document.getElementById('login-error');
     if (!el) {
@@ -48,7 +51,36 @@
     errEl.textContent   = '';
   }
 
+  // ── Friendly error messages (F5) ──────────────────────────────────────────
+  function _friendlyError(msg) {
+    const m = (msg || '').toLowerCase();
+    if (m.includes('invalid login') || m.includes('invalid credentials'))
+      return 'Incorrect email or password. Please try again.';
+    if (m.includes('email not confirmed') || m.includes('confirm your email'))
+      return 'Please verify your email address before signing in.';
+    if (m.includes('rate limit') || m.includes('too many'))
+      return 'Too many attempts. Please wait a moment and try again.';
+    if (m.includes('network') || m.includes('fetch'))
+      return 'Connection error. Please check your internet and try again.';
+    return msg;
+  }
+
+  // ── Redirect with status gate (F6) ────────────────────────────────────────
   function redirectByRole(user) {
+    if (user.status === 'suspended') {
+      showError('Your account has been suspended. Please contact support.');
+      btn.disabled    = false;
+      btn.textContent = 'Sign In';
+      if (typeof VaultStore.logout === 'function') VaultStore.logout();
+      return;
+    }
+    if (user.status === 'locked') {
+      showError('Your account is locked. Please contact support or verify your identity.');
+      btn.disabled    = false;
+      btn.textContent = 'Sign In';
+      if (typeof VaultStore.logout === 'function') VaultStore.logout();
+      return;
+    }
     if (user.role === 'admin') {
       window.location.href = 'admin.html';
     } else if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
@@ -58,12 +90,29 @@
     }
   }
 
-  // Attach the submit listener IMMEDIATELY — before any async work — so
-  // e.preventDefault() is always in place even if VaultStore.ready is slow.
+  // ── OAuth "coming soon" buttons (F2) ──────────────────────────────────────
+  document.querySelectorAll('.btn--oauth').forEach(oauthBtn => {
+    oauthBtn.addEventListener('click', () => {
+      showError('Google and Apple sign-in are coming soon. Please use email and password.');
+      oauthBtn.disabled = true;
+      setTimeout(() => { oauthBtn.disabled = false; }, 1500);
+    });
+  });
+
+  // ── Submit handler ─────────────────────────────────────────────────────────
+  // Uses bubble phase (removed `true` capture arg — F3) so auth.js field
+  // validation also fires on submit.
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
-    e.stopImmediatePropagation();
+    // F3: removed e.stopImmediatePropagation() so auth.js validateField() runs
     clearError();
+
+    // F4: lockout check
+    if (Date.now() < _lockedUntil) {
+      const secsLeft = Math.ceil((_lockedUntil - Date.now()) / 1000);
+      showError(`Too many failed attempts. Please wait ${secsLeft} seconds.`);
+      return;
+    }
 
     const email    = emailEl.value.trim();
     const password = passEl.value;
@@ -90,9 +139,36 @@
     if (!result.ok) {
       btn.disabled = false;
       btn.classList.remove('loading');
-      showError(result.error);
+
+      // F4: track failures
+      _failCount++;
+      if (_failCount >= 5) {
+        _lockedUntil = Date.now() + 30_000;
+        btn.disabled = true;
+        let secsLeft = 30;
+        const tick = () => {
+          btn.textContent = `Locked out — wait ${secsLeft}s`;
+          if (secsLeft <= 0) {
+            btn.disabled    = false;
+            btn.textContent = 'Sign In';
+            _failCount      = 0;
+            return;
+          }
+          secsLeft--;
+          setTimeout(tick, 1000);
+        };
+        tick();
+      } else {
+        // Progressive delay before re-enable
+        setTimeout(() => {}, 500 * _failCount);
+      }
+
+      showError(_friendlyError(result.error));   // F5
       return;
     }
+
+    // Successful login — reset fail counter (F4)
+    _failCount = 0;
 
     const user = result.user;
 
@@ -102,22 +178,32 @@
       gsap.to('.auth-card', { scale: 0.96, opacity: 0.8, duration: 0.5, ease: 'power2.in', delay: 1.1 });
     }
 
-    // Redirect based on role and KYC status
+    // Redirect based on role and KYC status (F6 status checks inside)
     setTimeout(() => redirectByRole(user), 1800);
 
-  }, true);
+  }); // bubble phase (no `true`) — F3
 
   // Check for an existing session after ready resolves — do this AFTER
   // attaching the submit listener so the form is always guarded first.
-  // Disable the button immediately when a session is found so the user
-  // cannot submit and race with the automatic redirect.
   VaultStore.ready.then(() => {
     const existing = VaultStore.getCurrentUser();
-    if (existing) {
-      btn.disabled    = true;
-      btn.textContent = 'Redirecting…';
-      redirectByRole(existing);
+    if (!existing) return;
+
+    // F6: gate suspended/locked users even on cached session
+    if (existing.status === 'suspended') {
+      VaultStore.logout();
+      showError('Your account has been suspended. Please contact support.');
+      return;
     }
+    if (existing.status === 'locked') {
+      VaultStore.logout();
+      showError('Your account is locked. Please contact support or verify your identity.');
+      return;
+    }
+
+    btn.disabled    = true;
+    btn.textContent = 'Redirecting…';
+    redirectByRole(existing);
   }).catch(() => {});
 
 })();

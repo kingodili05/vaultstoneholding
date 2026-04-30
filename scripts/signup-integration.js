@@ -86,7 +86,8 @@ function wireNextSave() {
 
 /* ── OTP ───────────────────────────────────────────────────── */
 function getRedirectUrl() {
-  return window.location.origin + '/kyc.html';
+  const base = window.location.href.replace(/\/[^\/]*$/, '/');
+  return base + 'kyc.html';
 }
 
 let _skipNextStep4Send = false;

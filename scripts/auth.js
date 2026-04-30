@@ -636,20 +636,7 @@ function initSignupPage() {
     });
   });
 
-  /* ── Resend OTP ── */
-  const resendBtn = document.getElementById('resend-otp');
-  if (resendBtn) {
-    resendBtn.addEventListener('click', () => {
-      resendBtn.disabled = true;
-      resendBtn.textContent = 'Sent!';
-      otpInputs.forEach(inp => { inp.value = ''; inp.classList.remove('filled'); });
-      otpInputs[0].focus();
-      setTimeout(() => {
-        resendBtn.disabled = false;
-        resendBtn.textContent = 'Resend code';
-      }, 30000);
-    });
-  }
+  /* ── Resend OTP wired in signup-integration.js (real Supabase call) ── */
 
   /* ── Next Buttons ── */
   $$('[data-next]').forEach(btn => {
@@ -936,10 +923,19 @@ document.addEventListener('DOMContentLoaded', () => {
     initSignupPage();
   }
 
-  /* Live validation on blur */
+  /* Live validation on blur (F10) — re-validate rather than blindly clear */
+  const _blurTypeMap = { email: 'email', password: 'password', tel: 'phone' };
   $$('input[required], select[required]').forEach(input => {
     input.addEventListener('blur', () => {
-      if (input.value) hideError(input);
+      const vType = _blurTypeMap[input.type]
+        || (input.id && input.id.includes('name') ? 'name' : null)
+        || (input.id && input.id.includes('confirm') ? 'confirm' : null)
+        || (input.id && input.id.includes('dob') ? 'dob' : null);
+      if (vType) {
+        validateField(input, vType);
+      } else if (input.value) {
+        hideError(input);
+      }
     });
   });
 });

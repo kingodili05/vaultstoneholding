@@ -39,6 +39,8 @@ const VaultStore = (() => {
       balance:           parseFloat(checking.balance   || 0),
       savingsBalance:    parseFloat(savings.balance    || 0),
       investmentBalance: parseFloat(investment.balance || 0),
+      savingsId:         savings.id    || '',
+      investmentId:      investment.id || '',
       status:            profile.status    || 'pending_kyc',
       kycStatus:         profile.kyc_status || 'not_started',
       role:              profile.role       || 'user',
@@ -548,7 +550,7 @@ const VaultStore = (() => {
   /* ═══════════════════════════════════════════════════════════
      TRANSACTIONS
   ═══════════════════════════════════════════════════════════ */
-  async function _loadTransactions(userId, limit = 50) {
+  async function _loadTransactions(userId, limit = 200) {
     const { data } = await sb.from('transactions')
       .select('*')
       .eq('user_id', userId)
@@ -861,16 +863,19 @@ const VaultStore = (() => {
   }
 
   function subscribeToTransfers(userId, onChange) {
+    const handler = payload => {
+      const flat = _flattenTransfer(payload.new || payload.old);
+      onChange(payload.eventType, flat);
+    };
     return sb.channel(`xfer:${userId}`)
       .on('postgres_changes', {
-        event:  '*',
-        schema: 'public',
-        table:  'transfers',
+        event: '*', schema: 'public', table: 'transfers',
         filter: `from_user_id=eq.${userId}`,
-      }, payload => {
-        const flat = _flattenTransfer(payload.new || payload.old);
-        onChange(payload.eventType, flat);
-      })
+      }, handler)
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'transfers',
+        filter: `to_user_id=eq.${userId}`,
+      }, handler)
       .subscribe();
   }
 
@@ -939,6 +944,7 @@ const VaultStore = (() => {
     subscribeToNotifications, subscribeToTransfers,
     // Data loaders
     loadDashboardData, loadAdminData,
+    refreshCurrentUser: (userId) => _refreshUser(userId || (_user && _user.id)),
     // Events
     on, off, emit,
   };

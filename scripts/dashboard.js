@@ -63,12 +63,13 @@ function showToast(msg, type = 'info') {
 ─────────────────────────────────────────── */
 const panels = {};
 const titleMap = {
-  overview: 'Overview',
-  accounts: 'My Accounts',
-  transfers: 'Transfers',
-  cards: 'Cards',
+  overview:    'Overview',
+  accounts:    'My Accounts',
+  transfers:   'Transfers',
+  cards:       'Cards',
   investments: 'Investments',
-  settings: 'Settings'
+  statements:  'Statements',
+  settings:    'Settings',
 };
 
 function initNav() {
@@ -489,9 +490,11 @@ function initTransfersPanel() {
     const item = e.target.closest('.recipient-item');
     if (item) {
       const recipientInput = document.getElementById('recipient-input');
+      const recipientUid   = document.getElementById('recipient-uid');
       const dropdown       = document.getElementById('recipient-dropdown');
       const internalInfo   = document.getElementById('internal-recipient-info');
       if (recipientInput) recipientInput.value = item.dataset.name;
+      if (recipientUid)   recipientUid.value   = item.dataset.uid || '';
       if (dropdown)       dropdown.classList.remove('visible');
       if (internalInfo) {
         internalInfo.style.display = 'block';
@@ -508,10 +511,12 @@ function initTransfersPanel() {
     /* Clear recipient button */
     if (e.target.closest('#clear-recipient-btn')) {
       const recipientInput = document.getElementById('recipient-input');
+      const recipientUid   = document.getElementById('recipient-uid');
       const dropdown       = document.getElementById('recipient-dropdown');
       const internalInfo   = document.getElementById('internal-recipient-info');
       const extFields      = document.getElementById('external-fields');
       if (recipientInput) recipientInput.value      = '';
+      if (recipientUid)   recipientUid.value        = '';
       if (dropdown)       dropdown.classList.remove('visible');
       if (internalInfo)   internalInfo.style.display = 'none';
       if (extFields)      extFields.style.display    = 'none';
@@ -709,13 +714,35 @@ function initSettingsPanel() {
     });
   }
 
-  // 2FA toggle
+  // 2FA toggle — per-user TOTP secret stored in localStorage
   const twoFA = document.getElementById('2fa-toggle');
   const qrSection = document.getElementById('2fa-qr-section');
   if (twoFA && qrSection) {
+    const _totpKey = () => {
+      const uid = typeof VaultStore !== 'undefined' ? (VaultStore.getCurrentUser()?.id || 'guest') : 'guest';
+      return `vs_totp_${uid}`;
+    };
+    const _getOrCreateSecret = () => {
+      const key = _totpKey();
+      let secret = localStorage.getItem(key);
+      if (!secret) {
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+        secret = Array.from(crypto.getRandomValues(new Uint8Array(20)))
+          .map(b => chars[b % 32]).join('');
+        localStorage.setItem(key, secret);
+      }
+      return secret;
+    };
     twoFA.addEventListener('change', () => {
       qrSection.style.display = twoFA.checked ? 'flex' : 'none';
-      showToast(twoFA.checked ? 'Scan QR code with your authenticator app.' : '2FA disabled.', twoFA.checked ? 'info' : 'warning');
+      if (twoFA.checked) {
+        const secret = _getOrCreateSecret();
+        const el = document.getElementById('totp-secret');
+        if (el) el.textContent = secret;
+        showToast('Scan QR code with your authenticator app.', 'info');
+      } else {
+        showToast('2FA disabled.', 'warning');
+      }
     });
   }
 
@@ -779,6 +806,8 @@ function initSettingsPanel() {
     ['notif-pref-statements',   'Monthly statements'],
     ['notif-pref-promo',        'Promotional emails'],
     ['notif-pref-invest',       'Investment updates'],
+    ['toggle-login-notif',      'Login notifications'],
+    ['toggle-trusted-devices',  'Trusted devices only'],
   ];
   notifPrefs.forEach(([id, label]) => {
     const toggle = document.getElementById(id);
@@ -876,10 +905,12 @@ function loadUserData() {
   const checkBal  = document.getElementById('acct-checking-balance');
   const savBal    = document.getElementById('acct-savings-balance');
   const invBal    = document.getElementById('acct-invest-balance');
-  const checkNum  = document.getElementById('acct-checking-number');
+  const checkNum   = document.getElementById('acct-checking-number');
+  const savNum     = document.getElementById('acct-savings-number');
+  const invNum     = document.getElementById('acct-invest-number');
   const checkAvail = document.getElementById('acct-checking-available');
-  const savAvail  = document.getElementById('acct-savings-available');
-  const invAvail  = document.getElementById('acct-invest-available');
+  const savAvail   = document.getElementById('acct-savings-available');
+  const invAvail   = document.getElementById('acct-invest-available');
   const investTotal = document.getElementById('invest-total');
   const investGain  = document.getElementById('invest-gain');
 
@@ -891,7 +922,11 @@ function loadUserData() {
   /* Transfer panel available balance */
   const xferBal = document.getElementById('transfer-balance-display');
   if (xferBal) xferBal.textContent = fmt(user.balance);
-  if (checkNum)    checkNum.textContent     = user.accountNumber || '—';
+  if (checkNum)    checkNum.textContent = user.accountNumber || '—';
+  /* Derive last-4 from savings/investment account IDs for masked display */
+  const _last4 = id => (id || '').replace(/[^a-z0-9]/gi, '').slice(-4).toUpperCase() || '––––';
+  if (savNum)      savNum.textContent  = `•••• •••• •••• ${_last4(user.savingsId)}`;
+  if (invNum)      invNum.textContent  = `•••• •••• •••• ${_last4(user.investmentId)}`;
   if (checkAvail)  checkAvail.textContent   = fmt(user.balance);
   if (savAvail)    savAvail.textContent     = fmt(user.savingsBalance);
   if (invAvail)    invAvail.textContent     = fmt(user.investmentBalance);
@@ -987,6 +1022,38 @@ function renderMyTransfers() {
         </td>
       </tr>`;
     }).join('');
+}
+
+/* ── Scheduled transfers list (localStorage-backed) ── */
+function renderScheduledTransfers() {
+  const list = document.getElementById('sched-list');
+  if (!list) return;
+  const uid  = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
+  const key  = `vs_scheduled_${uid || 'guest'}`;
+  const items = JSON.parse(localStorage.getItem(key) || '[]');
+  if (!items.length) {
+    list.innerHTML = '<p style="padding:1.25rem;color:var(--text-muted,#888);text-align:center">No scheduled transfers yet.</p>';
+    return;
+  }
+  const freqLabel = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' };
+  list.innerHTML = items.map(item => {
+    const dateLbl = new Date(item.startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const fLbl    = freqLabel[item.frequency] || item.frequency;
+    return `<div class="sched-item">
+      <div class="sched-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+      <div class="sched-info"><div class="sched-name">${item.recipient}</div><div class="sched-date">${fLbl} &middot; from ${dateLbl}</div></div>
+      <div class="sched-amount text-red">-$${Number(item.amount).toLocaleString()}</div>
+      <button class="btn btn-sm" style="margin-left:0.5rem;padding:0.2rem 0.5rem;font-size:0.7rem" data-del-sched="${item.id}" title="Remove">&#x2715;</button>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('[data-del-sched]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.delSched);
+      const kept = items.filter(i => i.id !== id);
+      localStorage.setItem(key, JSON.stringify(kept));
+      renderScheduledTransfers();
+    });
+  });
 }
 
 /* ── Statements table with filter + pagination ── */
@@ -1133,8 +1200,12 @@ function wireTransferForm(user) {
       return;
     }
 
-    const allUsers  = VaultStore.getUsers();
-    const recipUser = allUsers.find(u => u.name.toLowerCase() === recipient.toLowerCase() && u.id !== user.id);
+    // Prefer the UID captured when the user selected from the dropdown
+    const selectedUid = document.getElementById('recipient-uid')?.value || '';
+    const allUsers    = VaultStore.getUsers();
+    const recipUser   = selectedUid
+      ? allUsers.find(u => u.id === selectedUid)
+      : allUsers.find(u => u.name.toLowerCase() === recipient.toLowerCase() && u.id !== user.id);
 
     const btn = form.querySelector('[type=submit]');
     if (btn) { btn.disabled = true; btn.classList.add('loading'); }
@@ -1242,13 +1313,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   /* Notifications drawer close */
   document.getElementById('notif-close-btn')?.addEventListener('click', closeNotifDrawer);
   document.getElementById('notif-backdrop')?.addEventListener('click', closeNotifDrawer);
-  document.getElementById('mark-all-read-btn')?.addEventListener('click', () => {
-    if (currentUser && typeof VaultStore !== 'undefined') {
-      VaultStore.markAllRead(currentUser.id);
-      loadNotifications(currentUser.id);
-      showToast('All notifications marked as read.', 'info');
-    }
-  });
+  /* mark-all-read wired in dashboard-supabase.js (async Supabase call) */
 
   /* Receive modal */
   document.getElementById('receive-btn')?.addEventListener('click', () => { openModal('receive-modal'); });
@@ -1276,12 +1341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast('Account closure request submitted. You will be contacted within 3 business days.', 'info');
   });
 
-  /* Logout */
-  document.getElementById('logout-btn')?.addEventListener('click', () => {
-    if (typeof VaultStore !== 'undefined') VaultStore.logout();
-    showToast('Signing out…', 'info');
-    setTimeout(() => { window.location.href = 'login.html'; }, 1000);
-  });
+  /* logout wired in dashboard-supabase.js (async Supabase sign-out) */
 
   /* CSV download for accounts — real export */
   document.getElementById('acct-csv-btn')?.addEventListener('click', () => {
@@ -1365,6 +1425,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast(`Investment of $${amount.toLocaleString()} in ${assetLbl} submitted. Funds will be allocated next business day.`, 'success');
   });
 
+  /* Render any previously saved scheduled transfers */
+  renderScheduledTransfers();
+
   /* ── New Scheduled Transfer modal ── */
   document.getElementById('new-schedule-btn')?.addEventListener('click', () => {
     const schedDate = document.getElementById('sched-start-date');
@@ -1386,11 +1449,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const frequency = document.getElementById('sched-frequency')?.value;
     const startDate = document.getElementById('sched-start-date')?.value;
     if (!recipient || !amount || !startDate) { showToast('Please fill in all required fields.', 'warning'); return; }
-    const freqLbl  = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' }[frequency] || frequency;
-    const dateLbl  = new Date(startDate + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    const uid = typeof VaultStore !== 'undefined' ? VaultStore.getCurrentUser()?.id : null;
+    const key = `vs_scheduled_${uid || 'guest'}`;
+    const items = JSON.parse(localStorage.getItem(key) || '[]');
+    items.push({ id: Date.now(), recipient, amount, frequency, startDate });
+    localStorage.setItem(key, JSON.stringify(items));
     closeModal('schedule-modal');
     document.getElementById('schedule-form')?.reset();
-    showToast(`${freqLbl} transfer of $${amount.toLocaleString()} to ${recipient} scheduled from ${dateLbl}.`, 'success');
+    renderScheduledTransfers();
+    const freqLbl = { weekly: 'Weekly', biweekly: 'Bi-weekly', monthly: 'Monthly' }[frequency] || frequency;
+    showToast(`${freqLbl} transfer of $${amount.toLocaleString()} to ${recipient} scheduled.`, 'success');
   });
 
   /* Header avatar → navigate to settings */
