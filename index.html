@@ -721,6 +721,47 @@
   <!-- ────────────────────────────────────
        Scripts
        ──────────────────────────────────── -->
+  <!-- OAuth callback handler — only runs when Google/Apple redirects back here -->
+  <script>
+  (async function () {
+    const isCallback = window.location.search.includes('code=') ||
+                       window.location.hash.includes('access_token=');
+    if (!isCallback) return;
+
+    // Dynamically load Supabase so the normal home-page visit stays lightweight
+    await new Promise(resolve => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+      s.onload = resolve; document.head.appendChild(s);
+    });
+    await new Promise(resolve => {
+      const s = document.createElement('script');
+      s.src = 'scripts/supabase-client.js';
+      s.onload = resolve; document.head.appendChild(s);
+    });
+
+    if (!window._sb) return;
+
+    // Exchange PKCE code → session (Supabase SDK does this automatically on getSession)
+    const { data: { session } } = await window._sb.auth.getSession();
+    if (!session) return;
+
+    const { data: profile } = await window._sb
+      .from('profiles')
+      .select('status, kyc_status, role')
+      .eq('id', session.user.id)
+      .single();
+
+    if (profile?.role === 'admin') {
+      window.location.replace('admin.html');
+    } else if (!profile || profile.status === 'pending_kyc' || profile.kyc_status === 'not_started') {
+      window.location.replace('kyc.html');
+    } else {
+      window.location.replace('dashboard.html');
+    }
+  })();
+  </script>
+
   <!-- Three.js -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
   <!-- Main JS -->

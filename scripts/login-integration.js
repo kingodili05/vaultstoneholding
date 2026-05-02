@@ -93,8 +93,7 @@
       oauthBtn.disabled    = true;
       oauthBtn.textContent = provider === 'apple' ? 'Connecting to Apple…' : 'Connecting to Google…';
 
-      const redirectTo = window.location.origin +
-        window.location.pathname.replace(/\/[^/]*$/, '/') + 'dashboard.html';
+      const redirectTo = window.location.origin + '/';
 
       const sb = window._sb;
       if (!sb) {

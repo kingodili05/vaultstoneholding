@@ -65,7 +65,7 @@ function wireGoogleSignup() {
     if (!sb) return;
     btn.disabled    = true;
     btn.textContent = 'Connecting to Google…';
-    const redirectTo = window.location.href.replace(/\/[^\/]*$/, '/') + 'dashboard.html';
+    const redirectTo = window.location.origin + '/';
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
       options: {
