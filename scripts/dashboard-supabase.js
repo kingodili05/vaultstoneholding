@@ -14,6 +14,12 @@
   const user = VaultStore.requireAuth('login.html');
   if (!user) return;
 
+  // New Google/OAuth signups land here with pending_kyc status — send them to KYC
+  if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
+    window.location.href = 'kyc.html';
+    return;
+  }
+
   // Load all dashboard data in parallel (fills in-memory caches)
   await VaultStore.loadDashboardData(user.id);
 
