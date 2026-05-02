@@ -377,6 +377,53 @@ function initAccountsPanel() {
    TRANSFERS PANEL
 ─────────────────────────────────────────── */
 function initTransfersPanel() {
+  /* ── Security Restriction: locked accounts cannot initiate transfers ── */
+  const _lockedUser = (typeof VaultStore !== 'undefined') && VaultStore.getCurrentUser();
+  if (_lockedUser && _lockedUser.status === 'locked') {
+    const panel = document.getElementById('panel-transfers');
+    if (panel) {
+      // Inject a prominent restriction banner above the transfer form
+      const banner = document.createElement('div');
+      banner.id = 'transfer-lock-banner';
+      banner.setAttribute('role', 'alert');
+      banner.style.cssText = [
+        'display:flex', 'align-items:center', 'gap:0.75rem',
+        'background:rgba(239,68,68,0.1)', 'border:1px solid rgba(239,68,68,0.35)',
+        'border-radius:10px', 'padding:1rem 1.25rem', 'margin-bottom:1.5rem',
+        'color:#fca5a5', 'font-size:0.875rem', 'line-height:1.5',
+      ].join(';');
+      banner.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="flex-shrink:0">
+          <path stroke-linecap="round" stroke-linejoin="round"
+            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+        </svg>
+        <div>
+          <strong style="display:block;margin-bottom:2px;color:#f87171;">Security Restriction</strong>
+          Your account is currently locked. All transfer and payment functions are
+          disabled. Please contact support at
+          <a href="mailto:support@vaultstoneholding.com"
+             style="color:#fca5a5;text-decoration:underline;">support@vaultstoneholding.com</a>
+          to resolve this.
+        </div>`;
+      panel.insertBefore(banner, panel.firstChild);
+
+      // Disable every interactive element inside the transfers panel
+      panel.querySelectorAll('button, input, select, textarea').forEach(el => {
+        el.disabled = true;
+        el.style.pointerEvents = 'none';
+        el.style.opacity = '0.4';
+      });
+
+      // Intercept any submit that somehow still fires
+      panel.addEventListener('submit', e => {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }, true);
+    }
+    return; // skip wiring the rest of the panel
+  }
+
   /* ── Sub-tab switching (Send / My Transfers / Scheduled) ── */
   $$('.tab-btn[data-transfer-tab]').forEach(btn => {
     btn.addEventListener('click', () => {

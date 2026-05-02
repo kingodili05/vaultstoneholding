@@ -13,19 +13,27 @@ const cors = {
 serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
 
+  if (!RESEND_API_KEY) {
+    console.error('[send-email] RESEND_API_KEY environment variable is not set');
+    return new Response(JSON.stringify({ error: 'Email service not configured' }), {
+      headers: { ...cors, 'Content-Type': 'application/json' }, status: 503,
+    });
+  }
+
   try {
     const body = await req.json();
     const { type } = body;
 
     let payload: Record<string, unknown>;
 
+    // ── Contact form submission ────────────────────────────────────────────
     if (type === 'contact') {
       const { firstName, lastName, email, phone, subject, message } = body;
       payload = {
-        from:    FROM_NOTIFY,
-        to:      [ADMIN_EMAIL],
+        from:     FROM_NOTIFY,
+        to:       [ADMIN_EMAIL],
         reply_to: email,
-        subject: `[Contact Form] ${subject} — ${firstName} ${lastName}`,
+        subject:  `[Contact Form] ${subject} — ${firstName} ${lastName}`,
         html: `
           <div style="font-family:Arial,sans-serif;max-width:600px;margin:auto;color:#1a1a2e;">
             <div style="background:#0d1117;padding:24px 32px;border-radius:8px 8px 0 0;">
@@ -33,19 +41,20 @@ serve(async (req) => {
             </div>
             <div style="background:#f9f9f9;padding:32px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
               <table style="width:100%;border-collapse:collapse;font-size:0.95rem;">
-                <tr><td style="padding:8px 0;color:#6b7280;width:130px;"><strong>Name</strong></td><td style="padding:8px 0;">${firstName} ${lastName}</td></tr>
-                <tr><td style="padding:8px 0;color:#6b7280;"><strong>Email</strong></td><td style="padding:8px 0;"><a href="mailto:${email}" style="color:#C9A84C;">${email}</a></td></tr>
-                <tr><td style="padding:8px 0;color:#6b7280;"><strong>Phone</strong></td><td style="padding:8px 0;">${phone || '—'}</td></tr>
-                <tr><td style="padding:8px 0;color:#6b7280;"><strong>Subject</strong></td><td style="padding:8px 0;">${subject}</td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;width:130px;"><strong>Name</strong></td><td>${firstName} ${lastName}</td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;"><strong>Email</strong></td><td><a href="mailto:${email}" style="color:#C9A84C;">${email}</a></td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;"><strong>Phone</strong></td><td>${phone || '—'}</td></tr>
+                <tr><td style="padding:8px 0;color:#6b7280;"><strong>Subject</strong></td><td>${subject}</td></tr>
               </table>
               <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;" />
-              <p style="color:#6b7280;font-size:0.85rem;margin-top:0;margin-bottom:8px;"><strong>Message:</strong></p>
+              <p style="color:#6b7280;font-size:0.85rem;margin-bottom:8px;"><strong>Message:</strong></p>
               <p style="white-space:pre-wrap;background:#fff;padding:16px;border-radius:6px;border:1px solid #e5e7eb;margin:0;">${message}</p>
             </div>
             <p style="font-size:0.75rem;color:#9ca3af;text-align:center;margin-top:16px;">Vaultstone Bank — Automated Notification</p>
           </div>`,
       };
 
+    // ── Signup OTP code ────────────────────────────────────────────────────
     } else if (type === 'otp') {
       const { email, code, name } = body;
       payload = {
@@ -69,6 +78,7 @@ serve(async (req) => {
           </div>`,
       };
 
+    // ── Welcome email (post signup OTP verification) ───────────────────────
     } else if (type === 'welcome') {
       const { email, name } = body;
       payload = {
@@ -85,7 +95,10 @@ serve(async (req) => {
               <p style="color:#374151;line-height:1.7;">Your Vaultstone Bank account has been successfully created. You now have access to institutional-grade banking from anywhere in the world.</p>
               <p style="color:#374151;line-height:1.7;"><strong>Next step:</strong> Complete your identity verification (KYC) to unlock full account features including transfers and card services.</p>
               <div style="text-align:center;margin:32px 0;">
-                <a href="https://vaultstoneholding.com/kyc.html" style="background:#C9A84C;color:#0d1117;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:700;font-size:1rem;">Complete Verification →</a>
+                <a href="https://vaultstoneholding.com/kyc.html"
+                   style="background:#C9A84C;color:#0d1117;padding:14px 32px;border-radius:6px;text-decoration:none;font-weight:700;font-size:1rem;">
+                  Complete Verification →
+                </a>
               </div>
               <hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0;" />
               <p style="color:#6b7280;font-size:0.85rem;margin:0;">Questions? Reply to this email or call us at 603 999 1425.</p>
@@ -94,10 +107,38 @@ serve(async (req) => {
           </div>`,
       };
 
+    // ── Password reset confirmation ────────────────────────────────────────
+    } else if (type === 'password-reset') {
+      const { email, name } = body;
+      payload = {
+        from:    FROM_AUTH,
+        to:      [email],
+        subject: 'Your Vaultstone password has been changed',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#1a1a2e;">
+            <div style="background:#0d1117;padding:24px 32px;border-radius:8px 8px 0 0;text-align:center;">
+              <h2 style="color:#C9A84C;margin:0;font-size:1.4rem;">Password Changed</h2>
+            </div>
+            <div style="background:#f9f9f9;padding:40px 32px;border-radius:0 0 8px 8px;border:1px solid #e5e7eb;">
+              <p style="margin-top:0;color:#374151;">Hi${name ? ' ' + name : ''},</p>
+              <p style="color:#374151;line-height:1.7;">Your Vaultstone Bank password was successfully changed.</p>
+              <p style="color:#374151;line-height:1.7;">If you did <strong>not</strong> make this change, please contact us immediately at
+                <a href="mailto:support@vaultstoneholding.com" style="color:#C9A84C;">support@vaultstoneholding.com</a>
+                or call <strong>603 999 1425</strong>.
+              </p>
+              <div style="background:#fef9ec;border:1px solid #fde68a;border-radius:8px;padding:14px 18px;margin-top:24px;">
+                <p style="color:#92400e;margin:0;font-size:0.875rem;">
+                  ⚠ For your security, all active sessions have been invalidated. Please sign in again.
+                </p>
+              </div>
+            </div>
+            <p style="font-size:0.75rem;color:#9ca3af;text-align:center;margin-top:16px;">Vaultstone Bank, N.A. &mdash; Member FDIC</p>
+          </div>`,
+      };
+
     } else {
-      return new Response(JSON.stringify({ error: 'Unknown email type' }), {
-        headers: { ...cors, 'Content-Type': 'application/json' },
-        status: 400,
+      return new Response(JSON.stringify({ error: `Unknown email type: ${type}` }), {
+        headers: { ...cors, 'Content-Type': 'application/json' }, status: 400,
       });
     }
 
@@ -109,15 +150,19 @@ serve(async (req) => {
 
     const data = await res.json();
 
+    if (!res.ok) {
+      console.error('[send-email] Resend API error:', JSON.stringify(data));
+    }
+
     return new Response(JSON.stringify(data), {
       headers: { ...cors, 'Content-Type': 'application/json' },
       status:  res.ok ? 200 : 400,
     });
 
   } catch (err) {
+    console.error('[send-email] Unexpected error:', err);
     return new Response(JSON.stringify({ error: (err as Error).message }), {
-      headers: { ...cors, 'Content-Type': 'application/json' },
-      status:  500,
+      headers: { ...cors, 'Content-Type': 'application/json' }, status: 500,
     });
   }
 });

@@ -309,6 +309,23 @@
         newStatus === 'suspended' ? 'warning' : 'success');
   };
 
+  // Toggle lock / unlock (overwrites admin.js fallback)
+  window.toggleLock = async function (id) {
+    const u = window.usersData.find(x => x.id === id);
+    if (!u) return;
+    const shouldLock = u.status !== 'locked';
+    if (shouldLock) {
+      await VaultStore.lockAccount(id);
+    } else {
+      await VaultStore.unlockAccount(id);
+    }
+    u.status = shouldLock ? 'locked' : 'active';
+    window.filteredUsers = [...window.usersData];
+    if (typeof renderUsersTable === 'function') renderUsersTable();
+    if (typeof showToast === 'function')
+      showToast(`${u.name} ${shouldLock ? 'locked' : 'unlocked'}.`, shouldLock ? 'warning' : 'success');
+  };
+
   // Delete user
   window.confirmDeleteUser = async function (id) {
     const u = window.usersData.find(x => x.id === id);

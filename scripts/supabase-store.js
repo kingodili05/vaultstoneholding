@@ -218,8 +218,8 @@ const VaultStore = (() => {
     const profile = profileRes.data;
     if (profile.status === 'suspended')
       return { ok: false, error: 'This account has been suspended. Contact support.' };
-    if (profile.status === 'locked')
-      return { ok: false, error: 'This account is locked. Please verify your identity.' };
+    // Locked accounts are allowed to log in and view their dashboard,
+    // but all transfer/payment functions are disabled at the UI layer.
 
     _session = data.session;
     _user    = _flattenProfile(profile, accountsRes.data || []);
@@ -626,28 +626,84 @@ const VaultStore = (() => {
 
   async function generateTransactions(userId, { targetBalance, count = 25, daysBack = 90 } = {}) {
     const MERCHANTS = [
-      { name: 'Amazon',         cat: 'Shopping'      },
-      { name: 'Netflix',        cat: 'Entertainment' },
-      { name: 'Uber',           cat: 'Transport'     },
-      { name: 'Whole Foods',    cat: 'Groceries'     },
-      { name: 'Shell',          cat: 'Fuel'          },
-      { name: 'Starbucks',      cat: 'Food & Drink'  },
-      { name: 'Apple',          cat: 'Tech'          },
-      { name: 'Spotify',        cat: 'Music'         },
-      { name: 'Delta Airlines', cat: 'Travel'        },
-      { name: 'Target',         cat: 'Retail'        },
-      { name: 'Walmart',        cat: 'Groceries'     },
-      { name: 'Zara',           cat: 'Shopping'      },
-      { name: 'IKEA',           cat: 'Shopping'      },
-      { name: 'DoorDash',       cat: 'Food & Drink'  },
-      { name: 'Airbnb',         cat: 'Travel'        },
-      { name: 'Best Buy',       cat: 'Tech'          },
-      { name: 'Costco',         cat: 'Groceries'     },
-      { name: 'Lyft',           cat: 'Transport'     },
-      { name: 'Hulu',           cat: 'Entertainment' },
-      { name: 'AT&T',           cat: 'Utilities'     },
+      // Groceries
+      { name: 'Whole Foods Market', cat: 'Groceries'     },
+      { name: 'Kroger',             cat: 'Groceries'     },
+      { name: 'Safeway',            cat: 'Groceries'     },
+      { name: 'Trader Joe\'s',      cat: 'Groceries'     },
+      { name: 'Publix',             cat: 'Groceries'     },
+      { name: 'Walmart',            cat: 'Groceries'     },
+      { name: 'Costco',             cat: 'Groceries'     },
+      { name: 'Sam\'s Club',        cat: 'Groceries'     },
+      // Retail
+      { name: 'Target',             cat: 'Retail'        },
+      { name: 'Amazon',             cat: 'Shopping'      },
+      { name: 'Best Buy',           cat: 'Tech'          },
+      { name: 'Home Depot',         cat: 'Home'          },
+      { name: 'Lowe\'s',            cat: 'Home'          },
+      { name: 'Macy\'s',            cat: 'Shopping'      },
+      { name: 'TJ Maxx',            cat: 'Shopping'      },
+      { name: 'Nordstrom',          cat: 'Shopping'      },
+      { name: 'IKEA',               cat: 'Home'          },
+      // Food & Drink
+      { name: 'Starbucks',          cat: 'Food & Drink'  },
+      { name: 'McDonald\'s',        cat: 'Food & Drink'  },
+      { name: 'Chick-fil-A',        cat: 'Food & Drink'  },
+      { name: 'Chipotle',           cat: 'Food & Drink'  },
+      { name: 'Domino\'s Pizza',    cat: 'Food & Drink'  },
+      { name: 'Panera Bread',       cat: 'Food & Drink'  },
+      { name: 'Dunkin\'',           cat: 'Food & Drink'  },
+      { name: 'Subway',             cat: 'Food & Drink'  },
+      { name: 'DoorDash',           cat: 'Food & Drink'  },
+      { name: 'Uber Eats',          cat: 'Food & Drink'  },
+      { name: 'Grubhub',            cat: 'Food & Drink'  },
+      // Fuel & Transport
+      { name: 'Shell',              cat: 'Fuel'          },
+      { name: 'Chevron',            cat: 'Fuel'          },
+      { name: 'ExxonMobil',         cat: 'Fuel'          },
+      { name: 'BP',                 cat: 'Fuel'          },
+      { name: 'Uber',               cat: 'Transport'     },
+      { name: 'Lyft',               cat: 'Transport'     },
+      // Entertainment & Subscriptions
+      { name: 'Netflix',            cat: 'Entertainment' },
+      { name: 'Hulu',               cat: 'Entertainment' },
+      { name: 'Disney+',            cat: 'Entertainment' },
+      { name: 'Spotify',            cat: 'Entertainment' },
+      { name: 'Apple',              cat: 'Tech'          },
+      { name: 'YouTube Premium',    cat: 'Entertainment' },
+      { name: 'Xbox Game Pass',     cat: 'Entertainment' },
+      // Utilities & Telecom
+      { name: 'AT&T',               cat: 'Utilities'     },
+      { name: 'Verizon',            cat: 'Utilities'     },
+      { name: 'T-Mobile',           cat: 'Utilities'     },
+      { name: 'Comcast/Xfinity',    cat: 'Utilities'     },
+      { name: 'Con Edison',         cat: 'Utilities'     },
+      { name: 'National Grid',      cat: 'Utilities'     },
+      // Health & Pharmacy
+      { name: 'CVS Pharmacy',       cat: 'Health'        },
+      { name: 'Walgreens',          cat: 'Health'        },
+      { name: 'Rite Aid',           cat: 'Health'        },
+      { name: 'Planet Fitness',     cat: 'Health'        },
+      { name: 'Equinox',            cat: 'Health'        },
+      // Travel
+      { name: 'Delta Airlines',     cat: 'Travel'        },
+      { name: 'American Airlines',  cat: 'Travel'        },
+      { name: 'United Airlines',    cat: 'Travel'        },
+      { name: 'Airbnb',             cat: 'Travel'        },
+      { name: 'Marriott Hotels',    cat: 'Travel'        },
+      { name: 'Hilton Hotels',      cat: 'Travel'        },
+      { name: 'Enterprise Rent-A-Car', cat: 'Travel'     },
     ];
-    const INCOMES = ['Salary Deposit', 'ACH Transfer', 'Wire Transfer', 'Client Payment', 'Invoice Payment'];
+    const INCOMES = [
+      'Payroll Direct Deposit',
+      'ACH Credit Transfer',
+      'Wire Transfer Received',
+      'Client Payment',
+      'Invoice Payment',
+      'Freelance Income',
+      'Dividend Credit',
+      'Refund Credit',
+    ];
 
     const now      = Date.now();
     const msPerDay = 86_400_000;

@@ -74,13 +74,7 @@
       if (typeof VaultStore.logout === 'function') VaultStore.logout();
       return;
     }
-    if (user.status === 'locked') {
-      showError('Your account is locked. Please contact support or verify your identity.');
-      btn.disabled    = false;
-      btn.textContent = 'Sign In';
-      if (typeof VaultStore.logout === 'function') VaultStore.logout();
-      return;
-    }
+    // Locked accounts may reach the dashboard — transfers are restricted there.
     if (user.role === 'admin') {
       window.location.href = 'admin.html';
     } else if (user.status === 'pending_kyc' || user.kycStatus === 'not_started') {
@@ -90,12 +84,42 @@
     }
   }
 
-  // ── OAuth "coming soon" buttons (F2) ──────────────────────────────────────
+  // ── OAuth — Google and Apple via Supabase signInWithOAuth ────────────────
   document.querySelectorAll('.btn--oauth').forEach(oauthBtn => {
-    oauthBtn.addEventListener('click', () => {
-      showError('Google and Apple sign-in are coming soon. Please use email and password.');
-      oauthBtn.disabled = true;
-      setTimeout(() => { oauthBtn.disabled = false; }, 1500);
+    oauthBtn.addEventListener('click', async () => {
+      const label    = oauthBtn.getAttribute('aria-label') || '';
+      const provider = label.toLowerCase().includes('apple') ? 'apple' : 'google';
+
+      oauthBtn.disabled    = true;
+      oauthBtn.textContent = provider === 'apple' ? 'Connecting to Apple…' : 'Connecting to Google…';
+
+      const redirectTo = window.location.origin +
+        window.location.pathname.replace(/\/[^/]*$/, '/') + 'dashboard.html';
+
+      const sb = window._sb;
+      if (!sb) {
+        showError('Authentication service unavailable. Please refresh and try again.');
+        oauthBtn.disabled    = false;
+        oauthBtn.textContent = provider === 'apple' ? 'Apple' : 'Google';
+        return;
+      }
+
+      const { error } = await sb.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+          queryParams: provider === 'google'
+            ? { access_type: 'offline', prompt: 'consent' }
+            : {},
+        },
+      });
+
+      if (error) {
+        showError(error.message || `Could not sign in with ${provider}. Please try again.`);
+        oauthBtn.disabled    = false;
+        oauthBtn.textContent = provider === 'apple' ? 'Apple' : 'Google';
+      }
+      // On success Supabase redirects the browser — no further action needed.
     });
   });
 
@@ -195,11 +219,7 @@
       showError('Your account has been suspended. Please contact support.');
       return;
     }
-    if (existing.status === 'locked') {
-      VaultStore.logout();
-      showError('Your account is locked. Please contact support or verify your identity.');
-      return;
-    }
+    // Locked — let them through to dashboard where transfers will be restricted.
 
     btn.disabled    = true;
     btn.textContent = 'Redirecting…';

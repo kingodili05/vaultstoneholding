@@ -304,52 +304,86 @@ function renderUsersTable() {
   const tbody = document.getElementById('users-tbody');
   if (!tbody) return;
 
-  tbody.innerHTML = filteredUsers.map(u => `
+  tbody.innerHTML = filteredUsers.map(u => {
+    const isLocked    = u.status === 'locked';
+    const isSuspended = u.status === 'suspended';
+    const statusClass = u.status === 'active' ? 'badge-green'
+                      : u.status === 'suspended' ? 'badge-red'
+                      : u.status === 'locked'    ? 'badge-orange'
+                      : 'badge-yellow';
+    return `
     <tr data-id="${u.id}" class="${selectedUsers.has(u.id) ? 'selected' : ''}">
       <td><input type="checkbox" class="row-check" data-id="${u.id}" ${selectedUsers.has(u.id) ? 'checked' : ''}></td>
-      <td><div style="display:flex;align-items:center;gap:0.75rem"><div class="avatar">${u.initials}</div><div><div style="font-weight:500">${u.name}</div><div class="hide-desktop" style="font-size:0.75rem;color:var(--muted2)">${u.email}</div></div></div></td>
-      <td class="hide-mobile" style="color:var(--muted2)">${u.email}</td>
-      <td class="hide-mobile"><span class="badge ${u.type === 'wealth' ? 'badge-gold' : u.type === 'business' ? 'badge-blue' : 'badge-muted'}">${u.type}</span></td>
-      <td style="font-weight:600">$${u.balance.toLocaleString()}</td>
-      <td><span class="badge ${u.status === 'active' ? 'badge-green' : u.status === 'suspended' ? 'badge-red' : 'badge-yellow'}">${u.status}</span></td>
-      <td class="hide-mobile" style="color:var(--muted2)">${u.joined}</td>
       <td>
-        <div class="action-btns hide-mobile">
-          <button class="btn btn-ghost btn-icon btn-sm view-user" data-id="${u.id}" title="View" aria-label="View user">
-            <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button class="btn btn-ghost btn-icon btn-sm edit-user" data-id="${u.id}" title="Edit" aria-label="Edit user">
-            <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-          </button>
-          <button class="btn btn-ghost btn-icon btn-sm fund-user" data-id="${u.id}" title="Fund Account" aria-label="Fund account">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </button>
-          <button class="btn btn-ghost btn-icon btn-sm gen-history-user" data-id="${u.id}" title="Generate History" aria-label="Generate transaction history">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 7 7 7"/></svg>
-          </button>
-          <button class="btn btn-ghost btn-icon btn-sm suspend-user" data-id="${u.id}" title="${u.status === 'suspended' ? 'Activate' : 'Suspend'}" aria-label="${u.status === 'suspended' ? 'Activate' : 'Suspend'} user">
-            <svg viewBox="0 0 24 24">${u.status === 'suspended'
-              ? '<polyline points="20 6 9 17 4 12"/>'
-              : '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>'}
-            </svg>
-          </button>
-          <button class="btn btn-danger btn-icon btn-sm delete-user" data-id="${u.id}" title="Delete" aria-label="Delete user">
-            <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          </button>
-        </div>
-        <div class="show-mobile" style="position:relative">
-          <button class="btn btn-ghost btn-sm row-actions-btn" data-id="${u.id}" aria-label="Actions" style="padding:0.5rem 0.75rem;font-size:1.25rem;line-height:1">⋯</button>
-          <div class="row-actions-menu" data-id="${u.id}" style="display:none;position:absolute;right:0;top:100%;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);box-shadow:var(--shadow);min-width:160px;padding:0.375rem 0">
-            <button class="row-menu-item view-user" data-id="${u.id}">View Profile</button>
-            <button class="row-menu-item edit-user" data-id="${u.id}">Edit User</button>
-            <button class="row-menu-item fund-user" data-id="${u.id}">Fund Account</button>
-            <button class="row-menu-item gen-history-user" data-id="${u.id}">Generate History</button>
-            <button class="row-menu-item suspend-user" data-id="${u.id}">${u.status === 'suspended' ? 'Activate' : 'Suspend'}</button>
-            <button class="row-menu-item delete-user" data-id="${u.id}" style="color:var(--red)">Delete User</button>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <div class="avatar">${u.initials}</div>
+          <div>
+            <div style="font-weight:500">${u.name}</div>
+            <div class="hide-desktop" style="font-size:0.75rem;color:var(--muted2)">${u.email}</div>
           </div>
         </div>
       </td>
-    </tr>`).join('');
+      <td class="hide-mobile" style="color:var(--muted2)">${u.email}</td>
+      <td class="hide-mobile"><span class="badge ${u.type === 'wealth' ? 'badge-gold' : u.type === 'business' ? 'badge-blue' : 'badge-muted'}">${u.type}</span></td>
+      <td style="font-weight:600">$${u.balance.toLocaleString()}</td>
+      <td><span class="badge ${statusClass}">${u.status}</span></td>
+      <td class="hide-mobile" style="color:var(--muted2)">${u.joined}</td>
+      <td>
+        <!-- Desktop: labelled action buttons -->
+        <div class="action-btns hide-mobile" style="gap:0.35rem;flex-wrap:wrap">
+          <button class="btn btn-ghost btn-sm edit-user" data-id="${u.id}" title="Edit user" style="gap:0.3rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Edit
+          </button>
+          <button class="btn btn-ghost btn-sm fund-user" data-id="${u.id}" title="Top-up balance" style="gap:0.3rem;color:var(--gold)">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            Top-up
+          </button>
+          <button class="btn btn-ghost btn-sm gen-history-user" data-id="${u.id}" title="Generate transaction history" style="gap:0.3rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 7 7 7"/></svg>
+            History
+          </button>
+          <button class="btn btn-ghost btn-sm lock-user" data-id="${u.id}"
+            title="${isLocked ? 'Unlock account' : 'Lock account'}"
+            style="gap:0.3rem;color:${isLocked ? 'var(--green,#22c55e)' : 'var(--amber,#f59e0b)'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              ${isLocked
+                ? '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/>'
+                : '<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>'}
+            </svg>
+            ${isLocked ? 'Unlock' : 'Lock'}
+          </button>
+          <button class="btn btn-ghost btn-sm suspend-user" data-id="${u.id}"
+            title="${isSuspended ? 'Activate account' : 'Suspend account'}"
+            style="gap:0.3rem;color:${isSuspended ? 'var(--green,#22c55e)' : 'var(--red,#ef4444)'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              ${isSuspended
+                ? '<polyline points="20 6 9 17 4 12"/>'
+                : '<circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>'}
+            </svg>
+            ${isSuspended ? 'Activate' : 'Suspend'}
+          </button>
+          <button class="btn btn-danger btn-sm delete-user" data-id="${u.id}" title="Delete user" style="gap:0.3rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+            Delete
+          </button>
+        </div>
+        <!-- Mobile: ⋯ dropdown -->
+        <div class="show-mobile" style="position:relative">
+          <button class="btn btn-ghost btn-sm row-actions-btn" data-id="${u.id}" aria-label="Actions" style="padding:0.5rem 0.75rem;font-size:1.25rem;line-height:1">⋯</button>
+          <div class="row-actions-menu" data-id="${u.id}" style="display:none;position:absolute;right:0;top:100%;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);box-shadow:var(--shadow);min-width:175px;padding:0.375rem 0">
+            <button class="row-menu-item edit-user"         data-id="${u.id}">✏️  Edit User</button>
+            <button class="row-menu-item fund-user"         data-id="${u.id}">💰  Top-up Balance</button>
+            <button class="row-menu-item gen-history-user"  data-id="${u.id}">🕐  Generate History</button>
+            <button class="row-menu-item lock-user"         data-id="${u.id}">${isLocked ? '🔓  Unlock Account' : '🔒  Lock Account'}</button>
+            <button class="row-menu-item suspend-user"      data-id="${u.id}">${isSuspended ? '✅  Activate Account' : '🚫  Suspend Account'}</button>
+            <hr style="border:none;border-top:1px solid var(--border2);margin:0.375rem 0">
+            <button class="row-menu-item delete-user"       data-id="${u.id}" style="color:var(--red)">🗑️  Delete User</button>
+          </div>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
 
   // Bind row actions — IDs are UUIDs (strings), never coerce with +
   tbody.querySelectorAll('.view-user').forEach(btn => btn.addEventListener('click', () => openViewUser(btn.dataset.id)));
@@ -360,6 +394,7 @@ function renderUsersTable() {
   tbody.querySelectorAll('.gen-history-user').forEach(btn => btn.addEventListener('click', () => {
     if (typeof window.openGenHistoryModal === 'function') window.openGenHistoryModal(btn.dataset.id);
   }));
+  tbody.querySelectorAll('.lock-user').forEach(btn => btn.addEventListener('click', () => toggleLock(btn.dataset.id)));
   tbody.querySelectorAll('.suspend-user').forEach(btn => btn.addEventListener('click', () => toggleSuspend(btn.dataset.id)));
   tbody.querySelectorAll('.delete-user').forEach(btn => btn.addEventListener('click', () => confirmDeleteUser(btn.dataset.id)));
   tbody.querySelectorAll('.row-check').forEach(cb => cb.addEventListener('change', () => {
@@ -410,6 +445,15 @@ function updateBulkBar() {
     bar.classList.toggle('visible', selectedUsers.size > 0);
     countEl.textContent = selectedUsers.size + ' user' + (selectedUsers.size !== 1 ? 's' : '');
   }
+}
+
+function toggleLock(id) {
+  const u = usersData.find(x => String(x.id) === String(id));
+  if (!u) return;
+  const isCurrentlyLocked = u.status === 'locked';
+  u.status = isCurrentlyLocked ? 'active' : 'locked';
+  filterUsers();
+  showToast(`${u.name} ${isCurrentlyLocked ? 'unlocked' : 'locked'}.`, isCurrentlyLocked ? 'success' : 'warning');
 }
 
 function toggleSuspend(id) {
