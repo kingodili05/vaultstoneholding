@@ -28,7 +28,12 @@ window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
 // session-persisting clients exist simultaneously.
 if (SUPABASE_SERVICE_KEY) {
   window._sbAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: {
+      persistSession:     false,
+      autoRefreshToken:   false,
+      detectSessionInUrl: false,
+      storageKey:         'sb-vaultstone-admin',
+    },
   });
 }
 
