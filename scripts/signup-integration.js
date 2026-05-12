@@ -144,11 +144,16 @@ async function registerAndSendOtp() {
 
   const hint = document.getElementById('otp-hint');
   if (!result.ok) {
-    if (result.error && result.error.toLowerCase().includes('already registered')) {
-      // Account already created — resend the OTP
-      await VaultStore.resendConfirmation(email);
+    console.error('[signup] createUser failed:', result.error);
+    const raw = (result.error || '').toLowerCase();
+    if (raw.includes('already registered') || raw.includes('already exists')) {
+      const resend = await VaultStore.resendConfirmation(email);
+      if (!resend.ok) console.error('[signup] resendConfirmation failed:', resend.error);
       if (hint) hint.innerHTML =
-        `Code resent to <strong>${email}</strong>. Check your inbox.`;
+        `Code resent to <strong>${email}</strong>. Check your inbox and spam folder.`;
+    } else if (raw.includes('rate') || raw.includes('too many')) {
+      if (hint) hint.innerHTML =
+        `<span style="color:#EF4444">Too many signup attempts. Wait 60 seconds then retry.</span>`;
     } else {
       if (hint) hint.innerHTML = `<span style="color:#EF4444">${result.error}</span>`;
     }
@@ -213,10 +218,17 @@ function wireVerifyButton() {
     const verifyResult = await VaultStore.verifyOtpCode(email, token);
 
     if (!verifyResult.ok) {
+      console.error('[signup] verifyOtp failed:', verifyResult.error);
       btn.classList.remove('loading');
       btn.disabled = false;
       otpInputs.forEach(i => i.classList.add('error'));
-      showError(btn, verifyResult.error || 'Incorrect or expired code. Please try again.');
+      const raw = (verifyResult.error || '').toLowerCase();
+      let msg;
+      if (raw.includes('expired'))       msg = 'Code expired. Tap "Resend code" to get a new one.';
+      else if (raw.includes('invalid'))  msg = 'Wrong code. Check your email — Vaultstone sent a 6-digit code.';
+      else if (raw.includes('not found')) msg = 'No pending signup for this email. Restart registration.';
+      else                                msg = verifyResult.error || 'Verification failed. Try again or use the link in your email.';
+      showError(btn, msg);
       return;
     }
 
