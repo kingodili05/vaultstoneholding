@@ -528,8 +528,15 @@
 'use strict';
 
 /* ── Auth guard ── */
-VaultStore.ready.then(() => {
-  const user = VaultStore.getCurrentUser();
+VaultStore.ready.then(async () => {
+  // Grace window for fresh signups: onAuthStateChange may still be loading
+  // the newly-created profile row when this guard first runs.
+  let user = VaultStore.getCurrentUser();
+  const start = Date.now();
+  while (!user && Date.now() - start < 4000) {
+    await new Promise(r => setTimeout(r, 150));
+    user = VaultStore.getCurrentUser();
+  }
   if (!user) { window.location.href = 'login.html'; return; }
   if (user.kycStatus === 'approved' && user.status === 'active') {
     window.location.href = 'dashboard.html'; return;

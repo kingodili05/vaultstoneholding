@@ -214,8 +214,16 @@ function wireVerifyButton() {
 
     btn.classList.add('loading');
     btn.disabled = true;
+    console.log('[signup] verifying code…');
 
-    const verifyResult = await VaultStore.verifyOtpCode(email, token);
+    // 12s safety timeout — never let the button hang forever
+    const verifyPromise = VaultStore.verifyOtpCode(email, token);
+    const timeoutPromise = new Promise(resolve =>
+      setTimeout(() => resolve({ ok: false, error: 'Request timed out. Check your connection and try again.' }), 12000)
+    );
+    const verifyResult = await Promise.race([verifyPromise, timeoutPromise]);
+
+    console.log('[signup] verify result:', verifyResult);
 
     if (!verifyResult.ok) {
       console.error('[signup] verifyOtp failed:', verifyResult.error);
@@ -227,12 +235,16 @@ function wireVerifyButton() {
       if (raw.includes('expired'))       msg = 'Code expired. Tap "Resend code" to get a new one.';
       else if (raw.includes('invalid'))  msg = 'Wrong code. Check your email — Vaultstone sent a 6-digit code.';
       else if (raw.includes('not found')) msg = 'No pending signup for this email. Restart registration.';
+      else if (raw.includes('timed out')) msg = verifyResult.error;
       else                                msg = verifyResult.error || 'Verification failed. Try again or use the link in your email.';
       showError(btn, msg);
       return;
     }
 
-    // Password was already set by createUser() on step-4 entry — no need to set it again.
+    // Success — clear loading state immediately so user sees a confirmed UI even
+    // if the redirect is briefly blocked by an extension or slow nav handler.
+    btn.classList.remove('loading');
+    btn.disabled = false;
     clearDraft();
     callSendEmail({ type: 'welcome', email, name: `${firstName} ${lastName}`.trim() });
     if (typeof triggerConfetti === 'function') triggerConfetti();
@@ -240,11 +252,19 @@ function wireVerifyButton() {
     const overlay = document.getElementById('success-overlay');
     if (overlay) {
       const sub = overlay.querySelector('p');
-      if (sub) sub.textContent = 'Welcome to Vaultstone. Redirecting to identity verification…';
+      if (sub) sub.textContent = 'Welcome to Vaultstone. Opening identity verification…';
       overlay.classList.add('visible');
     }
 
-    setTimeout(() => { window.location.href = 'kyc.html'; }, 2200);
+    // Wait for VaultStore._user to be populated (handle_new_auth_user trigger
+    // + onAuthStateChange handler must finish loading the profile) before
+    // redirecting, otherwise kyc.html's auth guard bounces to login.
+    const start = Date.now();
+    while (!VaultStore.getCurrentUser() && Date.now() - start < 5000) {
+      await new Promise(r => setTimeout(r, 150));
+    }
+    console.log('[signup] redirecting to kyc.html — user loaded:', !!VaultStore.getCurrentUser());
+    window.location.replace('kyc.html');
   });
 }
 
