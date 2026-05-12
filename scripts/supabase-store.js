@@ -361,6 +361,25 @@ const VaultStore = (() => {
       ({ data, error } = await sb.auth.verifyOtp({ email, token, type: 'email' }));
     }
     if (error) return { ok: false, error: error.message };
+
+    // Explicitly hydrate _user so downstream pages don't race against the
+    // onAuthStateChange handler. handle_new_auth_user trigger may also need a
+    // tick to insert the profile row — retry up to 3 times.
+    const uid = data?.user?.id;
+    if (uid) {
+      _session = data.session || _session;
+      for (let i = 0; i < 3; i++) {
+        const [profileRes, accountsRes] = await Promise.all([
+          sb.from('profiles').select('*').eq('id', uid).maybeSingle(),
+          sb.from('accounts').select('*').eq('user_id', uid),
+        ]);
+        if (profileRes.data) {
+          _user = _flattenProfile(profileRes.data, accountsRes.data || []);
+          break;
+        }
+        await new Promise(r => setTimeout(r, 400));
+      }
+    }
     return { ok: true, user: data.user };
   }
 

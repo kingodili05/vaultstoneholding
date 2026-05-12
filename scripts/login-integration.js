@@ -148,6 +148,17 @@
     btn.disabled = true;
     btn.classList.add('loading');
 
+    // Wipe any stale Supabase auth/PKCE state from previous failed attempts
+    // so signInWithPassword starts from a clean slate. Without this, an
+    // orphaned code-verifier or expired refresh token can cause login to
+    // fail silently until the user clears their browser history.
+    try {
+      if (window._sb) await window._sb.auth.signOut({ scope: 'local' });
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('sb-') && k.includes('code-verifier'))
+        .forEach(k => localStorage.removeItem(k));
+    } catch {}
+
     let result;
     try {
       result = await VaultStore.login(email, password);
