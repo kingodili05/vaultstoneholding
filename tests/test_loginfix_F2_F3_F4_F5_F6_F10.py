@@ -29,25 +29,33 @@ def load_login_no_session(page):
     page.wait_for_timeout(600)
 
 
-# ── F2 — OAuth buttons show "coming soon" message ────────────────────────────
-def test_F2_oauth_coming_soon():
+# ── F2 — OAuth buttons trigger Supabase signInWithOAuth ─────────────────────
+def test_F2_oauth_invokes_signInWithOAuth():
+    """OAuth buttons should call sb.auth.signInWithOAuth (no longer 'coming soon')."""
     with sync_playwright() as pw:
         browser = pw.chromium.launch(headless=True)
         page = browser.new_page()
         load_login_no_session(page)
 
+        # Install spy for sb.auth.signInWithOAuth (mock SDK lacks this method)
+        page.evaluate("""() => {
+          window.__oauthCalls = [];
+          window._sb.auth.signInWithOAuth = (args) => {
+            window.__oauthCalls.push(args);
+            return Promise.resolve({ data: { provider: args.provider, url: '/mock' }, error: null });
+          };
+        }""")
+
         oauth_btns = page.locator('.btn--oauth')
-        count = oauth_btns.count()
-        assert count > 0, f"No .btn--oauth buttons found"
-
+        assert oauth_btns.count() > 0, "No .btn--oauth buttons found"
         oauth_btns.first.click()
-        page.wait_for_timeout(300)
+        page.wait_for_timeout(400)
 
-        err_el = page.locator('#login-error')
-        err_text = err_el.inner_text() if err_el.count() > 0 else ''
-        assert 'coming soon' in err_text.lower(), f"Expected 'coming soon' in error, got: {err_text!r}"
+        calls = page.evaluate("() => window.__oauthCalls")
+        assert len(calls) == 1, f"Expected 1 signInWithOAuth call, got {len(calls)}"
+        assert calls[0]["provider"] in ("google", "apple"), f"Unexpected provider: {calls[0]}"
 
-        print(f"F2: OAuth 'coming soon' shown ({count} button(s)) : PASS")
+        print(f"F2: OAuth wired to signInWithOAuth (provider={calls[0]['provider']}) : PASS")
         browser.close()
 
 
