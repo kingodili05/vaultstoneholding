@@ -876,8 +876,22 @@ function loadUserData() {
   const user = VaultStore.requireAuth();
   if (!user) return null;
 
-  /* KYC pending banner */
-  if (user.kycStatus !== 'approved' || user.status !== 'active') {
+  /* Account status banner.
+     KYC and account-status (locked/suspended) are independent — an admin can
+     lock an already-KYC-approved user. Pick the message based on the
+     specific condition, not just "anything other than fully active". */
+  let bannerLabel = null;
+  if (user.kycStatus === 'under_review') {
+    bannerLabel = '🕐  Your identity documents are under review. Full access unlocks once approved (1–2 business days).';
+  } else if (user.kycStatus !== 'approved') {
+    bannerLabel = '⚠️  Identity verification required. <a href="kyc.html" style="color:#C9A84C;font-weight:600;text-decoration:underline">Complete KYC →</a>';
+  } else if (user.status === 'locked') {
+    bannerLabel = '🔒  Your account is currently locked. Transfers and payments are disabled. Contact support to restore full access.';
+  } else if (user.status === 'suspended') {
+    bannerLabel = '🚫  Your account is suspended. Please contact support.';
+  }
+
+  if (bannerLabel) {
     const banner = document.createElement('div');
     banner.id = 'kyc-banner';
     banner.style.cssText = [
@@ -892,10 +906,7 @@ function loadUserData() {
       'gap:0.75rem',
       'margin-bottom:1.25rem',
     ].join(';');
-    const label = user.kycStatus === 'under_review'
-      ? '🕐  Your identity documents are under review. Full access unlocks once approved (1–2 business days).'
-      : '⚠️  Identity verification required. <a href="kyc.html" style="color:#C9A84C;font-weight:600;text-decoration:underline">Complete KYC →</a>';
-    banner.innerHTML = label;
+    banner.innerHTML = bannerLabel;
     const contentArea = document.querySelector('.content-area');
     if (contentArea) contentArea.prepend(banner);
   }
