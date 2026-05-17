@@ -783,48 +783,88 @@ const VaultStore = (() => {
       new Date(startMs + Math.floor(Math.random() * rangeMs))
     ).sort((a, b) => a - b);
 
+    // Realistic mix: ~60% credits, ~40% debits, biased credit-heavy
+    // early so the balance grows naturally before settling near target.
+    // Each credit is sized to fill the gap toward the target across
+    // remaining credits, while debits stay small ($20 floor, capped
+    // around 0.03% of target). The result climbs along a roughly linear
+    // trajectory to targetBalance with no oversized correction at the
+    // end — only a small final-row tweak.
     const rows   = [];
     let running  = 0;
 
-    for (let i = 0; i < count - 1; i++) {
-      const progress  = i / Math.max(count - 2, 1);
-      // Bias toward credits early to build up balance, then more debits
-      const isCredit  = Math.random() < 0.42 - progress * 0.12;
-
-      let type, amount, merchant, category, description;
-
-      if (isCredit) {
-        amount      = parseFloat((Math.random() * 3000 + 500).toFixed(2));
-        merchant    = INCOMES[Math.floor(Math.random() * INCOMES.length)];
-        category    = 'Transfer';
-        description = merchant;
-        type        = 'credit';
-      } else {
-        const m     = MERCHANTS[Math.floor(Math.random() * MERCHANTS.length)];
-        const cap   = Math.max(20, running + 200);   // keep balance from going deeply negative
-        amount      = parseFloat(Math.min(Math.random() * 400 + 5, cap).toFixed(2));
-        merchant    = m.name;
-        category    = m.cat;
-        description = m.name;
-        type        = 'debit';
-      }
-
-      running = parseFloat((running + (type === 'credit' ? amount : -amount)).toFixed(2));
-      rows.push({ type, amount, merchant, category, description, date: dates[i], balAfter: Math.max(0, running) });
+    function _pickIncome() {
+      const m = INCOMES[Math.floor(Math.random() * INCOMES.length)];
+      return { merchant: m, category: 'Transfer' };
+    }
+    function _pickMerchant() {
+      const m = MERCHANTS[Math.floor(Math.random() * MERCHANTS.length)];
+      return { merchant: m.name, category: m.cat };
     }
 
-    // Final transaction to land exactly on targetBalance
-    const diff = parseFloat((targetBalance - running).toFixed(2));
-    if (Math.abs(diff) >= 0.01) {
-      rows.push({
-        type:        diff > 0 ? 'credit' : 'debit',
-        amount:      Math.abs(diff),
-        merchant:    diff > 0 ? 'Account Funding' : 'Account Adjustment',
-        category:    'Transfer',
-        description: diff > 0 ? 'Funding Credit'  : 'Balance Adjustment',
-        date:        dates[count - 1],
-        balAfter:    targetBalance,
-      });
+    // 1) Pre-allocate types so we know how many credits will sum to target.
+    //    First row is always a credit (account starts at 0; it must go up).
+    const types = ['credit'];
+    for (let i = 1; i < count; i++) {
+      const progress    = i / count;
+      const creditProb  = 0.75 - progress * 0.40; // 0.75 early → 0.35 late
+      types.push(Math.random() < creditProb ? 'credit' : 'debit');
+    }
+
+    // Realistic debit window — clamped so small accounts still produce
+    // visible rows and huge accounts still get retail-sized debits.
+    const debitFloor = Math.max(20, targetBalance * 0.00005);
+    const debitCeil  = Math.max(debitFloor * 4, Math.min(targetBalance * 0.0003, 800));
+
+    for (let i = 0; i < count; i++) {
+      let type    = types[i];
+      let amount  = 0;
+      let merchant, category;
+
+      if (type === 'debit') {
+        amount = debitFloor + Math.random() * (debitCeil - debitFloor);
+        // Never overdraw the running balance.
+        if (running - amount < 0) amount = Math.max(0, running - 0.01);
+        // If clamping killed the debit, promote to a small credit so
+        // the row still carries weight.
+        if (amount < 1) { type = 'credit'; amount = debitFloor; }
+      }
+
+      if (type === 'credit') {
+        // How many credits (including this one) remain to bridge the gap?
+        const creditsLeft = types.slice(i).filter(t => t === 'credit').length || 1;
+        const gap         = targetBalance - running;
+        const avgNeeded   = gap / creditsLeft;
+        // ±35% jitter around the needed average, floored at $50.
+        const jitter      = avgNeeded * 0.35 * (Math.random() - 0.5) * 2;
+        amount            = Math.max(50, avgNeeded + jitter);
+      }
+
+      amount = parseFloat(amount.toFixed(2));
+      if (type === 'credit') ({ merchant, category } = _pickIncome());
+      else                   ({ merchant, category } = _pickMerchant());
+
+      running = parseFloat((running + (type === 'credit' ? amount : -amount)).toFixed(2));
+      rows.push({ type, amount, merchant, category, description: merchant, date: dates[i], balAfter: Math.max(0, running) });
+    }
+
+    // Tiny final correction on the last row so we land exactly on target.
+    const drift = parseFloat((targetBalance - running).toFixed(2));
+    if (rows.length && Math.abs(drift) >= 0.01) {
+      const last = rows[rows.length - 1];
+      const newAmount = last.type === 'credit' ? last.amount + drift : last.amount - drift;
+      if (newAmount >= 0) {
+        last.amount = parseFloat(newAmount.toFixed(2));
+      } else {
+        last.type   = last.type === 'credit' ? 'debit' : 'credit';
+        last.amount = parseFloat(Math.abs(newAmount).toFixed(2));
+        const picked = last.type === 'credit' ? _pickIncome() : _pickMerchant();
+        last.merchant    = picked.merchant;
+        last.category    = picked.category;
+        last.description = picked.merchant;
+      }
+      last.balAfter = targetBalance;
+      running       = targetBalance;
     }
 
     const payloads = rows.map(r => ({
