@@ -343,6 +343,10 @@ function renderUsersTable() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4.5"/><polyline points="3 3 3 7 7 7"/></svg>
             History
           </button>
+          <button class="btn btn-ghost btn-sm view-tx-user" data-id="${u.id}" title="View / delete transactions" style="gap:0.3rem">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M3 12h18"/><path d="M3 18h18"/></svg>
+            Txns
+          </button>
           <button class="btn btn-ghost btn-sm lock-user" data-id="${u.id}"
             title="${isLocked ? 'Unlock account' : 'Lock account'}"
             style="gap:0.3rem;color:${isLocked ? 'var(--green,#22c55e)' : 'var(--amber,#f59e0b)'}">
@@ -375,6 +379,7 @@ function renderUsersTable() {
             <button class="row-menu-item edit-user"         data-id="${u.id}">✏️  Edit User</button>
             <button class="row-menu-item fund-user"         data-id="${u.id}">💰  Top-up Balance</button>
             <button class="row-menu-item gen-history-user"  data-id="${u.id}">🕐  Generate History</button>
+            <button class="row-menu-item view-tx-user"      data-id="${u.id}">📋  View / Delete Txns</button>
             <button class="row-menu-item lock-user"         data-id="${u.id}">${isLocked ? '🔓  Unlock Account' : '🔒  Lock Account'}</button>
             <button class="row-menu-item suspend-user"      data-id="${u.id}">${isSuspended ? '✅  Activate Account' : '🚫  Suspend Account'}</button>
             <hr style="border:none;border-top:1px solid var(--border2);margin:0.375rem 0">
@@ -393,6 +398,9 @@ function renderUsersTable() {
   }));
   tbody.querySelectorAll('.gen-history-user').forEach(btn => btn.addEventListener('click', () => {
     if (typeof window.openGenHistoryModal === 'function') window.openGenHistoryModal(btn.dataset.id);
+  }));
+  tbody.querySelectorAll('.view-tx-user').forEach(btn => btn.addEventListener('click', () => {
+    if (typeof window.openTxHistoryModal === 'function') window.openTxHistoryModal(btn.dataset.id);
   }));
   tbody.querySelectorAll('.lock-user').forEach(btn => btn.addEventListener('click', () => toggleLock(btn.dataset.id)));
   tbody.querySelectorAll('.suspend-user').forEach(btn => btn.addEventListener('click', () => toggleSuspend(btn.dataset.id)));

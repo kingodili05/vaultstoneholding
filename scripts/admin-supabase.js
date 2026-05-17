@@ -106,12 +106,26 @@
       if (!id) return;
       const u          = window.usersData.find(x => String(x.id) === String(id));
       const name       = document.getElementById('edit-name')?.value.trim();
+      const email      = document.getElementById('edit-email')?.value.trim();
       const status     = document.getElementById('edit-status')?.value;
       const acctType   = document.getElementById('edit-type')?.value;
       const newBalance = parseFloat(document.getElementById('edit-balance')?.value || 0);
 
       freshSave.disabled    = true;
       freshSave.textContent = 'Saving…';
+
+      // Email is changed via dedicated admin-only path because it must
+      // update auth.users too (login email), not only the profiles row.
+      const emailChanged = email && u && email !== u.email;
+      if (emailChanged) {
+        const res = await VaultStore.adminChangeUserEmail(id, email);
+        if (!res.ok) {
+          freshSave.disabled = false;
+          freshSave.textContent = 'Save Changes';
+          if (typeof showToast === 'function') showToast(res.error || 'Email update failed.', 'error');
+          return;
+        }
+      }
 
       await VaultStore.updateUser(id, { name, status, accountType: acctType });
       if (u && newBalance !== u.balance) {
@@ -121,7 +135,10 @@
       freshSave.disabled    = false;
       freshSave.textContent = 'Save Changes';
 
-      if (u) { u.name = name; u.status = status; u.type = acctType; u.balance = newBalance; }
+      if (u) {
+        u.name = name; u.status = status; u.type = acctType; u.balance = newBalance;
+        if (emailChanged) u.email = email;
+      }
       if (typeof closeDrawer      === 'function') closeDrawer();
       if (typeof renderUsersTable === 'function') renderUsersTable();
       if (typeof showToast        === 'function') showToast('User updated.', 'success');
@@ -166,10 +183,15 @@
     const acctType = document.getElementById('fund-acct-type')?.value || 'checking';
     const genHist  = document.getElementById('fund-gen-history')?.checked || false;
     const txCount  = parseInt(document.getElementById('fund-tx-count')?.value  || 25, 10);
-    const daysBack = parseInt(document.getElementById('fund-days-back')?.value || 90, 10);
+    const startDate = document.getElementById('fund-start-date')?.value || null;
+    const endDate   = document.getElementById('fund-end-date')?.value   || null;
 
     if (!userId || !(amount > 0)) {
       if (typeof showToast === 'function') showToast('Enter a valid amount.', 'warning');
+      return;
+    }
+    if (genHist && startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      if (typeof showToast === 'function') showToast('Start date must be before end date.', 'warning');
       return;
     }
 
@@ -177,7 +199,7 @@
     this.textContent = genHist ? 'Generating…' : 'Funding…';
 
     const result = await VaultStore.fundAccount(userId, amount, acctType, {
-      generateHistory: genHist, txCount, daysBack,
+      generateHistory: genHist, txCount, startDate, endDate,
     });
 
     this.disabled    = false;
@@ -210,7 +232,10 @@
     document.getElementById('gen-history-user-balance').textContent =
       `Current balance: $${u.balance.toLocaleString()} — history will culminate at this amount`;
     document.getElementById('gen-tx-count').value  = 25;
-    document.getElementById('gen-days-back').value = '90';
+    const sd = document.getElementById('gen-start-date');
+    const ed = document.getElementById('gen-end-date');
+    if (sd) sd.value = '';
+    if (ed) ed.value = '';
     const overlay = document.getElementById('gen-history-modal-overlay');
     overlay.dataset.userId      = id;
     overlay.dataset.userBalance = u.balance;
@@ -234,17 +259,22 @@
     const userId        = overlay?.dataset.userId;
     const targetBalance = parseFloat(overlay?.dataset.userBalance || 0);
     const txCount       = parseInt(document.getElementById('gen-tx-count')?.value  || 25, 10);
-    const daysBack      = parseInt(document.getElementById('gen-days-back')?.value || 90, 10);
+    const startDate     = document.getElementById('gen-start-date')?.value || null;
+    const endDate       = document.getElementById('gen-end-date')?.value   || null;
 
     if (!userId || !(targetBalance > 0)) {
       if (typeof showToast === 'function') showToast('This account has no balance to generate history for.', 'warning');
+      return;
+    }
+    if (startDate && endDate && new Date(startDate) > new Date(endDate)) {
+      if (typeof showToast === 'function') showToast('Start date must be before end date.', 'warning');
       return;
     }
 
     this.disabled    = true;
     this.textContent = 'Generating…';
 
-    const result = await VaultStore.generateTransactions(userId, { targetBalance, count: txCount, daysBack });
+    const result = await VaultStore.generateTransactions(userId, { targetBalance, count: txCount, startDate, endDate });
 
     this.disabled    = false;
     this.textContent = 'Generate History';
@@ -451,6 +481,119 @@
       });
     });
   }
+
+  /* ─── View / Delete Transactions Modal ───────────────────── */
+  let _txModalRows = [];           // last-loaded transactions for the open user
+  let _txModalSelected = new Set();// ids selected via checkbox
+
+  function _renderTxModalRows() {
+    const tbody = document.getElementById('view-history-tbody');
+    if (!tbody) return;
+    if (!_txModalRows.length) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted2);padding:1.5rem">No transactions for this user.</td></tr>';
+      return;
+    }
+    const fmtMoney = v => '$' + Number(v).toLocaleString('en-US', { minimumFractionDigits: 2 });
+    tbody.innerHTML = _txModalRows.map(t => {
+      const checked = _txModalSelected.has(String(t.id)) ? 'checked' : '';
+      const amtClr  = t.type === 'credit' ? 'var(--green,#22c55e)' : 'var(--red,#ef4444)';
+      const sign    = t.type === 'credit' ? '+' : '−';
+      const dateStr = t.date ? new Date(t.date).toLocaleDateString('en-US') : '—';
+      return `
+        <tr data-id="${t.id}">
+          <td><input type="checkbox" class="tx-row-check" data-id="${t.id}" ${checked} /></td>
+          <td style="color:var(--muted2);white-space:nowrap">${dateStr}</td>
+          <td><span class="badge badge-muted">${t.type}</span></td>
+          <td style="text-align:right;font-weight:600;color:${amtClr}">${sign}${fmtMoney(Math.abs(t.amount))}</td>
+          <td>${t.merchant || '—'}</td>
+          <td style="color:var(--muted2)">${t.category || '—'}</td>
+          <td><button class="btn btn-danger btn-sm tx-delete-one" data-id="${t.id}" title="Delete this transaction" style="padding:0.25rem 0.5rem">×</button></td>
+        </tr>`;
+    }).join('');
+
+    tbody.querySelectorAll('.tx-row-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const id = String(cb.dataset.id);
+        cb.checked ? _txModalSelected.add(id) : _txModalSelected.delete(id);
+        _updateTxModalSelCount();
+      });
+    });
+    tbody.querySelectorAll('.tx-delete-one').forEach(btn => {
+      btn.addEventListener('click', () => _deleteTxIds([String(btn.dataset.id)]));
+    });
+    _updateTxModalSelCount();
+  }
+
+  function _updateTxModalSelCount() {
+    const el = document.getElementById('view-history-sel-count');
+    const btn = document.getElementById('view-history-bulk-delete');
+    const checkAll = document.getElementById('view-history-check-all');
+    if (el) el.textContent = `${_txModalSelected.size} selected`;
+    if (btn) btn.disabled = _txModalSelected.size === 0;
+    if (checkAll) checkAll.checked = _txModalRows.length > 0 && _txModalSelected.size === _txModalRows.length;
+  }
+
+  async function _deleteTxIds(ids) {
+    if (!ids.length) return;
+    if (!confirm(`Delete ${ids.length} transaction${ids.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    const res = await VaultStore.deleteTransactions(ids);
+    if (!res.ok) {
+      if (typeof showToast === 'function') showToast(res.error || 'Delete failed.', 'error');
+      return;
+    }
+    const dead = new Set(ids.map(String));
+    _txModalRows = _txModalRows.filter(t => !dead.has(String(t.id)));
+    ids.forEach(id => _txModalSelected.delete(String(id)));
+    _renderTxModalRows();
+    if (typeof showToast === 'function') showToast(`Deleted ${res.deleted ?? ids.length} transaction${res.deleted === 1 ? '' : 's'}.`, 'success');
+  }
+
+  window.openTxHistoryModal = async function (id) {
+    const u = window.usersData.find(x => String(x.id) === String(id));
+    if (!u) return;
+    const overlay = document.getElementById('view-history-modal-overlay');
+    if (!overlay) return;
+    overlay.dataset.userId = id;
+    document.getElementById('view-history-user-name').textContent    = u.name;
+    document.getElementById('view-history-user-balance').textContent = `Current balance: $${u.balance.toLocaleString()} · ${u.email}`;
+    overlay.style.display  = 'flex';
+    overlay.removeAttribute('aria-hidden');
+    _txModalRows = [];
+    _txModalSelected.clear();
+    const tbody = document.getElementById('view-history-tbody');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted2);padding:1.5rem">Loading…</td></tr>';
+    _txModalRows = await VaultStore.adminListUserTransactions(id, 500);
+    _renderTxModalRows();
+  };
+
+  function _closeTxHistoryModal() {
+    const o = document.getElementById('view-history-modal-overlay');
+    if (o) { o.style.display = 'none'; o.setAttribute('aria-hidden', 'true'); }
+    _txModalRows = [];
+    _txModalSelected.clear();
+  }
+
+  document.getElementById('view-history-close')?.addEventListener('click', _closeTxHistoryModal);
+  document.getElementById('view-history-cancel-btn')?.addEventListener('click', _closeTxHistoryModal);
+  document.getElementById('view-history-modal-overlay')?.addEventListener('click', e => {
+    if (e.target === e.currentTarget) _closeTxHistoryModal();
+  });
+  document.getElementById('view-history-check-all')?.addEventListener('change', e => {
+    if (e.target.checked) _txModalRows.forEach(t => _txModalSelected.add(String(t.id)));
+    else                  _txModalSelected.clear();
+    _renderTxModalRows();
+  });
+  document.getElementById('view-history-select-all')?.addEventListener('click', () => {
+    _txModalRows.forEach(t => _txModalSelected.add(String(t.id)));
+    _renderTxModalRows();
+  });
+  document.getElementById('view-history-clear-sel')?.addEventListener('click', () => {
+    _txModalSelected.clear();
+    _renderTxModalRows();
+  });
+  document.getElementById('view-history-bulk-delete')?.addEventListener('click', () => {
+    _deleteTxIds(Array.from(_txModalSelected));
+  });
 
   /* ─── Override KPI counters with real numbers ─────────────── */
   const kpiUsers  = document.getElementById('kpi-users');

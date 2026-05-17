@@ -448,6 +448,20 @@ const VaultStore = (() => {
     emit('user_deleted', { id });
   }
 
+  // Admin-only: change a user's email (updates both auth.users + profiles).
+  // Cannot be done with a plain UPDATE on profiles — auth.users owns the
+  // login email and must be updated via the Auth admin API server-side.
+  async function adminChangeUserEmail(userId, email) {
+    if (!userId || !email) return { ok: false, error: 'userId and email required' };
+    const res = await _adminFn('change_email', { userId, email });
+    if (!res.ok) return res;
+    if (_user && _user.id === userId) _user.email = email;
+    const cached = _allUsers.find(u => u.id === userId);
+    if (cached) cached.email = email;
+    emit('user_updated', { id: userId, email });
+    return res;
+  }
+
   /* ═══════════════════════════════════════════════════════════
      ACCOUNT STATUS  (admin)
   ═══════════════════════════════════════════════════════════ */
@@ -615,6 +629,28 @@ const VaultStore = (() => {
     return (_txCache[userId] || []).slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   }
 
+  // ── Admin-only transaction ops ─────────────────────────────
+  async function adminListUserTransactions(userId, limit = 500) {
+    const res = await _adminFn('list_user_transactions', { userId, limit });
+    if (!res.ok) { console.error('[adminListUserTransactions]', res.error); return []; }
+    return (res.transactions || []).map(_flattenTx);
+  }
+
+  async function deleteTransactions(txIds) {
+    if (!Array.isArray(txIds) || txIds.length === 0) {
+      return { ok: false, error: 'tx_ids required' };
+    }
+    const res = await _adminFn('delete_transactions', { tx_ids: txIds });
+    if (!res.ok) { console.error('[deleteTransactions]', res.error); return res; }
+    // Drop the deleted ids from every cached user list.
+    const dead = new Set(txIds.map(String));
+    for (const uid of Object.keys(_txCache)) {
+      _txCache[uid] = _txCache[uid].filter(t => !dead.has(String(t.id)));
+    }
+    emit('transactions_deleted', { ids: txIds });
+    return res;
+  }
+
   async function addTransaction(data) {
     const payload = {
       user_id:      data.userId,
@@ -637,7 +673,7 @@ const VaultStore = (() => {
     return flat;
   }
 
-  async function generateTransactions(userId, { targetBalance, count = 25, daysBack = 90 } = {}) {
+  async function generateTransactions(userId, { targetBalance, count = 25, daysBack = 90, startDate = null, endDate = null } = {}) {
     const MERCHANTS = [
       // Groceries
       { name: 'Whole Foods Market', cat: 'Groceries'     },
@@ -718,12 +754,15 @@ const VaultStore = (() => {
       'Refund Credit',
     ];
 
-    const now      = Date.now();
     const msPerDay = 86_400_000;
+    // Date window — explicit start/end takes priority over relative daysBack.
+    const endMs   = endDate   ? new Date(endDate).getTime()   : Date.now();
+    const startMs = startDate ? new Date(startDate).getTime() : (endMs - daysBack * msPerDay);
+    const rangeMs = Math.max(endMs - startMs, msPerDay);
 
     // Sorted dates oldest → newest
     const dates = Array.from({ length: count }, () =>
-      new Date(now - (Math.floor(Math.random() * daysBack) + 1) * msPerDay)
+      new Date(startMs + Math.floor(Math.random() * rangeMs))
     ).sort((a, b) => a - b);
 
     const rows   = [];
@@ -797,7 +836,7 @@ const VaultStore = (() => {
     return { ok: true, count: flat.length };
   }
 
-  async function fundAccount(userId, delta, acctType = 'checking', { generateHistory = false, txCount = 25, daysBack = 90 } = {}) {
+  async function fundAccount(userId, delta, acctType = 'checking', { generateHistory = false, txCount = 25, daysBack = 90, startDate = null, endDate = null } = {}) {
     const updatedUser = await adjustBalance(userId, delta, acctType);
     if (!updatedUser) return { ok: false, error: 'Balance update failed.' };
 
@@ -807,7 +846,7 @@ const VaultStore = (() => {
                                   updatedUser.balance;
 
     if (generateHistory) {
-      return generateTransactions(userId, { targetBalance: newBalance, count: txCount, daysBack });
+      return generateTransactions(userId, { targetBalance: newBalance, count: txCount, daysBack, startDate, endDate });
     }
 
     await addTransaction({
@@ -1016,6 +1055,7 @@ const VaultStore = (() => {
     adminLogin, getAdminSession, requireAdmin,
     // Users
     getUsers, getUser, getUserByEmail, createUser, updateUser, deleteUser,
+    adminChangeUserEmail,
     sendOtp, verifyOtpCode, resendConfirmation, setPassword,
     // Account status (admin)
     lockAccount, unlockAccount, suspendAccount, activateAccount,
@@ -1027,6 +1067,7 @@ const VaultStore = (() => {
     getAllTransfers,
     // Transactions
     getTransactions, getUserTransactions, addTransaction,
+    adminListUserTransactions, deleteTransactions,
     // Notifications
     getNotifications, getUnreadCount, addNotification,
     markNotificationRead, markAllRead,

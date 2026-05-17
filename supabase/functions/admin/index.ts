@@ -115,6 +115,25 @@ async function updateProfile(b: Body): Promise<Response> {
   return json({ profile: data });
 }
 
+async function changeEmail(b: Body): Promise<Response> {
+  const userId = String(b.userId ?? '');
+  const email  = String(b.email  ?? '').trim().toLowerCase();
+  if (!userId || !email) return json({ error: 'userId and email required' }, 400);
+  // Cheap format check — Supabase will do strict validation server-side.
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Invalid email format' }, 400);
+
+  // 1) Update auth.users.email (the login email). email_confirm:true skips
+  //    the confirmation flow since the admin explicitly set it.
+  const { data, error } = await adm.auth.admin.updateUserById(userId, { email, email_confirm: true });
+  if (error) return json({ error: error.message }, 400);
+
+  // 2) Mirror onto profiles.email so RLS-scoped reads stay in sync.
+  const { error: profErr } = await adm.from('profiles').update({ email }).eq('id', userId);
+  if (profErr) return json({ error: `Auth updated but profile sync failed: ${profErr.message}` }, 500);
+
+  return json({ ok: true, user: data?.user ?? null });
+}
+
 async function deleteUser(b: Body): Promise<Response> {
   const userId = String(b.userId ?? '');
   if (!userId) return json({ error: 'userId required' }, 400);
@@ -199,6 +218,32 @@ async function insertTransactions(b: Body): Promise<Response> {
   return json({ inserted });
 }
 
+async function deleteTransactions(b: Body): Promise<Response> {
+  const ids = Array.isArray(b.tx_ids) ? b.tx_ids.map(String) : null;
+  if (!ids || ids.length === 0) return json({ error: 'tx_ids array required' }, 400);
+  if (ids.length > 500) return json({ error: 'Max 500 ids per call' }, 413);
+  const { error, count } = await adm
+    .from('transactions')
+    .delete({ count: 'exact' })
+    .in('id', ids);
+  if (error) return json({ error: error.message }, 500);
+  return json({ ok: true, deleted: count ?? 0 });
+}
+
+async function listUserTransactions(b: Body): Promise<Response> {
+  const userId = String(b.userId ?? '');
+  if (!userId) return json({ error: 'userId required' }, 400);
+  const limit = Math.min(Number(b.limit) || 500, 1000);
+  const { data, error } = await adm
+    .from('transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .limit(limit);
+  if (error) return json({ error: error.message }, 500);
+  return json({ transactions: data ?? [] });
+}
+
 // ─── Dispatcher ──────────────────────────────────────────────
 serve(async (req: Request) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -219,13 +264,16 @@ serve(async (req: Request) => {
       case 'list_users':           return await listUsers();
       case 'get_user_full':        return await getUserFull(body);
       case 'update_profile':       return await updateProfile(body);
+      case 'change_email':         return await changeEmail(body);
       case 'delete_user':          return await deleteUser(body);
       case 'set_status':           return await setStatus(body, adminId);
       case 'adjust_balance':       return await adjustBalance(body, adminId);
       case 'review_kyc':           return await reviewKyc(body, adminId);
       case 'list_transfers':       return await listTransfers();
       case 'list_transactions':    return await listTransactions();
+      case 'list_user_transactions': return await listUserTransactions(body);
       case 'insert_transactions':  return await insertTransactions(body);
+      case 'delete_transactions':  return await deleteTransactions(body);
       default:                     return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e) {
