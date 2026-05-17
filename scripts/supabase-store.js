@@ -173,16 +173,23 @@ const VaultStore = (() => {
   // Safety net — guarantee `ready` resolves even if getSession() hangs.
   setTimeout(_resolveReady, 6000);
 
-  // Handle later auth events (token refresh, sign-in/out, multi-tab).
-  // Does NOT gate `ready`.
+  // Handle later auth events. Does NOT gate `ready`.
+  // Only act on explicit events — supabase-js occasionally fires
+  // INITIAL_SESSION or TOKEN_REFRESHED with a transient null session,
+  // and we must NOT wipe the cached _user / _session that the init
+  // flow above already populated on the strength of getSession().
   sb.auth.onAuthStateChange(async (event, session) => {
-    _session = session;
-    if (event === 'SIGNED_OUT' || !session) {
-      _user = null;
+    if (event === 'SIGNED_OUT') {
+      _session = null;
+      _user    = null;
       return;
     }
-    if (event === 'TOKEN_REFRESHED') return; // token only; profile unchanged
-    if (session && (!_user || _user.id !== session.user.id)) {
+    if (event === 'TOKEN_REFRESHED' && session) {
+      _session = session;            // refreshed token only; profile unchanged
+      return;
+    }
+    if (event === 'SIGNED_IN' && session && (!_user || _user.id !== session.user.id)) {
+      _session = session;
       try {
         const [profileRes, accountsRes] = await Promise.all([
           sb.from('profiles').select('*').eq('id', session.user.id).single(),
