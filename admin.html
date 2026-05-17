@@ -186,6 +186,13 @@
       <p style="font-size:0.75rem;color:var(--muted2);margin:-0.25rem 0 0">
         Leave dates blank to default to the last 90 days.
       </p>
+      <label style="display:flex;align-items:flex-start;gap:0.6rem;padding:0.65rem 0.85rem;border:1px solid var(--border2);border-radius:8px;cursor:pointer">
+        <input type="checkbox" id="gen-clear-existing" style="margin-top:0.2rem" />
+        <div>
+          <div style="font-weight:500;font-size:0.875rem">Clear existing transactions first</div>
+          <div style="font-size:0.78rem;color:var(--muted2);margin-top:1px">Delete every prior transaction for this user (reverting balance to zero), then generate a fresh history that lands on the current balance within the chosen date range.</div>
+        </div>
+      </label>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost flex-1" id="gen-history-cancel">Cancel</button>

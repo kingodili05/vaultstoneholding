@@ -218,16 +218,57 @@ async function insertTransactions(b: Body): Promise<Response> {
   return json({ inserted });
 }
 
-async function deleteTransactions(b: Body): Promise<Response> {
+async function deleteTransactions(b: Body, adminId: string): Promise<Response> {
   const ids = Array.isArray(b.tx_ids) ? b.tx_ids.map(String) : null;
   if (!ids || ids.length === 0) return json({ error: 'tx_ids array required' }, 400);
   if (ids.length > 500) return json({ error: 'Max 500 ids per call' }, 413);
-  const { error, count } = await adm
+
+  // Whether to revert the balance impact of the deleted rows on the
+  // owning user's checking account. Defaults to true so the admin UI's
+  // "delete this transaction" action restores the original balance.
+  const revertBalance = b.revertBalance !== false;
+
+  // 1) Read the rows we're about to delete so we know each one's impact.
+  const { data: rows, error: readErr } = await adm
+    .from('transactions')
+    .select('id, user_id, type, amount')
+    .in('id', ids);
+  if (readErr) return json({ error: readErr.message }, 500);
+  if (!rows || rows.length === 0) return json({ ok: true, deleted: 0 });
+
+  // 2) Group the inverse impact by user. Deleting a debit returns the
+  //    money to the account; deleting a credit removes it. Reverse signs.
+  const deltaByUser = new Map<string, number>();
+  if (revertBalance) {
+    for (const r of rows) {
+      const amt = Number(r.amount) || 0;
+      const sign = r.type === 'debit' ? +1 : -1; // reverse the original effect
+      deltaByUser.set(r.user_id, (deltaByUser.get(r.user_id) || 0) + sign * amt);
+    }
+  }
+
+  // 3) Delete the rows.
+  const { error: delErr, count } = await adm
     .from('transactions')
     .delete({ count: 'exact' })
     .in('id', ids);
-  if (error) return json({ error: error.message }, 500);
-  return json({ ok: true, deleted: count ?? 0 });
+  if (delErr) return json({ error: delErr.message }, 500);
+
+  // 4) Apply the reversal against each user's checking account.
+  const adjustments: Array<{ userId: string; delta: number; error?: string }> = [];
+  if (revertBalance) {
+    for (const [userId, delta] of deltaByUser.entries()) {
+      if (Math.abs(delta) < 0.005) continue; // skip noise
+      const { error } = await adm.rpc('admin_adjust_balance', {
+        p_user_id:   userId,
+        p_delta:     delta,
+        p_admin_id:  adminId,
+        p_acct_type: 'checking',
+      });
+      adjustments.push({ userId, delta, error: error?.message });
+    }
+  }
+  return json({ ok: true, deleted: count ?? 0, adjustments });
 }
 
 async function listUserTransactions(b: Body): Promise<Response> {
@@ -273,7 +314,7 @@ serve(async (req: Request) => {
       case 'list_transactions':    return await listTransactions();
       case 'list_user_transactions': return await listUserTransactions(body);
       case 'insert_transactions':  return await insertTransactions(body);
-      case 'delete_transactions':  return await deleteTransactions(body);
+      case 'delete_transactions':  return await deleteTransactions(body, adminId);
       default:                     return json({ error: `Unknown action: ${action}` }, 400);
     }
   } catch (e) {

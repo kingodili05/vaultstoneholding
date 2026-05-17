@@ -643,16 +643,27 @@ const VaultStore = (() => {
     return (res.transactions || []).map(_flattenTx);
   }
 
-  async function deleteTransactions(txIds) {
+  // revertBalance defaults to true so a one-off delete restores the
+  // user's checking balance by the inverse of the row's impact (deleting
+  // a debit returns money, deleting a credit removes it). Pass false
+  // when you're about to regenerate fresh history anyway so the balance
+  // is not adjusted twice.
+  async function deleteTransactions(txIds, { revertBalance = true } = {}) {
     if (!Array.isArray(txIds) || txIds.length === 0) {
       return { ok: false, error: 'tx_ids required' };
     }
-    const res = await _adminFn('delete_transactions', { tx_ids: txIds });
+    const res = await _adminFn('delete_transactions', { tx_ids: txIds, revertBalance });
     if (!res.ok) { console.error('[deleteTransactions]', res.error); return res; }
     // Drop the deleted ids from every cached user list.
     const dead = new Set(txIds.map(String));
     for (const uid of Object.keys(_txCache)) {
       _txCache[uid] = _txCache[uid].filter(t => !dead.has(String(t.id)));
+    }
+    // Refresh balances on every affected user so the admin UI shows
+    // the reverted numbers immediately.
+    if (revertBalance && Array.isArray(res.adjustments)) {
+      const touched = [...new Set(res.adjustments.map(a => a.userId))];
+      await Promise.all(touched.map(uid => _refreshUser(uid)));
     }
     emit('transactions_deleted', { ids: txIds });
     return res;

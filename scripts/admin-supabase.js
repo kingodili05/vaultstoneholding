@@ -234,8 +234,10 @@
     document.getElementById('gen-tx-count').value  = 25;
     const sd = document.getElementById('gen-start-date');
     const ed = document.getElementById('gen-end-date');
+    const cx = document.getElementById('gen-clear-existing');
     if (sd) sd.value = '';
     if (ed) ed.value = '';
+    if (cx) cx.checked = false;
     const overlay = document.getElementById('gen-history-modal-overlay');
     overlay.dataset.userId      = id;
     overlay.dataset.userBalance = u.balance;
@@ -261,6 +263,7 @@
     const txCount       = parseInt(document.getElementById('gen-tx-count')?.value  || 25, 10);
     const startDate     = document.getElementById('gen-start-date')?.value || null;
     const endDate       = document.getElementById('gen-end-date')?.value   || null;
+    const clearFirst    = document.getElementById('gen-clear-existing')?.checked || false;
 
     if (!userId || !(targetBalance > 0)) {
       if (typeof showToast === 'function') showToast('This account has no balance to generate history for.', 'warning');
@@ -270,9 +273,30 @@
       if (typeof showToast === 'function') showToast('Start date must be before end date.', 'warning');
       return;
     }
+    if (clearFirst) {
+      const confirmed = confirm('This will permanently delete every existing transaction for this user, then generate a new history. Continue?');
+      if (!confirmed) return;
+    }
 
     this.disabled    = true;
-    this.textContent = 'Generating…';
+    this.textContent = clearFirst ? 'Clearing & generating…' : 'Generating…';
+
+    // If asked, wipe existing transactions first. We pass revertBalance:false
+    // because the brand-new history below will rebuild the balance to
+    // targetBalance — running both reversals would zero it out twice.
+    if (clearFirst) {
+      const existing = await VaultStore.adminListUserTransactions(userId, 1000);
+      const ids = existing.map(t => t.id);
+      if (ids.length) {
+        const delRes = await VaultStore.deleteTransactions(ids, { revertBalance: false });
+        if (!delRes.ok) {
+          this.disabled = false;
+          this.textContent = 'Generate History';
+          if (typeof showToast === 'function') showToast(delRes.error || 'Failed to clear existing history.', 'error');
+          return;
+        }
+      }
+    }
 
     const result = await VaultStore.generateTransactions(userId, { targetBalance, count: txCount, startDate, endDate });
 
@@ -535,7 +559,7 @@
 
   async function _deleteTxIds(ids) {
     if (!ids.length) return;
-    if (!confirm(`Delete ${ids.length} transaction${ids.length === 1 ? '' : 's'}? This cannot be undone.`)) return;
+    if (!confirm(`Delete ${ids.length} transaction${ids.length === 1 ? '' : 's'}? Account balance will be reverted. This cannot be undone.`)) return;
     const res = await VaultStore.deleteTransactions(ids);
     if (!res.ok) {
       if (typeof showToast === 'function') showToast(res.error || 'Delete failed.', 'error');
@@ -545,7 +569,25 @@
     _txModalRows = _txModalRows.filter(t => !dead.has(String(t.id)));
     ids.forEach(id => _txModalSelected.delete(String(id)));
     _renderTxModalRows();
-    if (typeof showToast === 'function') showToast(`Deleted ${res.deleted ?? ids.length} transaction${res.deleted === 1 ? '' : 's'}.`, 'success');
+    // Mirror the reverted balance into window.usersData so the user row
+    // and the modal header line both update without a full page reload.
+    if (Array.isArray(res.adjustments)) {
+      const fresh = VaultStore.getUsers();
+      res.adjustments.forEach(adj => {
+        const cached = fresh.find(u => u.id === adj.userId);
+        if (cached) {
+          const row = window.usersData?.find(x => String(x.id) === String(adj.userId));
+          if (row) row.balance = cached.balance;
+        }
+      });
+      if (typeof renderUsersTable === 'function') renderUsersTable();
+      const overlay  = document.getElementById('view-history-modal-overlay');
+      const headerId = overlay?.dataset.userId;
+      const headerU  = window.usersData?.find(x => String(x.id) === String(headerId));
+      const balEl    = document.getElementById('view-history-user-balance');
+      if (headerU && balEl) balEl.textContent = `Current balance: $${headerU.balance.toLocaleString()} · ${headerU.email}`;
+    }
+    if (typeof showToast === 'function') showToast(`Deleted ${res.deleted ?? ids.length} · balance reverted.`, 'success');
   }
 
   window.openTxHistoryModal = async function (id) {
