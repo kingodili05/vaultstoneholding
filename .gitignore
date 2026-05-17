@@ -4,3 +4,20 @@ tests/__pycache__/
 *.pyc
 .DS_Store
 test_*_failure.log
+
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+*.secret.json
+
+# Test artifacts (may contain JWTs / screenshots of authenticated UI)
+test_output.txt
+test_admin.png
+drive_out.txt
+
+# Supabase CLI scratch
+supabase/.temp/
+
+# Editor / personal config
+.claude/settings.local.json

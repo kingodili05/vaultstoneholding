@@ -9,32 +9,26 @@ if (window._sb) { /* already initialised — do nothing */ }
 else {
 
 const SUPABASE_URL = 'https://wkkwwoalovuwhgvzprov.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indra3d3b2Fsb3Z1d2hndnpwcm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY5NDgxMjMsImV4cCI6MjA5MjUyNDEyM30.2BdduVQN4X_Fa54Um8f5KAcmrbmqKCwAO7PKU3QDU98';
+// Publishable key (replaces legacy anon JWT). Public-safe — RLS-gated reads only.
+const SUPABASE_ANON_KEY = 'sb_publishable_rFFOekzm14plccWWozXxHQ_v9YgM73k';
 
-// Service-role key — bypasses RLS. Used only for admin dashboard operations.
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indra3d3b2Fsb3Z1d2hndnpwcm92Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njk0ODEyMywiZXhwIjoyMDkyNTI0MTIzfQ.0bnCaOPkaI7yjz3ij3n1VxDnuJ6nXCkyMD13435Mxg0';
+// NOTE: the service-role key MUST NOT live in client code. All privileged
+// (RLS-bypassing) ops go through the `admin` Supabase Edge Function, which
+// verifies the caller's JWT and looks up profiles.role === 'admin' before
+// touching the service-role client server-side.
+// If you previously had a SUPABASE_SERVICE_KEY constant here, rotate it
+// immediately in the Supabase dashboard — anyone who loaded the page has it.
 
 window._sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
     persistSession:     true,
     autoRefreshToken:   true,
     detectSessionInUrl: true,
+    // navigator.locks-based default lock can hang getSession() across page
+    // navigations on some browsers. Replace with a no-op since we are
+    // single-tab and singleton-guarded above.
+    lock: (_name, _acquireTimeout, fn) => fn(),
   },
 });
-
-// Admin client: second instance is intentional (service-role, no session persistence).
-// persistSession:false prevents a second GoTrueClient from managing token storage,
-// which is what causes the "Multiple GoTrueClient instances" warning when two
-// session-persisting clients exist simultaneously.
-if (SUPABASE_SERVICE_KEY) {
-  window._sbAdmin = window.supabase.createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-    auth: {
-      persistSession:     false,
-      autoRefreshToken:   false,
-      detectSessionInUrl: false,
-      storageKey:         'sb-vaultstone-admin',
-    },
-  });
-}
 
 } // end singleton guard

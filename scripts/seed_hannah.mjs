@@ -3,15 +3,28 @@
  * with ~2.5M checking balance, 40 historical transactions, and executes one
  * outbound transfer to prove the rails work end-to-end.
  *
- *   node scripts/seed_hannah.mjs
+ *   Required env vars (loaded from .env in project root):
+ *     SUPABASE_URL
+ *     SUPABASE_SERVICE_KEY
+ *     HANNAH_PASSWORD       (optional, defaults to random 24-char string)
+ *
+ *   Usage:
+ *     node --env-file=.env scripts/seed_hannah.mjs
  */
 import { createClient } from '@supabase/supabase-js';
+import { randomBytes } from 'node:crypto';
 
-const SUPABASE_URL         = 'https://wkkwwoalovuwhgvzprov.supabase.co';
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indra3d3b2Fsb3Z1d2hndnpwcm92Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njk0ODEyMywiZXhwIjoyMDkyNTI0MTIzfQ.0bnCaOPkaI7yjz3ij3n1VxDnuJ6nXCkyMD13435Mxg0';
+const SUPABASE_URL         = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('FATAL: SUPABASE_URL and SUPABASE_SERVICE_KEY env vars are required.');
+  console.error('Create a .env file in the project root and run with: node --env-file=.env scripts/seed_hannah.mjs');
+  process.exit(1);
+}
 
 const HANNAH_EMAIL    = 'hannah.baron2026@gmail.com';
-const HANNAH_PASSWORD = 'Hannah!Secure#2026Bank';
+const HANNAH_PASSWORD = process.env.HANNAH_PASSWORD
+  || randomBytes(18).toString('base64url');
 const HANNAH_NAME     = 'Hannah Baron';
 const TARGET_BALANCE  = 2_500_000;
 

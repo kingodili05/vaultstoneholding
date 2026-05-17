@@ -1327,11 +1327,9 @@ window.updateAdminKPIs = function () {
    INIT
 ─────────────────────────────────────────── */
 
-// Set admin session synchronously at the top level so admin-supabase.js
-// can read it after VaultStore.ready resolves (before DOMContentLoaded fires).
-if (typeof VaultStore !== 'undefined') {
-  VaultStore.adminLogin('Vaultstone@Admin2024');
-}
+// Admin authorization is now driven by the logged-in Supabase user's
+// `profiles.role`. Sign in via /login.html with an account where role='admin'.
+// requireAdmin() in admin-supabase.js will redirect otherwise.
 
 document.addEventListener('DOMContentLoaded', () => {
   initNav();

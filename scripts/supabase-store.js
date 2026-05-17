@@ -9,8 +9,36 @@
 const VaultStore = (() => {
 
   const sb = window._sb;
-  // Admin client: uses service-role key (bypasses RLS). Falls back to anon if not configured.
-  const _adm = () => window._sbAdmin || sb;
+
+  // ─── Admin Edge Function bridge ─────────────────────────────
+  // All service-role ops now route through the `admin` Edge Function.
+  // The function verifies caller JWT and profiles.role === 'admin'
+  // server-side; no service-role key exists on the client.
+  function _supabaseUrl() {
+    // sb.supabaseUrl set by createClient — keeps URL out of duplicate consts.
+    return (sb && sb.supabaseUrl) || (window._SUPABASE_URL || '');
+  }
+
+  async function _adminFn(action, payload = {}) {
+    const token = _session?.access_token;
+    if (!token) {
+      return { ok: false, error: 'Not authenticated' };
+    }
+    const res = await fetch(`${_supabaseUrl()}/functions/v1/admin`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ action, ...payload }),
+    });
+    let json = null;
+    try { json = await res.json(); } catch { /* non-JSON */ }
+    if (!res.ok) {
+      return { ok: false, error: (json && json.error) || `HTTP ${res.status}` };
+    }
+    return { ok: true, ...(json || {}) };
+  }
 
   /* ── In-memory cache ─────────────────────────────────────── */
   let _user    = null;   // current user profile (flat object matching old schema)
@@ -112,23 +140,17 @@ const VaultStore = (() => {
   // redirect the user to login on every reload.
   let _readyResolve;
   const ready = new Promise(r => { _readyResolve = r; });
-  let _readySources = 0;
-
-  function _markReadySource() {
-    _readySources++;
-    if (_readySources >= 2 && _readyResolve) {
-      const fn = _readyResolve;
-      _readyResolve = null;
-      fn();
-    }
+  function _resolveReady() {
+    if (_readyResolve) { const fn = _readyResolve; _readyResolve = null; fn(); }
   }
 
-  // Source 1 — getSession() (authoritative; performs token refresh via network)
+  // Single deterministic init: getSession → load profile → resolve.
+  // Resolves as soon as the network round-trip completes (~1s typical).
   (async () => {
     try {
       const { data: { session } } = await sb.auth.getSession();
-      _session = _session || session;
-      if (session && !_user) {
+      _session = session;
+      if (session) {
         const [profileRes, accountsRes] = await Promise.all([
           sb.from('profiles').select('*').eq('id', session.user.id).single(),
           sb.from('accounts').select('*').eq('user_id', session.user.id),
@@ -142,21 +164,24 @@ const VaultStore = (() => {
           .then(() => {});
       }
     } catch (e) {
-      console.error('[VaultStore] getSession error:', e);
+      console.error('[VaultStore] init error:', e);
+    } finally {
+      _resolveReady();
     }
-    _markReadySource();
   })();
 
-  // Source 2 — onAuthStateChange (INITIAL_SESSION fires fast from localStorage;
-  // also handles TOKEN_REFRESHED, SIGNED_OUT, and subsequent sign-in/out)
-  let _firstAuthEvent = false;
+  // Safety net — guarantee `ready` resolves even if getSession() hangs.
+  setTimeout(_resolveReady, 6000);
+
+  // Handle later auth events (token refresh, sign-in/out, multi-tab).
+  // Does NOT gate `ready`.
   sb.auth.onAuthStateChange(async (event, session) => {
     _session = session;
-    if (event === 'SIGNED_OUT') {
+    if (event === 'SIGNED_OUT' || !session) {
       _user = null;
-      if (!_firstAuthEvent) { _firstAuthEvent = true; _markReadySource(); }
       return;
     }
+    if (event === 'TOKEN_REFRESHED') return; // token only; profile unchanged
     if (session && (!_user || _user.id !== session.user.id)) {
       try {
         const [profileRes, accountsRes] = await Promise.all([
@@ -169,17 +194,8 @@ const VaultStore = (() => {
       } catch (e) {
         console.error('[VaultStore] auth state error:', e);
       }
-    } else if (!session) {
-      _user = null;
     }
-    if (!_firstAuthEvent) { _firstAuthEvent = true; _markReadySource(); }
   });
-
-  // Hard timeout — prevent permanent hang if a source never fires (e.g. offline)
-  setTimeout(() => {
-    _readySources = Math.max(_readySources, 2);
-    if (_readyResolve) { const fn = _readyResolve; _readyResolve = null; fn(); }
-  }, 8000);
 
   /* ── Emit helper (fires local listeners only) ────────────── */
   const _listeners = {};
@@ -259,23 +275,25 @@ const VaultStore = (() => {
     return _user;
   }
 
+  // Admin = real Supabase auth user whose profiles.role === 'admin'.
+  // The hardcoded-password / localStorage backdoor has been removed because
+  // it granted UI access without granting the Edge Function any real JWT,
+  // leaving admin pages broken anyway. Promote a real user with:
+  //   UPDATE profiles SET role='admin' WHERE id='<auth.users.id>';
   function _hasAdminSession() {
-    if (_user && _user.role === 'admin') return true;
-    try { return !!(JSON.parse(localStorage.getItem('vs_admin_session') || 'null')?.adminId); } catch { return false; }
+    return !!(_user && _user.role === 'admin');
   }
 
-  async function adminLogin(password) {
-    if (password === 'Vaultstone@Admin2024') {
-      localStorage.setItem('vs_admin_session', JSON.stringify({ adminId: 'admin_root', loginAt: new Date().toISOString() }));
-      return true;
-    }
-    if (!_user) return false;
-    return _user.role === 'admin';
+  async function adminLogin(_passwordIgnored) {
+    // Kept for backwards compatibility with admin.js DOMContentLoaded handler.
+    // Real auth happens via the normal login() flow; role check below.
+    return _hasAdminSession();
   }
 
   function getAdminSession() {
-    if (_user && _user.role === 'admin') return { adminId: _user.id, loginAt: new Date().toISOString() };
-    try { return JSON.parse(localStorage.getItem('vs_admin_session') || 'null'); } catch { return null; }
+    return _hasAdminSession()
+      ? { adminId: _user.id, loginAt: new Date().toISOString() }
+      : null;
   }
 
   function requireAdmin(redirectTo = 'login.html') {
@@ -289,21 +307,13 @@ const VaultStore = (() => {
   ═══════════════════════════════════════════════════════════ */
   async function _loadAllUsers() {
     if (!_hasAdminSession()) return [];
-    // Fetch profiles and accounts as separate flat queries — avoids dependency on
-    // PostgREST schema-cache foreign-key relationships which can silently fail.
-    const [profilesRes, accountsRes] = await Promise.all([
-      _adm().from('profiles').select('*').order('created_at', { ascending: false }),
-      _adm().from('accounts').select('*'),
-    ]);
-    if (profilesRes.error) {
-      console.error('[VaultStore] _loadAllUsers profiles error:', profilesRes.error.message);
+    const res = await _adminFn('list_users');
+    if (!res.ok) {
+      console.error('[VaultStore] _loadAllUsers error:', res.error);
       return [];
     }
-    if (accountsRes.error) {
-      console.warn('[VaultStore] _loadAllUsers accounts error (non-fatal):', accountsRes.error.message);
-    }
-    const accounts = accountsRes.data || [];
-    _allUsers = (profilesRes.data || []).map(p => {
+    const accounts = res.accounts || [];
+    _allUsers = (res.profiles || []).map(p => {
       const userAccounts = accounts.filter(a => a.user_id === p.id);
       return _flattenProfile(p, userAccounts);
     });
@@ -403,21 +413,22 @@ const VaultStore = (() => {
 
     if (Object.keys(mapped).length === 0) return _user;
 
-    const { data, error } = await _adm().from('profiles').update(mapped).eq('id', id).select('*').single();
-    if (error) { console.error('[updateUser]', error); return null; }
+    const res = await _adminFn('update_profile', { userId: id, updates: mapped });
+    if (!res.ok) { console.error('[updateUser]', res.error); return null; }
 
     if (_user && _user.id === id) {
-      const [accountsRes] = await Promise.all([
-        _adm().from('accounts').select('*').eq('user_id', id),
-      ]);
-      _user = _flattenProfile(data, accountsRes.data || []);
-      emit('user_updated', _user);
+      const full = await _adminFn('get_user_full', { userId: id });
+      if (full.ok && full.profile) {
+        _user = _flattenProfile(full.profile, full.accounts || []);
+        emit('user_updated', _user);
+      }
     }
     return _user;
   }
 
   async function deleteUser(id) {
-    await _adm().from('profiles').delete().eq('id', id);
+    const res = await _adminFn('delete_user', { userId: id });
+    if (!res.ok) { console.error('[deleteUser]', res.error); return; }
     _allUsers = _allUsers.filter(u => u.id !== id);
     emit('user_deleted', { id });
   }
@@ -425,49 +436,22 @@ const VaultStore = (() => {
   /* ═══════════════════════════════════════════════════════════
      ACCOUNT STATUS  (admin)
   ═══════════════════════════════════════════════════════════ */
-  async function lockAccount(userId) {
-    const res = await _adm().rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'locked', p_admin_id: _user?.id,
-    });
+  async function _setStatus(userId, status) {
+    const res = await _adminFn('set_status', { userId, status });
     await _refreshUser(userId);
     emit('account_updated', { userId });
-    return res.data;
+    return res.ok ? res.result : null;
   }
 
-  async function unlockAccount(userId) {
-    const res = await _adm().rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'active', p_admin_id: _user?.id,
-    });
-    await _refreshUser(userId);
-    emit('account_updated', { userId });
-    return res.data;
-  }
-
-  async function suspendAccount(userId) {
-    const res = await _adm().rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'suspended', p_admin_id: _user?.id,
-    });
-    await _refreshUser(userId);
-    emit('account_updated', { userId });
-    return res.data;
-  }
-
-  async function activateAccount(userId) {
-    const res = await _adm().rpc('admin_set_status', {
-      p_user_id: userId, p_status: 'active', p_admin_id: _user?.id,
-    });
-    await _refreshUser(userId);
-    emit('account_updated', { userId });
-    return res.data;
-  }
+  async function lockAccount(userId)     { return _setStatus(userId, 'locked');    }
+  async function unlockAccount(userId)   { return _setStatus(userId, 'active');    }
+  async function suspendAccount(userId)  { return _setStatus(userId, 'suspended'); }
+  async function activateAccount(userId) { return _setStatus(userId, 'active');    }
 
   async function _refreshUser(userId) {
-    const [profileRes, accountsRes] = await Promise.all([
-      _adm().from('profiles').select('*').eq('id', userId).single(),
-      _adm().from('accounts').select('*').eq('user_id', userId),
-    ]);
-    if (!profileRes.data) return;
-    const flat = _flattenProfile(profileRes.data, accountsRes.data || []);
+    const res = await _adminFn('get_user_full', { userId });
+    if (!res.ok || !res.profile) return;
+    const flat = _flattenProfile(res.profile, res.accounts || []);
     const idx  = _allUsers.findIndex(u => u.id === userId);
     if (idx > -1) _allUsers[idx] = flat;
     if (_user && _user.id === userId) _user = flat;
@@ -484,12 +468,8 @@ const VaultStore = (() => {
   }
 
   async function adjustBalance(userId, delta, acctType = 'checking') {
-    const { data } = await _adm().rpc('admin_adjust_balance', {
-      p_user_id:   userId,
-      p_delta:     delta,
-      p_admin_id:  _user?.id,
-      p_acct_type: acctType,
-    });
+    const res = await _adminFn('adjust_balance', { userId, delta, acctType });
+    if (!res.ok) { console.error('[adjustBalance]', res.error); return null; }
     await _refreshUser(userId);
     const u = getUser(userId);
     emit('balance_updated', { userId, balance: u?.balance });
@@ -509,10 +489,9 @@ const VaultStore = (() => {
   }
 
   async function _loadAllTransfers() {
-    const { data } = await _adm().from('transfers')
-      .select('*')
-      .order('created_at', { ascending: false });
-    return (data || []).map(_flattenTransfer);
+    const res = await _adminFn('list_transfers');
+    if (!res.ok) { console.error('[_loadAllTransfers]', res.error); return []; }
+    return (res.transfers || []).map(_flattenTransfer);
   }
 
   function getTransfers() {
@@ -634,9 +613,9 @@ const VaultStore = (() => {
       transfer_id:  data.transferId  || null,
       date:         data.date        || new Date().toISOString(),
     };
-    const { data: row, error } = await _adm().from('transactions').insert(payload).select().single();
-    if (error) { console.error('[addTransaction]', error); return null; }
-    const flat = _flattenTx(row);
+    const res = await _adminFn('insert_transactions', { rows: [payload] });
+    if (!res.ok || !res.inserted?.[0]) { console.error('[addTransaction]', res.error); return null; }
+    const flat = _flattenTx(res.inserted[0]);
     if (!_txCache[data.userId]) _txCache[data.userId] = [];
     _txCache[data.userId].unshift(flat);
     emit('transaction_added', flat);
@@ -788,13 +767,13 @@ const VaultStore = (() => {
       date:         r.date.toISOString(),
     }));
 
-    // Batch inserts in chunks of 50 to stay within Supabase limits
+    // Batch inserts via Edge Function (function caps at 500/call; chunk to stay below)
     const CHUNK    = 50;
     const inserted = [];
     for (let i = 0; i < payloads.length; i += CHUNK) {
-      const { data, error } = await _adm().from('transactions').insert(payloads.slice(i, i + CHUNK)).select();
-      if (error) { console.error('[generateTransactions]', error); return { ok: false, error: error.message }; }
-      inserted.push(...(data || []));
+      const res = await _adminFn('insert_transactions', { rows: payloads.slice(i, i + CHUNK) });
+      if (!res.ok) { console.error('[generateTransactions]', res.error); return { ok: false, error: res.error }; }
+      inserted.push(...(res.inserted || []));
     }
 
     const flat = inserted.map(_flattenTx);
@@ -914,28 +893,19 @@ const VaultStore = (() => {
   }
 
   async function approveKYC(userId, submissionId = null) {
-    const { data } = await sb.rpc('admin_review_kyc', {
-      p_user_id:       userId,
-      p_action:        'approve',
-      p_admin_id:      _user.id,
-      p_submission_id: submissionId,
-    });
+    const res = await _adminFn('review_kyc', { userId, decision: 'approve', submissionId });
+    if (!res.ok) { console.error('[approveKYC]', res.error); return null; }
     await _refreshUser(userId);
     emit('kyc_approved', { userId });
-    return data;
+    return res.result;
   }
 
   async function rejectKYC(userId, reason = 'Documents could not be verified.', submissionId = null) {
-    const { data } = await sb.rpc('admin_review_kyc', {
-      p_user_id:       userId,
-      p_action:        'reject',
-      p_admin_id:      _user.id,
-      p_submission_id: submissionId,
-      p_reason:        reason,
-    });
+    const res = await _adminFn('review_kyc', { userId, decision: 'reject', submissionId, reason });
+    if (!res.ok) { console.error('[rejectKYC]', res.error); return null; }
     await _refreshUser(userId);
     emit('kyc_rejected', { userId, reason });
-    return data;
+    return res.result;
   }
 
   /* ═══════════════════════════════════════════════════════════
@@ -1002,8 +972,7 @@ const VaultStore = (() => {
     const [users, transfers, txs] = await Promise.all([
       _loadAllUsers(),
       _loadAllTransfers(),
-      _adm().from('transactions').select('*').order('date', { ascending: false }).limit(200)
-        .then(({ data }) => (data || []).map(_flattenTx)),
+      _adminFn('list_transactions').then(r => (r.ok ? (r.transactions || []).map(_flattenTx) : [])),
     ]);
     // Cache all user transactions globally
     txs.forEach(tx => {

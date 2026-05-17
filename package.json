@@ -23,5 +23,8 @@
   "homepage": "https://github.com/kingodili05/vaultstoneholding#readme",
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4"
+  },
+  "devDependencies": {
+    "playwright": "^1.60.0"
   }
 }
