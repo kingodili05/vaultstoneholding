@@ -413,17 +413,32 @@ const VaultStore = (() => {
 
     if (Object.keys(mapped).length === 0) return _user;
 
-    const res = await _adminFn('update_profile', { userId: id, updates: mapped });
-    if (!res.ok) { console.error('[updateUser]', res.error); return null; }
-
-    if (_user && _user.id === id) {
-      const full = await _adminFn('get_user_full', { userId: id });
-      if (full.ok && full.profile) {
-        _user = _flattenProfile(full.profile, full.accounts || []);
+    // Self-update (e.g. user editing own profile on dashboard settings):
+    // go direct via RLS-gated UPDATE — the admin Edge Function rejects
+    // non-admin callers, which would silently break the settings form.
+    const isSelf = !!(_user && _user.id === id);
+    if (isSelf) {
+      // Strip privileged columns the user must not be able to set on themself.
+      delete mapped.role;
+      delete mapped.status;
+      delete mapped.kyc_status;
+      const { error } = await sb.from('profiles').update(mapped).eq('id', id);
+      if (error) { console.error('[updateUser self]', error); return null; }
+      const [profileRes, accountsRes] = await Promise.all([
+        sb.from('profiles').select('*').eq('id', id).single(),
+        sb.from('accounts').select('*').eq('user_id', id),
+      ]);
+      if (profileRes.data) {
+        _user = _flattenProfile(profileRes.data, accountsRes.data || []);
         emit('user_updated', _user);
       }
+      return _user;
     }
-    return _user;
+
+    // Admin editing someone else — route through the privileged Edge Function.
+    const res = await _adminFn('update_profile', { userId: id, updates: mapped });
+    if (!res.ok) { console.error('[updateUser]', res.error); return null; }
+    return null;
   }
 
   async function deleteUser(id) {
