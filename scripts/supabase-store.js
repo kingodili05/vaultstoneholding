@@ -783,15 +783,13 @@ const VaultStore = (() => {
       new Date(startMs + Math.floor(Math.random() * rangeMs))
     ).sort((a, b) => a - b);
 
-    // Realistic mix: ~60% credits, ~40% debits, biased credit-heavy
-    // early so the balance grows naturally before settling near target.
-    // Each credit is sized to fill the gap toward the target across
-    // remaining credits, while debits stay small ($20 floor, capped
-    // around 0.03% of target). The result climbs along a roughly linear
-    // trajectory to targetBalance with no oversized correction at the
-    // end — only a small final-row tweak.
-    const rows   = [];
-    let running  = 0;
+    // Real bank statements don't start from $0 — they carry forward the
+    // balance from a prior period. Mirror that here: row 0 is a single
+    // "Balance Carried Forward" credit that primes the running balance
+    // to ~85% of target (random within 80–92%), so subsequent rows look
+    // like normal in-period activity ending at targetBalance instead of
+    // a slow ramp from zero followed by a giant correction credit.
+    const rows = [];
 
     function _pickIncome() {
       const m = INCOMES[Math.floor(Math.random() * INCOMES.length)];
@@ -802,13 +800,25 @@ const VaultStore = (() => {
       return { merchant: m.name, category: m.cat };
     }
 
-    // 1) Pre-allocate types so we know how many credits will sum to target.
-    //    First row is always a credit (account starts at 0; it must go up).
-    const types = ['credit'];
-    for (let i = 1; i < count; i++) {
-      const progress    = i / count;
-      const creditProb  = 0.75 - progress * 0.40; // 0.75 early → 0.35 late
-      types.push(Math.random() < creditProb ? 'credit' : 'debit');
+    const startBal = parseFloat((targetBalance * (0.80 + Math.random() * 0.12)).toFixed(2));
+    rows.push({
+      type:        'credit',
+      amount:      startBal,
+      merchant:    'Balance Carried Forward',
+      category:    'Transfer',
+      description: 'Balance Carried Forward',
+      date:        dates[0],
+      balAfter:    startBal,
+    });
+    let running = startBal;
+
+    // Allocate types for the remaining rows: ~55% credits, ~45% debits.
+    // No early-credit bias is needed now since the primer above already
+    // put us most of the way to target.
+    const remaining = count - 1;
+    const types = [];
+    for (let i = 0; i < remaining; i++) {
+      types.push(Math.random() < 0.55 ? 'credit' : 'debit');
     }
 
     // Realistic debit window — clamped so small accounts still produce
@@ -816,28 +826,28 @@ const VaultStore = (() => {
     const debitFloor = Math.max(20, targetBalance * 0.00005);
     const debitCeil  = Math.max(debitFloor * 4, Math.min(targetBalance * 0.0003, 800));
 
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < remaining; i++) {
       let type    = types[i];
       let amount  = 0;
       let merchant, category;
 
       if (type === 'debit') {
         amount = debitFloor + Math.random() * (debitCeil - debitFloor);
-        // Never overdraw the running balance.
         if (running - amount < 0) amount = Math.max(0, running - 0.01);
-        // If clamping killed the debit, promote to a small credit so
-        // the row still carries weight.
         if (amount < 1) { type = 'credit'; amount = debitFloor; }
       }
 
       if (type === 'credit') {
-        // How many credits (including this one) remain to bridge the gap?
         const creditsLeft = types.slice(i).filter(t => t === 'credit').length || 1;
         const gap         = targetBalance - running;
         const avgNeeded   = gap / creditsLeft;
-        // ±35% jitter around the needed average, floored at $50.
-        const jitter      = avgNeeded * 0.35 * (Math.random() - 0.5) * 2;
+        const jitter      = Math.abs(avgNeeded) * 0.45 * (Math.random() - 0.5) * 2;
         amount            = Math.max(50, avgNeeded + jitter);
+        // If gap is already very small, fall back to a tier-scaled amount
+        // so the row still feels like an in-period transaction.
+        if (avgNeeded < debitCeil) {
+          amount = debitCeil * (0.5 + Math.random() * 2.5); // small-medium credit
+        }
       }
 
       amount = parseFloat(amount.toFixed(2));
@@ -845,7 +855,7 @@ const VaultStore = (() => {
       else                   ({ merchant, category } = _pickMerchant());
 
       running = parseFloat((running + (type === 'credit' ? amount : -amount)).toFixed(2));
-      rows.push({ type, amount, merchant, category, description: merchant, date: dates[i], balAfter: Math.max(0, running) });
+      rows.push({ type, amount, merchant, category, description: merchant, date: dates[i + 1], balAfter: Math.max(0, running) });
     }
 
     // Tiny final correction on the last row so we land exactly on target.
