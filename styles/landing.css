@@ -1020,3 +1020,71 @@ p { max-width: 65ch; color: var(--stone-700); }
   .reveal-rule::before { transform: scaleX(1); }
   html { scroll-behavior: auto; }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   ADDITIONS — skip-link, architecture index, button press,
+   hover gating. Appended in the /impeccable pass.
+─────────────────────────────────────────────────────────────── */
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+}
+.skip-link:focus {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 9999;
+  background: var(--stone-900);
+  color: var(--stone-50);
+  padding: 12px 18px;
+  border: 1px solid var(--terra);
+  font-family: var(--font-body);
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.architecture__index {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: var(--type-caption);
+  letter-spacing: 0.32em;
+  color: var(--terra);
+  display: inline-block;
+  min-width: 3ch;
+  padding-top: 4px;
+}
+
+.btn,
+button,
+.closing__action {
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.btn:active:not(:disabled),
+button:active:not(:disabled),
+.closing__action:active {
+  transform: scale(0.98);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn, button, .closing__action { transition: none; }
+  .btn:active, button:active, .closing__action:active { transform: none; }
+}
+
+@media (hover: none) {
+  .btn:hover,
+  .closing__action:hover,
+  .offering:hover,
+  .architecture__item:hover {
+    transform: none;
+  }
+}
