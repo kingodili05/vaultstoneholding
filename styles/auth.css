@@ -30,7 +30,7 @@
   --glass-border:   rgba(255, 255, 255, 0.06);
   --glass-blur:     24px;
 
-  --font-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-base: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
 
   --radius-sm:  6px;
   --radius-md:  12px;
@@ -71,7 +71,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
 .auth-split {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
 }
 
@@ -479,7 +479,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   cursor: pointer;
   border: none;
   outline: none;
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
   position: relative;
   overflow: hidden;
 }
@@ -637,7 +637,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
    ============================================================ */
 .signup-page {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -722,7 +722,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   color: var(--muted);
   position: relative;
   z-index: 1;
-  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), background-color 0.35s cubic-bezier(0.4,0,0.2,1), border-color 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 
 .step-progress__item.active .step-progress__circle {
@@ -783,7 +783,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   border: 1.5px solid rgba(255,255,255,0.07);
   border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.22s cubic-bezier(0.4,0,0.2,1), background-color 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.22s cubic-bezier(0.4,0,0.2,1);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -863,7 +863,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.22s ease;
+  transition: transform 0.22s ease, background-color 0.22s ease, opacity 0.22s ease;
 }
 
 .account-type-card__check svg {
@@ -946,7 +946,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   justify-content: center;
   flex-shrink: 0;
   margin-top: 1px;
-  transition: all 0.18s ease;
+  transition: transform 0.18s ease, background-color 0.18s ease, opacity 0.18s ease;
 }
 
 .checkbox-field__box svg {
@@ -1036,7 +1036,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   text-align: center;
   outline: none;
   caret-color: var(--accent);
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
   -webkit-appearance: none;
   appearance: none;
 }
@@ -1069,7 +1069,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   font-weight: 500;
   padding: 15px 24px;
   border-radius: var(--radius-md);
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
 }
 
 .btn--ghost:hover {
@@ -1286,7 +1286,7 @@ input[type="date"].field-group__input::-webkit-calendar-picker-indicator {
   }
 
   .auth-form-panel {
-    min-height: 100vh;
+    min-height: 100dvh;
     padding: 32px 20px;
     /* canvas behind on mobile for login */
     position: relative;

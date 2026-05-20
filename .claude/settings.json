@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit -m ' *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/login.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/signup.html)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:8080/kyc.html)",
+      "Bash(python -m pytest tests/test_auth_flow_audit.py -v --tb=short)",
+      "Bash(python -m pytest tests/test_auth_flow_audit.py -v --tb=line)",
+      "Bash(python -m pytest tests/test_auth_flow_audit.py::test_login_success -v -s)",
+      "Bash(python -m pytest tests/test_auth_flow_audit.py::test_login_success -v)",
+      "Bash(python -m pytest tests/test_auth_flow_audit.py::test_signup_to_kyc -v --tb=line)",
+      "Bash(python -m pytest tests/ -v --tb=line)",
+      "Bash(python -m pytest tests/test_loginfix_F2_F3_F4_F5_F6_F10.py::test_F2_oauth_invokes_signInWithOAuth -v --tb=short)",
+      "Bash(python -m pytest tests/ --tb=line)",
+      "Bash(rm -f test_signup_failure.log test_login_failure.log)",
+      "Bash(curl -s http://localhost:8080/login.html)",
+      "Bash(npm init *)",
+      "Bash(node scripts/seed_hannah.mjs)",
+      "Bash(git rm *)",
+      "Bash(node scripts/verify_hannah.mjs)",
+      "Bash(node scripts/drive_login_hannah.mjs)",
+      "Bash(python scripts/drive_login_hannah.py)",
+      "Bash(findstr /n \".\")",
+      "Bash(findstr /r \"^[1-4][0-9]:\" /b /v)",
+      "Bash(cat \"/c/Users/HP/AppData/Local/Temp/claude/c--Users-HP-Downloads-Bankwebsite/96194514-6af3-4113-bfa2-ad1e5daacf46/tasks/b0xxhxrmy.output\" 2>/dev/null | head -50)",
+      "Read(//c/Users/HP/AppData/Local/Temp/claude/c--Users-HP-Downloads-Bankwebsite/96194514-6af3-4113-bfa2-ad1e5daacf46/tasks/**)",
+      "Bash(echo \"DONE exit=$?\")"
+    ]
+  }
+}

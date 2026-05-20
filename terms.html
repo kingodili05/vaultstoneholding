@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles/main.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23b25b3a'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%23faf4ec'/></svg>" />
 
   <style>
     [id] { scroll-margin-top: calc(var(--nav-height) + 2rem); }
@@ -62,7 +62,7 @@
       text-decoration: none; padding: 0.4rem 0.75rem;
       border-left: 2px solid transparent;
       border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-      transition: all var(--transition-fast); line-height: 1.4;
+      transition: transform var(--transition-fast), background-color var(--transition-fast), color var(--transition-fast); line-height: 1.4;
     }
     .legal-toc__link:hover { color: var(--text-secondary); border-left-color: var(--accent-border); background: rgba(255,255,255,0.02); }
     .legal-toc__link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-dim); }

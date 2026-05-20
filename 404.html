@@ -10,11 +10,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles/main.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23C9A84C'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%230A0E1A'/></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23b25b3a'/><path d='M8 10h16v2H8zM8 15h16v2H8zM8 20h10v2H8z' fill='%23faf4ec'/></svg>" />
 
   <style>
     .not-found {
-      min-height: 100vh;
+      min-height: 100dvh;
       background: var(--primary-deep);
       display: flex;
       flex-direction: column;
@@ -159,7 +159,7 @@
       animation: float-particle linear infinite;
     }
     @keyframes float-particle {
-      0%   { opacity: 0; transform: translateY(100vh) scale(0); }
+      0%   { opacity: 0; transform: translateY(100dvh) scale(0.4); }
       10%  { opacity: 0.6; }
       90%  { opacity: 0.3; }
       100% { opacity: 0; transform: translateY(-10vh) scale(1); }

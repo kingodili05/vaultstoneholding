@@ -25,7 +25,7 @@
   --glass-bg:       rgba(17, 24, 39, 0.80);
   --glass-border:   rgba(255, 255, 255, 0.06);
   --glass-blur:     24px;
-  --font-base: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-base: 'Geist', 'Inter', system-ui, -apple-system, sans-serif;
   --radius-sm:  6px;
   --radius-md:  12px;
   --radius-lg:  18px;
@@ -61,7 +61,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
 .kyc-split {
   display: grid;
   grid-template-columns: 40% 60%;
-  min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
 }
 
@@ -281,7 +281,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   color: var(--muted);
   position: relative;
   z-index: 1;
-  transition: all 0.35s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), background-color 0.35s cubic-bezier(0.4,0,0.2,1), border-color 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s cubic-bezier(0.4,0,0.2,1);
 }
 
 .kyc-step-progress__item.active .kyc-step-progress__circle {
@@ -498,7 +498,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   cursor: pointer;
   border: none;
   outline: none;
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
   position: relative;
   overflow: hidden;
 }
@@ -540,7 +540,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   font-weight: 500;
   padding: 15px 24px;
   border-radius: var(--radius-md);
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
 }
 
 .btn--ghost:hover {
@@ -557,7 +557,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   font-weight: 600;
   padding: 15px 24px;
   border-radius: var(--radius-md);
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
 }
 .btn--secondary:hover {
   background: rgba(201,168,76,0.14);
@@ -594,7 +594,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   border: 1.5px solid rgba(255,255,255,0.08);
   border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.22s cubic-bezier(0.4,0,0.2,1), background-color 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.22s cubic-bezier(0.4,0,0.2,1);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -662,7 +662,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   padding: 28px 20px;
   text-align: center;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.4,0,0.2,1);
+  transition: transform 0.22s cubic-bezier(0.4,0,0.2,1), background-color 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.22s cubic-bezier(0.4,0,0.2,1);
   background: rgba(255,255,255,0.02);
   position: relative;
   overflow: hidden;
@@ -786,7 +786,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   justify-content: center;
   color: var(--danger);
   cursor: pointer;
-  transition: all var(--transition);
+  transition: transform var(--transition), background-color var(--transition), border-color var(--transition), color var(--transition), opacity var(--transition);
   flex-shrink: 0;
 }
 
@@ -1002,7 +1002,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
 .captured-checkmark svg { width: 28px; height: 28px; }
 
 @keyframes popIn {
-  from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  from { transform: translate(-50%, -50%) scale(0.95); opacity: 0; }
   to   { transform: translate(-50%, -50%) scale(1); opacity: 1; }
 }
 
@@ -1047,7 +1047,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  transition: all 0.35s ease;
+  transition: transform 0.35s ease, background-color 0.35s ease, opacity 0.35s ease;
 }
 
 .liveness-check-item.passed .liveness-check-item__icon {
@@ -1181,7 +1181,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   justify-content: center;
   flex-shrink: 0;
   margin-top: 1px;
-  transition: all 0.18s ease;
+  transition: transform 0.18s ease, background-color 0.18s ease, opacity 0.18s ease;
 }
 
 .checkbox-field__box svg {
@@ -1359,7 +1359,7 @@ button { font-family: var(--font-base); cursor: pointer; border: none; backgroun
   .kyc-form-panel {
     position: relative;
     z-index: 1;
-    min-height: 100vh;
+    min-height: 100dvh;
     padding: 32px 16px;
     background: rgba(17, 24, 39, 0.90);
     backdrop-filter: blur(8px);

@@ -29,7 +29,7 @@
   --info:           #3B82F6;
 
   /* Typography */
-  --font-base:      'Inter', system-ui, -apple-system, sans-serif;
+  --font-base:      'Geist', 'Inter', system-ui, -apple-system, sans-serif;
   --text-xs:        0.75rem;
   --text-sm:        0.875rem;
   --text-base:      1rem;
@@ -618,7 +618,7 @@ input, textarea, select {
    ============================================================ */
 .hero {
   position: relative;
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -1588,4 +1588,63 @@ input, textarea, select {
 .culture-grid,
 .benefits-grid {
   perspective: 1200px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   PRESS FEEDBACK + HOVER GATING + A11Y SKIP-LINK
+   Added in the 4-skill sweep (stop-slop / emil / taste / redesign).
+─────────────────────────────────────────────────────────────── */
+
+/* Tactile press on every button & .btn */
+.btn,
+button {
+  transition:
+    transform 160ms cubic-bezier(0.22, 1, 0.36, 1),
+    background-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 180ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 180ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.btn:active:not(:disabled),
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Skip-to-content (place <a href="#main" class="skip-link"> at top of body) */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+}
+.skip-link:focus {
+  position: fixed;
+  left: 12px;
+  top: 12px;
+  z-index: 9999;
+  background: var(--stone-900, #1c1a17);
+  color: var(--stone-50, #faf4ec);
+  padding: 10px 16px;
+  border: 1px solid var(--terra, #b25b3a);
+  font-family: var(--font-base);
+  font-size: 14px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+/* Reduced motion: kill the press transform */
+@media (prefers-reduced-motion: reduce) {
+  .btn:active, button:active { transform: none; }
+}
+
+/* Gate decorative hover states behind real hover-capable pointers
+   so taps on touch devices don't trigger stuck hover effects. */
+@media (hover: none) {
+  .btn:hover,
+  .card:hover,
+  .feature-card:hover,
+  .product-card:hover {
+    transform: none;
+  }
 }
