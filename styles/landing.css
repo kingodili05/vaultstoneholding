@@ -1088,3 +1088,20 @@ button:active:not(:disabled),
     transform: none;
   }
 }
+
+/* Missing primitives — referenced by index.html */
+.container {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding-inline: clamp(20px, 4vw, 64px);
+}
+
+.nav__brand-name {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--type-body);
+  color: var(--stone-900);
+}
