@@ -47,11 +47,11 @@
 html { scroll-behavior: smooth; }
 
 body {
-  font-family: 'Geist', 'Inter', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
   line-height: 1.5;
-  min-height: 100dvh;
+  min-height: 100vh;
   overflow-x: hidden;
 }
 
@@ -422,7 +422,7 @@ tbody tr.selected { background: rgba(201,168,76,0.06); }
 
 .app-layout {
   display: flex;
-  min-height: 100dvh;
+  min-height: 100vh;
 }
 
 /* ── Sidebar ── */
@@ -522,7 +522,7 @@ tbody tr.selected { background: rgba(201,168,76,0.06); }
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 100dvh;
+  min-height: 100vh;
 }
 
 /* ── Top Header ── */
