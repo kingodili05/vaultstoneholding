@@ -1,0 +1,27 @@
+name: Supabase Keep-Alive
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily 06:00 UTC — under the 7-day idle limit
+  workflow_dispatch: {}     # manual "Run workflow" button
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping Supabase REST (executes a DB query)
+        run: |
+          set -euo pipefail
+          URL="https://wkkwwoalovuwhgvzprov.supabase.co"
+          KEY="sb_publishable_rFFOekzm14plccWWozXxHQ_v9YgM73k"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 \
+            "$URL/rest/v1/profiles?select=id&limit=1" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY")
+          echo "HTTP $CODE"
+          if [ "$CODE" != "200" ] && [ "$CODE" != "401" ]; then
+            echo "Unexpected status — project may be paused or down."
+            exit 1
+          fi
+          echo "Supabase reachable — keep-alive OK."
